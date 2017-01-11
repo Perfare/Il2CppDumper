@@ -85,30 +85,37 @@ namespace Il2CppDumper
                 }
                 Position += 4;
             }
-            //从.init_array获取函数
-            var addrs = ReadClassArray<uint>(init_array.sh_offset, (int)init_array.sh_size / 4);
-            foreach (var i in addrs)
+            if (_GLOBAL_OFFSET_TABLE_ != 0)
             {
-                if (i != 0)
+                //从.init_array获取函数
+                var addrs = ReadClassArray<uint>(init_array.sh_offset, (int)init_array.sh_size / 4);
+                foreach (var i in addrs)
                 {
-                    Position = i;
-                    var buff = ReadBytes(12);
-                    if (bytes.SequenceEqual(buff))
+                    if (i != 0)
                     {
-                        Position = i + 0x2c;
-                        var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                        Position = subaddr + 0x28;
-                        var codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                        Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                        Position = subaddr + 0x2C;
-                        var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                        Position = MapVATR(ptr);
-                        var metadataRegistration = ReadUInt32();
-                        Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                        Init(codeRegistration, metadataRegistration);
-                        return true;
+                        Position = i;
+                        var buff = ReadBytes(12);
+                        if (bytes.SequenceEqual(buff))
+                        {
+                            Position = i + 0x2c;
+                            var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                            Position = subaddr + 0x28;
+                            var codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                            Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                            Position = subaddr + 0x2C;
+                            var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                            Position = MapVATR(ptr);
+                            var metadataRegistration = ReadUInt32();
+                            Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                            Init(codeRegistration, metadataRegistration);
+                            return true;
+                        }
                     }
                 }
+            }
+            else
+            {
+                Console.WriteLine("ERROR: Unable to get GOT form PT_DYNAMIC.");
             }
             return false;
         }

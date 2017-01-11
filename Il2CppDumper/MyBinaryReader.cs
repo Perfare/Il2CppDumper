@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace Il2CppDumper
 {
@@ -123,17 +125,11 @@ namespace Il2CppDumper
         public string ReadStringToNull(long addr)
         {
             BaseStream.Position = addr;
-            string result = "";
-            char c;
-            for (int i = 0; i < base.BaseStream.Length; i++)
-            {
-                if ((c = (char)base.ReadByte()) == 0)
-                {
-                    break;
-                }
-                result += c.ToString();
-            }
-            return result;
+            List<byte> bytes = new List<byte>();
+            byte b;
+            while ((b = ReadByte()) != 0)
+                bytes.Add(b);
+            return Encoding.UTF8.GetString(bytes.ToArray());
         }
     }
 }

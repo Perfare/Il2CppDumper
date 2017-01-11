@@ -42,10 +42,9 @@ namespace Il2CppDumper
 
         public uint e_version;
 
-        //全部定义为64位
-        public ulong e_entry;
-        public ulong e_phoff;
-        public ulong e_shoff;
+        public uint e_entry;
+        public uint e_phoff;
+        public uint e_shoff;
         public uint e_flags;
         public ushort e_ehsize;
         public ushort e_phentsize;
@@ -53,6 +52,19 @@ namespace Il2CppDumper
         public ushort e_shentsize;
         public ushort e_shnum;
         public ushort e_shtrndx;
+    }
+
+    class program_header_table
+    {
+        public uint p_type;
+        public uint p_offset;
+        public uint p_vaddr;
+        public uint p_paddr;
+        public uint p_filesz;
+        public uint p_memsz;
+        public uint p_flags;
+        public uint p_align;
+        //public byte[] p_data;忽略
     }
 
     class elf_32_shdr

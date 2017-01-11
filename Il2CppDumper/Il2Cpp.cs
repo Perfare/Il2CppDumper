@@ -53,63 +53,61 @@ namespace Il2CppDumper
 
         public bool Auto()
         {
-            if (sectionWithName != null)
+            //函数特征码
+            var bytes = new byte[] { 0x1c, 0x0, 0x9f, 0xe5, 0x1c, 0x10, 0x9f, 0xe5, 0x1c, 0x20, 0x9f, 0xe5 };
+            //取.dynamic
+            var dynamic = new elf_32_shdr();
+            var PT_DYNAMIC = program_table_element.First(x => x.p_type == 2u);
+            dynamic.sh_offset = PT_DYNAMIC.p_offset;
+            dynamic.sh_size = PT_DYNAMIC.p_filesz;
+            //从.dynamic获取_GLOBAL_OFFSET_TABLE_和.init_array
+            uint _GLOBAL_OFFSET_TABLE_ = 0;
+            var init_array = new elf_32_shdr();
+            Position = dynamic.sh_offset;
+            var dynamicend = dynamic.sh_offset + dynamic.sh_size;
+            while (Position < dynamicend)
             {
-                var bytes = new byte[] { 0x1c, 0x0, 0x9f, 0xe5, 0x1c, 0x10, 0x9f, 0xe5, 0x1c, 0x20, 0x9f, 0xe5 };
-                //判断必要的section是否都在
-                if (sectionWithName.ContainsKey(".got") && sectionWithName.ContainsKey(".init_array") && sectionWithName.ContainsKey(".dynamic"))
+                var tag = ReadInt32();
+                if (tag == 3)//DT_PLTGOT
                 {
-                    var dynamic = sectionWithName[".dynamic"];
-                    var got = sectionWithName[".got"];
-                    //从.dynamic获取_GLOBAL_OFFSET_TABLE_
-                    uint _GLOBAL_OFFSET_TABLE_ = 0;
-                    Position = dynamic.sh_offset;
-                    var dynamicend = dynamic.sh_offset + dynamic.sh_size;
-                    var gotend = got.sh_offset + got.sh_size;
-                    while (Position < dynamicend)
-                    {
-                        var tag = ReadInt32();
-                        if (tag == 3)
-                        {
-                            var tmp = ReadUInt32();
-                            if (tmp >= got.sh_offset && tmp <= gotend)
-                            {
-                                _GLOBAL_OFFSET_TABLE_ = tmp;
-                                break;
-                            }
-                        }
-                        Position += 4;
-                    }
-                    //从.init_array获取函数
-                    var init_array = sectionWithName[".init_array"];
-                    var addrs = ReadClassArray<uint>(init_array.sh_offset, (int)init_array.sh_size / 4);
-                    foreach (var i in addrs)
-                    {
-                        if (i != 0)
-                        {
-                            Position = i;
-                            var buff = ReadBytes(12);
-                            if (bytes.SequenceEqual(buff))
-                            {
-                                Position = i + 0x2c;
-                                var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                Position = subaddr + 0x28;
-                                var codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                                Position = subaddr + 0x2C;
-                                var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                Position = MapVATR(ptr);
-                                var metadataRegistration = ReadUInt32();
-                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                                Init(codeRegistration, metadataRegistration);
-                                return true;
-                            }
-                        }
-                    }
+                    _GLOBAL_OFFSET_TABLE_ = ReadUInt32();
+                    continue;
                 }
-                else
+                else if (tag == 25)//DT_INIT_ARRAY
                 {
-                    Console.WriteLine("ERROR: The necessary section is missing.");
+                    init_array.sh_offset = MapVATR(ReadUInt32());
+                    continue;
+                }
+                else if (tag == 27)//DT_INIT_ARRAYSZ
+                {
+                    init_array.sh_size = ReadUInt32();
+                    continue;
+                }
+                Position += 4;
+            }
+            //从.init_array获取函数
+            var addrs = ReadClassArray<uint>(init_array.sh_offset, (int)init_array.sh_size / 4);
+            foreach (var i in addrs)
+            {
+                if (i != 0)
+                {
+                    Position = i;
+                    var buff = ReadBytes(12);
+                    if (bytes.SequenceEqual(buff))
+                    {
+                        Position = i + 0x2c;
+                        var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                        Position = subaddr + 0x28;
+                        var codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                        Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                        Position = subaddr + 0x2C;
+                        var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                        Position = MapVATR(ptr);
+                        var metadataRegistration = ReadUInt32();
+                        Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                        Init(codeRegistration, metadataRegistration);
+                        return true;
+                    }
                 }
             }
             return false;

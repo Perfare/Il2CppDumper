@@ -120,7 +120,7 @@ namespace Il2CppDumper
 
         public void Init()
         {
-            var str = System.Convert.ToString(bits, 2);
+            var str = Convert.ToString(bits, 2);
             if (str.Length != 32)
             {
                 str = new string(Enumerable.Repeat('0', 32 - str.Length).Concat(str.ToCharArray()).ToArray());

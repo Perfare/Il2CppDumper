@@ -1,4 +1,5 @@
 # Il2CppDumper
 参考代码[Il2CppDumper](https://github.com/Jumboperson/Il2CppDumper)  
-修复原代码部分功能并添加自动处理功能  
-支持metadata版本21，22
+支持ELF(arm, x86), Mach-O(32bit)  
+支持metadata版本21，22  
+导出包括types, parent, fields, properties, methods, attribute  

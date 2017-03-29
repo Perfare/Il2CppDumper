@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-
+#pragma warning disable CS0649
 namespace Il2CppDumper
 {
     class elf_header
@@ -64,7 +64,6 @@ namespace Il2CppDumper
         public uint p_memsz;
         public uint p_flags;
         public uint p_align;
-        //public byte[] p_data;忽略
     }
 
     class elf_32_shdr

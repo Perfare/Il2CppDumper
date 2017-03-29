@@ -34,6 +34,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -46,6 +47,8 @@
     <Compile Include="ElfClass.cs" />
     <Compile Include="Il2Cpp.cs" />
     <Compile Include="Il2CppClass.cs" />
+    <Compile Include="Macho.cs" />
+    <Compile Include="MachoClass.cs" />
     <Compile Include="Metadata.cs" />
     <Compile Include="MetadataClass.cs" />
     <Compile Include="MyBinaryReader.cs" />

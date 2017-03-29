@@ -6,7 +6,7 @@ namespace Il2CppDumper
 {
     class Metadata : MyBinaryReader
     {
-        Il2CppGlobalMetadataHeader pMetadataHdr;
+        private Il2CppGlobalMetadataHeader pMetadataHdr;
         public int uiImageCount;
         public int uiNumTypes;
         public Il2CppImageDefinition[] imageDefs;
@@ -15,6 +15,9 @@ namespace Il2CppDumper
         public Il2CppParameterDefinition[] parameterDefs;
         public Il2CppFieldDefinition[] fieldDefs;
         public Il2CppFieldDefaultValue[] fieldDefaultValues;
+        public Il2CppPropertyDefinition[] propertyDefs;
+        public Il2CppCustomAttributeTypeRange[] attributesInfos;
+        public int[] attributeTypes;
 
         public Metadata(Stream stream) : base(stream)
         {
@@ -38,8 +41,14 @@ namespace Il2CppDumper
             parameterDefs = ReadClassArray<Il2CppParameterDefinition>(pMetadataHdr.parametersOffset, pMetadataHdr.parametersCount / MySizeOf(typeof(Il2CppParameterDefinition)));
             //GetFieldDefFromIndex
             fieldDefs = ReadClassArray<Il2CppFieldDefinition>(pMetadataHdr.fieldsOffset, pMetadataHdr.fieldsCount / MySizeOf(typeof(Il2CppFieldDefinition)));
-            //GetFieldDefaultFromIndex
+            //GetFieldDefaultValuesFromIndex
             fieldDefaultValues = ReadClassArray<Il2CppFieldDefaultValue>(pMetadataHdr.fieldDefaultValuesOffset, pMetadataHdr.fieldDefaultValuesCount / MySizeOf(typeof(Il2CppFieldDefaultValue)));
+            //GetPropertyDefinitionFromIndex
+            propertyDefs = ReadClassArray<Il2CppPropertyDefinition>(pMetadataHdr.propertiesOffset, pMetadataHdr.propertiesCount / MySizeOf(typeof(Il2CppPropertyDefinition)));
+            //GetAttributesInfoFromIndex
+            attributesInfos = ReadClassArray<Il2CppCustomAttributeTypeRange>(pMetadataHdr.attributesInfoOffset, pMetadataHdr.attributesInfoCount / MySizeOf(typeof(Il2CppCustomAttributeTypeRange)));
+            //GetAttributeTypesFromIndex
+            attributeTypes = ReadClassArray<int>(pMetadataHdr.attributeTypesOffset, pMetadataHdr.attributeTypesCount / 4);
         }
 
         public Il2CppFieldDefaultValue GetFieldDefaultFromIndex(int idx)

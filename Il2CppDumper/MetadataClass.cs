@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
+#pragma warning disable CS0649
 namespace Il2CppDumper
 {
     class Il2CppGlobalMetadataHeader
@@ -176,5 +176,21 @@ namespace Il2CppDumper
         public int fieldIndex;
         public int typeIndex;
         public int dataIndex;
+    }
+
+    public class Il2CppPropertyDefinition
+    {
+        public int nameIndex;
+        public int get;
+        public int set;
+        public uint attrs;
+        public int customAttributeIndex;
+        public uint token;
+    }
+
+    public class Il2CppCustomAttributeTypeRange
+    {
+        public int start;
+        public int count;
     }
 }

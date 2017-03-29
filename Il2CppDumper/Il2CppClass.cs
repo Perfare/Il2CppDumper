@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-
+#pragma warning disable CS0649
 namespace Il2CppDumper
 {
     public class Il2CppCodeRegistration
@@ -23,14 +23,12 @@ namespace Il2CppDumper
         public uint invokerPointersCount;
         public uint invokerPointers;
         public int customAttributeCount;
-        public uint customAttributeGenerators;
+        public uint pcustomAttributeGenerators;
         public int guidCount;
         public uint guids; // Il2CppGuid
 
-        public uint[] methodPointers
-        {
-            get; set;
-        }
+        public uint[] methodPointers { get; set; }
+        public uint[] customAttributeGenerators { get; set; }
     }
 
     class Il2CppMetadataRegistration
@@ -54,15 +52,9 @@ namespace Il2CppDumper
         public uint metadataUsagesCount;
         public uint metadataUsages;
 
-        public int[] fieldOffsets
-        {
-            get; set;
-        }
+        public int[] fieldOffsets { get; set; }
 
-        public Il2CppType[] types
-        {
-            get; set;
-        }
+        public Il2CppType[] types { get; set; }
     }
 
     public enum Il2CppTypeEnum
@@ -136,41 +128,13 @@ namespace Il2CppDumper
         public class Anonymous
         {
             public uint dummy;
-            public int klassIndex
-            {
-                get
-                {
-                    return (int)dummy;
-                }
-            }
-            public uint type
-            {
-                get
-                {
-                    return dummy;
-                }
-            }
-            public uint array
-            {
-                get
-                {
-                    return dummy;
-                }
-            }
-            public int genericParameterIndex
-            {
-                get
-                {
-                    return (int)dummy;
-                }
-            }
-            public uint generic_class
-            {
-                get
-                {
-                    return dummy;
-                }
-            }
+            public int klassIndex => (int)dummy;
+
+            public uint type => dummy;
+            public uint array => dummy;
+
+            public int genericParameterIndex => (int)dummy;
+            public uint generic_class => dummy;
         }
     }
 

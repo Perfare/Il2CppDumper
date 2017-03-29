@@ -6,23 +6,22 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    class Elf : MyBinaryReader
+    class Elf : Il2Cpp
     {
-        public elf_header elf_header;
-        public program_header_table[] program_table_element;
+        private elf_header elf_header;
+        private program_header_table[] program_table_element;
+        private static byte[] ARMFeatureBytes = { 0x1c, 0x0, 0x9f, 0xe5, 0x1c, 0x10, 0x9f, 0xe5, 0x1c, 0x20, 0x9f, 0xe5 };
+        private static byte[] X86FeatureBytes = { 0x55, 0x89, 0xE5, 0x53, 0x83, 0xE4, 0xF0, 0x83, 0xEC, 0x20, 0xE8, 0x00, 0x00, 0x00, 0x00, 0x5B };
+
 
         public Elf(Stream stream) : base(stream)
         {
             elf_header = new elf_header();
             elf_header.m_dwFormat = ReadUInt32();
-            if (elf_header.m_dwFormat != 0x464c457f)
-            {
-                throw new Exception("ERROR: il2cpp lib provided is not a valid ELF file.");
-            }
             elf_header.m_arch = ReadByte();
             if (elf_header.m_arch == 2)//64
             {
-                throw new Exception("ERROR: 64 bit so files are not supported.");
+                throw new Exception("ERROR: 64 bit not supported.");
             }
             elf_header.m_endian = ReadByte();
             elf_header.m_version = ReadByte();
@@ -45,20 +44,108 @@ namespace Il2CppDumper
             program_table_element = ReadClassArray<program_header_table>(elf_header.e_phoff, elf_header.e_phnum);
         }
 
-        public uint MapVATR(uint uiAddr)
+        public Elf(Stream stream, uint codeRegistration, uint metadataRegistration) : this(stream)
+        {
+            Init(codeRegistration, metadataRegistration);
+        }
+
+        protected override uint MapVATR(uint uiAddr)
         {
             var program_header_table = program_table_element.First(x => uiAddr >= x.p_vaddr && uiAddr <= (x.p_vaddr + x.p_memsz));
             return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
         }
 
-        public T MapVATR<T>(uint uiAddr) where T : new()
+        public override bool Auto()
         {
-            return ReadClass<T>(MapVATR(uiAddr));
-        }
-
-        public T[] MapVATR<T>(uint uiAddr, int count) where T : new()
-        {
-            return ReadClassArray<T>(MapVATR(uiAddr), count);
+            //取.dynamic
+            var dynamic = new elf_32_shdr();
+            var PT_DYNAMIC = program_table_element.First(x => x.p_type == 2u);
+            dynamic.sh_offset = PT_DYNAMIC.p_offset;
+            dynamic.sh_size = PT_DYNAMIC.p_filesz;
+            //从.dynamic获取_GLOBAL_OFFSET_TABLE_和.init_array
+            uint _GLOBAL_OFFSET_TABLE_ = 0;
+            var init_array = new elf_32_shdr();
+            Position = dynamic.sh_offset;
+            var dynamicend = dynamic.sh_offset + dynamic.sh_size;
+            while (Position < dynamicend)
+            {
+                var tag = ReadInt32();
+                if (tag == 3)//DT_PLTGOT
+                {
+                    _GLOBAL_OFFSET_TABLE_ = ReadUInt32();
+                }
+                else if (tag == 25)//DT_INIT_ARRAY
+                {
+                    init_array.sh_offset = MapVATR(ReadUInt32());
+                }
+                else if (tag == 27)//DT_INIT_ARRAYSZ
+                {
+                    init_array.sh_size = ReadUInt32();
+                }
+                else
+                {
+                    Position += 4;//skip
+                }
+            }
+            if (_GLOBAL_OFFSET_TABLE_ != 0)
+            {
+                //从.init_array获取函数
+                var addrs = ReadClassArray<uint>(init_array.sh_offset, (int)init_array.sh_size / 4);
+                foreach (var i in addrs)
+                {
+                    if (i > 0)
+                    {
+                        Position = i;
+                        if (elf_header.e_machine == 0x28)
+                        {
+                            var buff = ReadBytes(12);
+                            if (ARMFeatureBytes.SequenceEqual(buff))
+                            {
+                                Position = i + 0x2c;
+                                var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                Position = subaddr + 0x28;
+                                var codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                                Position = subaddr + 0x2C;
+                                var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                Position = MapVATR(ptr);
+                                var metadataRegistration = ReadUInt32();
+                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                                Init(codeRegistration, metadataRegistration);
+                                return true;
+                            }
+                        }
+                        else if (elf_header.e_machine == 0x3)
+                        {
+                            var buff = ReadBytes(16);
+                            if (X86FeatureBytes.SequenceEqual(buff))
+                            {
+                                Position = i + 0x18;
+                                var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                Position = subaddr + 0x2C;
+                                var codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                                Position = subaddr + 0x22;
+                                var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                Position = MapVATR(ptr);
+                                var metadataRegistration = ReadUInt32();
+                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                                Init(codeRegistration, metadataRegistration);
+                                return true;
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("ERROR: Automatic processing does not support this ELF file.");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("ERROR: Unable to get GOT form PT_DYNAMIC.");
+            }
+            return false;
         }
     }
 }

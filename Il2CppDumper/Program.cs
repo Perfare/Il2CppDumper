@@ -32,6 +32,13 @@ namespace Il2CppDumper
                         {
                             isElf = true;
                         }
+                        else if (macig == 0xCAFEBABE || macig == 0xBEBAFECA) //FAT
+                        {
+                            var fat = new MachoFat(new MemoryStream(il2cppfile));
+                            il2cppfile = fat.GetMacho32bit();
+                            if(il2cppfile == null)
+                                throw new Exception("ERROR: il2cpp file not supported.");
+                        }
                         else if (macig != 0xFEEDFACE) //32-bit mach object file
                         {
                             throw new Exception("ERROR: il2cpp file not supported.");

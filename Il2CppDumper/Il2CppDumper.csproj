@@ -49,6 +49,7 @@
     <Compile Include="Il2CppClass.cs" />
     <Compile Include="Macho.cs" />
     <Compile Include="MachoClass.cs" />
+    <Compile Include="MachoFat.cs" />
     <Compile Include="Metadata.cs" />
     <Compile Include="MetadataClass.cs" />
     <Compile Include="MyBinaryReader.cs" />

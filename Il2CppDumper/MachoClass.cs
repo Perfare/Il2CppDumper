@@ -13,4 +13,11 @@ namespace Il2CppDumper
         public uint offset;
         public uint end;
     }
+
+    class Fat
+    {
+        public uint file_offset;
+        public uint size;
+        public uint magic;
+    }
 }

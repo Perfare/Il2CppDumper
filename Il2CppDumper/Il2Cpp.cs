@@ -16,7 +16,7 @@ namespace Il2CppDumper
         public Il2CppType[] types;
 
         public abstract bool Auto();
-        protected abstract uint MapVATR(uint uiAddr);
+        public abstract uint MapVATR(uint uiAddr);
 
         protected Il2Cpp(Stream stream) : base(stream) { }
 

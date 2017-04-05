@@ -382,8 +382,23 @@ namespace Il2CppDumper.v23
             for (var i = 0; i < attributeTypeRange.count; i++)
             {
                 var typeIndex = metadata.attributeTypes[attributeTypeRange.start + i];
-                sb.AppendFormat("{0}[{1}] // {2:x}\n", padding, get_type_name(il2cpp.types[typeIndex]),
-                    il2cpp.customAttributeGenerators[index]);
+                var typename = get_type_name(il2cpp.types[typeIndex]);
+                var addr = il2cpp.customAttributeGenerators[index];
+                if (typename == "ProtoMemberAttribute")
+                {
+                    il2cpp.Position = il2cpp.MapVATR(addr);
+                    var j = 0;
+                    while (j++ < 10)
+                    {
+                        var buff = il2cpp.ReadBytes(4);
+                        if (buff[1] == 0x10 && buff[2] == 0xa0 && buff[3] == 0xe3)//Mov R1,#buff[0]
+                        {
+                            typename = $"ProtoMember({buff[0]})";
+                            break;
+                        }
+                    }
+                }
+                sb.AppendFormat("{0}[{1}] // {2:x}\n", padding, typename, addr);
             }
             return sb.ToString();
         }

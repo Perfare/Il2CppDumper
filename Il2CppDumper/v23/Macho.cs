@@ -53,7 +53,7 @@ namespace Il2CppDumper.v23
             Init(codeRegistration, metadataRegistration);
         }
 
-        protected override uint MapVATR(uint uiAddr)
+        public override uint MapVATR(uint uiAddr)
         {
             var section = sections.First(x => uiAddr >= x.address && uiAddr <= x.end);
             return uiAddr - (section.address - section.offset);

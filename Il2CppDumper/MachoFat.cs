@@ -16,7 +16,7 @@ namespace Il2CppDumper
             Position += 4;
             var size = BitConverter.ToInt32(ReadBytes(4).Reverse().ToArray(), 0);
             fats = new Fat[size];
-            for (int i = 0; i < size; i++)
+            for (var i = 0; i < size; i++)
             {
                 Position += 8;
                 fats[i] = new Fat();
@@ -24,7 +24,7 @@ namespace Il2CppDumper
                 fats[i].size = BitConverter.ToUInt32(ReadBytes(4).Reverse().ToArray(), 0);
                 Position += 4;
             }
-            for (int i = 0; i < size; i++)
+            for (var i = 0; i < size; i++)
             {
                 Position = fats[i].file_offset;
                 fats[i].magic = ReadUInt32();

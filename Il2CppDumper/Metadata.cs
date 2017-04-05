@@ -14,7 +14,7 @@ namespace Il2CppDumper
         public Il2CppMethodDefinition[] methodDefs;
         public Il2CppParameterDefinition[] parameterDefs;
         public Il2CppFieldDefinition[] fieldDefs;
-        public Il2CppFieldDefaultValue[] fieldDefaultValues;
+        private Il2CppFieldDefaultValue[] fieldDefaultValues;
         public Il2CppPropertyDefinition[] propertyDefs;
         public Il2CppCustomAttributeTypeRange[] attributesInfos;
         public int[] attributeTypes;
@@ -68,7 +68,7 @@ namespace Il2CppDumper
 
         private int MySizeOf(Type type)
         {
-            int size = 0;
+            var size = 0;
             foreach (var i in type.GetFields())
             {
                 if (i.FieldType == typeof(int))

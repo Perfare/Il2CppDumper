@@ -47,7 +47,7 @@ namespace Il2CppDumper
             }
             else
             {
-                T t = new T();
+                var t = new T();
                 foreach (var i in t.GetType().GetFields())
                 {
                     if (i.FieldType == typeof(int))
@@ -90,8 +90,8 @@ namespace Il2CppDumper
             {
                 if (type == typeof(int))
                 {
-                    int[] t = new int[count];
-                    for (int i = 0; i < count; i++)
+                    var t = new int[count];
+                    for (var i = 0; i < count; i++)
                     {
                         t[i] = ReadInt32();
                     }
@@ -99,8 +99,8 @@ namespace Il2CppDumper
                 }
                 else if (type == typeof(uint))
                 {
-                    uint[] t = new uint[count];
-                    for (int i = 0; i < count; i++)
+                    var t = new uint[count];
+                    for (var i = 0; i < count; i++)
                     {
                         t[i] = ReadUInt32();
                     }
@@ -113,8 +113,8 @@ namespace Il2CppDumper
             }
             else
             {
-                T[] t = new T[count];
-                for (int i = 0; i < count; i++)
+                var t = new T[count];
+                for (var i = 0; i < count; i++)
                 {
                     t[i] = ReadClass<T>();
                 }
@@ -125,7 +125,7 @@ namespace Il2CppDumper
         public string ReadStringToNull(long addr)
         {
             BaseStream.Position = addr;
-            List<byte> bytes = new List<byte>();
+            var bytes = new List<byte>();
             byte b;
             while ((b = ReadByte()) != 0)
                 bytes.Add(b);

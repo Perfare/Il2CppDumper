@@ -1,31 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
+#pragma warning disable CS0169
 #pragma warning disable CS0649
-namespace Il2CppDumper
+namespace Il2CppDumper.v23
 {
-    public class Il2CppCodeRegistration
+    class Il2CppCodeRegistration
     {
         public uint methodPointersCount;
         public uint methodPointers;
-        public uint delegateWrappersFromNativeToManagedCount;
-        public uint delegateWrappersFromNativeToManaged; // note the double indirection to handle different calling conventions
-        public uint delegateWrappersFromManagedToNativeCount;
-        public uint delegateWrappersFromManagedToNative;
-        public uint marshalingFunctionsCount;
-        public uint marshalingFunctions;
-        public uint ccwMarshalingFunctionsCount;
-        public uint ccwMarshalingFunctions;
+        public uint reversePInvokeWrapperCount;
+        public uint reversePInvokeWrappers;
         public uint genericMethodPointersCount;
         public uint genericMethodPointers;
         public uint invokerPointersCount;
         public uint invokerPointers;
         public int customAttributeCount;
         public uint customAttributeGenerators;
-        public int guidCount;
-        public uint guids; // Il2CppGuid
+        public uint unresolvedVirtualCallCount;
+        public uint unresolvedVirtualCallPointers;
+        public uint interopDataCount;
+        public uint interopData;
     }
 
     class Il2CppMetadataRegistration
@@ -35,7 +31,7 @@ namespace Il2CppDumper
         public int genericInstsCount;
         public uint genericInsts;
         public int genericMethodTableCount;
-        public uint genericMethodTable; // Il2CppGenericMethodFunctionsDefinitions
+        public uint genericMethodTable;
         public int typesCount;
         public uint types;
         public int methodSpecsCount;
@@ -50,7 +46,7 @@ namespace Il2CppDumper
         public uint metadataUsages;
     }
 
-    public enum Il2CppTypeEnum
+    enum Il2CppTypeEnum
     {
         IL2CPP_TYPE_END = 0x00,       /* End of List */
         IL2CPP_TYPE_VOID = 0x01,
@@ -92,7 +88,7 @@ namespace Il2CppDumper
         IL2CPP_TYPE_ENUM = 0x55        /* an enumeration */
     }
 
-    public class Il2CppType
+    class Il2CppType
     {
         public uint datapoint;
         public Anonymous data { get; set; }
@@ -131,14 +127,14 @@ namespace Il2CppDumper
         }
     }
 
-    public class Il2CppGenericClass
+    class Il2CppGenericClass
     {
         public int typeDefinitionIndex;    /* the generic type definition */
         public Il2CppGenericContext context;   /* a context that contains the type instantiation doesn't contain any method instantiation */
-        public uint cached_class; /* if present, the Il2CppClass corresponding to the instantiation.  */
+        public uint cached_class;  /* if present, the Il2CppClass corresponding to the instantiation.  */
     }
 
-    public class Il2CppGenericContext
+    class Il2CppGenericContext
     {
         /* The instantiation corresponding to the class generic parameters */
         public uint class_inst;
@@ -146,14 +142,13 @@ namespace Il2CppDumper
         public uint method_inst;
     }
 
-
-    public class Il2CppGenericInst
+    class Il2CppGenericInst
     {
         public uint type_argc;
         public uint type_argv;
     }
 
-    public class Il2CppArrayType
+    class Il2CppArrayType
     {
         public uint etype;
         public byte rank;

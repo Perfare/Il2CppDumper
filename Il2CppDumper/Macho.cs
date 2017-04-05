@@ -18,7 +18,7 @@ namespace Il2CppDumper
             Position += 16;//skip
             var ncmds = ReadUInt32();
             Position += 8;//skip
-            for (int i = 0; i < ncmds; i++)
+            for (var i = 0; i < ncmds; i++)
             {
                 var offset = Position;
                 var loadCommandType = ReadUInt32();
@@ -31,7 +31,7 @@ namespace Il2CppDumper
                         Position += 24;//skip
                         var number_of_sections = ReadUInt32();
                         Position += 4;//skip
-                        for (int j = 0; j < number_of_sections; j++)
+                        for (var j = 0; j < number_of_sections; j++)
                         {
                             var section_name = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
                             Position += 16;

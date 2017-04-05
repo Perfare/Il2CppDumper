@@ -9,11 +9,14 @@ namespace Il2CppDumper
     abstract class Il2Cpp : MyBinaryReader
     {
         private Il2CppMetadataRegistration pMetadataRegistration;
-        public Il2CppCodeRegistration pCodeRegistration;
+        private Il2CppCodeRegistration pCodeRegistration;
+        public uint[] methodPointers;
+        public uint[] customAttributeGenerators;
+        private int[] fieldOffsets;
+        public Il2CppType[] types;
 
         public abstract bool Auto();
         protected abstract uint MapVATR(uint uiAddr);
-
 
         protected Il2Cpp(Stream stream) : base(stream) { }
 
@@ -21,26 +24,21 @@ namespace Il2CppDumper
         {
             pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
             pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
-            pCodeRegistration.methodPointers = MapVATR<uint>(pCodeRegistration.pmethodPointers, (int)pCodeRegistration.methodPointersCount);
-            pCodeRegistration.customAttributeGenerators = MapVATR<uint>(pCodeRegistration.pcustomAttributeGenerators, pCodeRegistration.customAttributeCount);
-            pMetadataRegistration.fieldOffsets = MapVATR<int>(pMetadataRegistration.pfieldOffsets, pMetadataRegistration.fieldOffsetsCount);
-            var types = MapVATR<uint>(pMetadataRegistration.ptypes, pMetadataRegistration.typesCount);
-            pMetadataRegistration.types = new Il2CppType[pMetadataRegistration.typesCount];
-            for (int i = 0; i < pMetadataRegistration.typesCount; ++i)
+            methodPointers = MapVATR<uint>(pCodeRegistration.methodPointers, (int)pCodeRegistration.methodPointersCount);
+            customAttributeGenerators = MapVATR<uint>(pCodeRegistration.customAttributeGenerators, pCodeRegistration.customAttributeCount);
+            fieldOffsets = MapVATR<int>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount);
+            var ptypes = MapVATR<uint>(pMetadataRegistration.types, pMetadataRegistration.typesCount);
+            types = new Il2CppType[pMetadataRegistration.typesCount];
+            for (var i = 0; i < pMetadataRegistration.typesCount; ++i)
             {
-                pMetadataRegistration.types[i] = MapVATR<Il2CppType>(types[i]);
-                pMetadataRegistration.types[i].Init();
+                types[i] = MapVATR<Il2CppType>(ptypes[i]);
+                types[i].Init();
             }
-        }
-
-        public Il2CppType GetTypeFromTypeIndex(int idx)
-        {
-            return pMetadataRegistration.types[idx];
         }
 
         public int GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType)
         {
-            var ptr = pMetadataRegistration.fieldOffsets[typeIndex];
+            var ptr = fieldOffsets[typeIndex];
             if (ptr >= 0)
             {
                 Position = MapVATR((uint)ptr) + 4 * fieldIndexInType;

@@ -24,5 +24,44 @@
         public const int TYPE_ATTRIBUTE_SERIALIZABLE = 0x00002000;
         public const int PARAM_ATTRIBUTE_OUT = 0x0002;
         public const int PARAM_ATTRIBUTE_OPTIONAL = 0x0010;
+
+
+        public static string[] szTypeString =
+        {
+            "END",
+            "void",
+            "bool",
+            "char",
+            "sbyte",
+            "byte",
+            "short",
+            "ushort",
+            "int",
+            "uint",
+            "long",
+            "ulong",
+            "float",
+            "double",
+            "string",
+            "PTR", //eg. void*
+            "BYREF",
+            "VALUETYPE",
+            "CLASS",
+            "T",
+            "ARRAY",
+            "GENERICINST",
+            "TYPEDBYREF",
+            "None",
+            "IntPtr",
+            "UIntPtr",
+            "None",
+            "FNPTR",
+            "object",
+            "SZARRAY",
+            "T",
+            "CMOD_REQD",
+            "CMOD_OPT",
+            "INTERNAL",
+        };
     }
 }

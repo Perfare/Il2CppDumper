@@ -31,22 +31,17 @@ namespace Il2CppDumper
             }
         }
 
-        public byte[] GetMacho32bit()
+        public byte[] GetFirstMacho()
         {
-            var fat = fats.FirstOrDefault(x => x.magic == 0xFEEDFACE);
-            if (fat == null)
-                return null;
+            var fat = fats.First();
             Position = fat.file_offset;
             return ReadBytes((int)fat.size);
         }
 
-        public byte[] GetMacho64bit()
+        public uint GetFirstMachoMagic()
         {
-            var fat = fats.FirstOrDefault(x => x.magic == 0xFEEDFACF);
-            if (fat == null)
-                return null;
-            Position = fat.file_offset;
-            return ReadBytes((int)fat.size);
+            var fat = fats.First();
+            return fat.magic;
         }
     }
 }

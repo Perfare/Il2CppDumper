@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using static Il2CppDumper.ArmHelper;
 
 namespace Il2CppDumper
 {
@@ -98,13 +99,6 @@ namespace Il2CppDumper
                 }
             }
             return false;
-        }
-
-        private uint decodeMov(byte[] asm)
-        {
-            var low = (ushort)(asm[2] + ((asm[3] & 0x70) << 4) + ((asm[1] & 0x04) << 9) + ((asm[0] & 0x0f) << 12));
-            var high = (ushort)(asm[6] + ((asm[7] & 0x70) << 4) + ((asm[5] & 0x04) << 9) + ((asm[4] & 0x0f) << 12));
-            return (uint)((high << 16) + low);
         }
     }
 }

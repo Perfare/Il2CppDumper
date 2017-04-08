@@ -47,6 +47,7 @@
     <Compile Include="64bit\Il2CppClass.cs" />
     <Compile Include="64bit\Macho.cs" />
     <Compile Include="64bit\MachoClass.cs" />
+    <Compile Include="ArmHelper.cs" />
     <Compile Include="DefineConstants.cs" />
     <Compile Include="Elf.cs" />
     <Compile Include="ElfClass.cs" />

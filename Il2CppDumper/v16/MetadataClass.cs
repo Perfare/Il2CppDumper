@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Il2CppDumper
+namespace Il2CppDumper.v16
 {
     public class Il2CppGlobalMetadataHeader
     {
@@ -55,18 +55,6 @@ namespace Il2CppDumper
         public int imagesCount;
         public int assembliesOffset; // Il2CppAssemblyDefinition
         public int assembliesCount;
-        public int metadataUsageListsOffset; // Il2CppMetadataUsageList
-        public int metadataUsageListsCount;
-        public int metadataUsagePairsOffset; // Il2CppMetadataUsagePair
-        public int metadataUsagePairsCount;
-        public int fieldRefsOffset; // Il2CppFieldRef
-        public int fieldRefsCount;
-        public int referencedAssembliesOffset; // int32_t
-        public int referencedAssembliesCount;
-        public int attributesInfoOffset; // Il2CppCustomAttributeTypeRange
-        public int attributesInfoCount;
-        public int attributeTypesOffset; // TypeIndex
-        public int attributeTypesCount;
     }
 
     public class Il2CppImageDefinition
@@ -78,7 +66,6 @@ namespace Il2CppDumper
         public uint typeCount;
 
         public int entryPointIndex;
-        public uint token;
     }
 
     public class Il2CppTypeDefinition
@@ -100,8 +87,6 @@ namespace Il2CppDumper
 
         public int delegateWrapperFromManagedToNativeIndex;
         public int marshalingFunctionsIndex;
-        public int ccwFunctionIndex;
-        public int guidIndex;
 
         public uint flags;
 
@@ -129,10 +114,8 @@ namespace Il2CppDumper
         // 03 - has_finalize;
         // 04 - has_cctor;
         // 05 - is_blittable;
-        // 06 - is_import;
-        // 07-10 - One of nine possible PackingSize values (0, 1, 2, 4, 8, 16, 32, 64, or 128)
+        // 06-09 - One of nine possible PackingSize values (0, 1, 2, 4, 8, 16, 32, 64, or 128)
         public uint bitfield;
-        public uint token;
     }
 
     public class Il2CppMethodDefinition
@@ -168,7 +151,6 @@ namespace Il2CppDumper
         public int nameIndex;
         public int typeIndex;
         public int customAttributeIndex;
-        public uint token;
     }
 
     public class Il2CppFieldDefaultValue
@@ -185,12 +167,5 @@ namespace Il2CppDumper
         public int set;
         public uint attrs;
         public int customAttributeIndex;
-        public uint token;
-    }
-
-    public class Il2CppCustomAttributeTypeRange
-    {
-        public int start;
-        public int count;
     }
 }

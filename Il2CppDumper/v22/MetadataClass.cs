@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Il2CppDumper
+namespace Il2CppDumper.v22
 {
     public class Il2CppGlobalMetadataHeader
     {
@@ -67,6 +67,10 @@ namespace Il2CppDumper
         public int attributesInfoCount;
         public int attributeTypesOffset; // TypeIndex
         public int attributeTypesCount;
+        public int unresolvedVirtualCallParameterTypesOffset; // TypeIndex
+        public int unresolvedVirtualCallParameterTypesCount;
+        public int unresolvedVirtualCallParameterRangesOffset; // Il2CppRange
+        public int unresolvedVirtualCallParameterRangesCount;
     }
 
     public class Il2CppImageDefinition
@@ -98,7 +102,7 @@ namespace Il2CppDumper
 
         public int genericContainerIndex;
 
-        public int delegateWrapperFromManagedToNativeIndex;
+        public int reversePInvokeWrapperIndex;
         public int marshalingFunctionsIndex;
         public int ccwFunctionIndex;
         public int guidIndex;
@@ -129,7 +133,7 @@ namespace Il2CppDumper
         // 03 - has_finalize;
         // 04 - has_cctor;
         // 05 - is_blittable;
-        // 06 - is_import;
+        // 06 - is_import_or_windows_runtime;
         // 07-10 - One of nine possible PackingSize values (0, 1, 2, 4, 8, 16, 32, 64, or 128)
         public uint bitfield;
         public uint token;
@@ -145,7 +149,7 @@ namespace Il2CppDumper
         public int genericContainerIndex;
         public int methodIndex;
         public int invokerIndex;
-        public int delegateWrapperIndex;
+        public int reversePInvokeWrapperIndex;
         public int rgctxStartIndex;
         public int rgctxCount;
         public uint token;

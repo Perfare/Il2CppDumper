@@ -37,6 +37,9 @@ namespace Il2CppDumper
                         {
                             default:
                                 throw new Exception($"ERROR: Metadata file supplied is not a supported version[{metadataversion}].");
+                            case 16:
+                                v16.Dump.Dumpv16(il2cppfile, metadatafile);
+                                break;
                             case 23:
                                 v23.Dump.Dumpv23(il2cppfile, metadatafile);
                                 break;
@@ -54,7 +57,7 @@ namespace Il2CppDumper
                                         goto case 0xFEEDFACE;
                                     case 0xCAFEBABE:
                                     case 0xBEBAFECA:
-                                        Console.Write("WARNING: fat macho will only dump the first object file.");
+                                        Console.WriteLine("WARNING: fat macho will only dump the first object file.");
                                         var fat = new MachoFat(new MemoryStream(il2cppfile));
                                         il2cppfile = fat.GetFirstMacho();
                                         var magic = fat.GetFirstMachoMagic();
@@ -225,7 +228,7 @@ namespace Il2CppDumper
                                                             }
                                                         }
                                                         writer.Write("; // 0x{0:x}\n",
-                                                            il2cpp.GetFieldOffsetFromIndex(idx, i - typeDef.fieldStart));
+                                                            il2cpp.GetFieldOffsetFromIndex(idx, i - typeDef.fieldStart, i));
                                                     }
                                                     writer.Write("\n");
                                                 }

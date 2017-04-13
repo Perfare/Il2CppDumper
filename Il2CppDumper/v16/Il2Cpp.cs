@@ -1,20 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.IO;
 
-namespace Il2CppDumper
+namespace Il2CppDumper.v16
 {
     abstract class Il2Cpp : MyBinaryReader
     {
         private Il2CppMetadataRegistration pMetadataRegistration;
         private Il2CppCodeRegistration pCodeRegistration;
         public uint[] methodPointers;
-        public uint[] customAttributeGenerators;
         private int[] fieldOffsets;
         public Il2CppType[] types;
-        private bool isNew21;
 
         public abstract bool Auto();
         public abstract uint MapVATR(uint uiAddr);
@@ -26,10 +20,7 @@ namespace Il2CppDumper
             pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
             pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
             methodPointers = MapVATR<uint>(pCodeRegistration.methodPointers, (int)pCodeRegistration.methodPointersCount);
-            customAttributeGenerators = MapVATR<uint>(pCodeRegistration.customAttributeGenerators, pCodeRegistration.customAttributeCount);
             fieldOffsets = MapVATR<int>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount);
-            //TODO 在21版本中存在两种FieldOffset，通过对第一非0数值进行判断确认是指针还是int
-            isNew21 = fieldOffsets.First(x => x > 0) > 1000;
             var ptypes = MapVATR<uint>(pMetadataRegistration.types, pMetadataRegistration.typesCount);
             types = new Il2CppType[pMetadataRegistration.typesCount];
             for (var i = 0; i < pMetadataRegistration.typesCount; ++i)
@@ -39,18 +30,8 @@ namespace Il2CppDumper
             }
         }
 
-        public int GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex)
+        public int GetFieldOffsetFromIndex(int fieldIndex)
         {
-            if (isNew21)
-            {
-                var ptr = fieldOffsets[typeIndex];
-                if (ptr >= 0)
-                {
-                    Position = MapVATR((uint)ptr) + 4 * fieldIndexInType;
-                    return ReadInt32();
-                }
-                return 0;
-            }
             return fieldOffsets[fieldIndex];
         }
 

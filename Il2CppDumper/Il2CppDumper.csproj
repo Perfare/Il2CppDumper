@@ -61,6 +61,17 @@
     <Compile Include="MyBinaryReader.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="v16\Dump.cs" />
+    <Compile Include="v16\Elf.cs" />
+    <Compile Include="v16\Il2Cpp.cs" />
+    <Compile Include="v16\Il2CppClass.cs" />
+    <Compile Include="v16\Macho.cs" />
+    <Compile Include="v16\Metadata.cs" />
+    <Compile Include="v16\MetadataClass.cs" />
+    <Compile Include="v20\Il2CppClass.cs" />
+    <Compile Include="v20\MetadataClass.cs" />
+    <Compile Include="v22\Il2CppClass.cs" />
+    <Compile Include="v22\MetadataClass.cs" />
     <Compile Include="v23\64bit\Dump.cs" />
     <Compile Include="v23\64bit\Il2Cpp.cs" />
     <Compile Include="v23\64bit\Il2CppClass.cs" />

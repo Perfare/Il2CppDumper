@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-#pragma warning disable CS0169
-#pragma warning disable CS0649
+
 namespace Il2CppDumper.v23._64bit
 {
-    class Il2CppCodeRegistration
+    public class Il2CppCodeRegistration
     {
         public ulong methodPointersCount;
         public ulong methodPointers;
@@ -24,7 +23,7 @@ namespace Il2CppDumper.v23._64bit
         public ulong interopData;
     }
 
-    class Il2CppMetadataRegistration
+    public class Il2CppMetadataRegistration
     {
         public long genericClassesCount;
         public ulong genericClasses;
@@ -46,7 +45,7 @@ namespace Il2CppDumper.v23._64bit
         public ulong metadataUsages;
     }
 
-    enum Il2CppTypeEnum
+    public enum Il2CppTypeEnum
     {
         IL2CPP_TYPE_END = 0x00,       /* End of List */
         IL2CPP_TYPE_VOID = 0x01,
@@ -88,7 +87,7 @@ namespace Il2CppDumper.v23._64bit
         IL2CPP_TYPE_ENUM = 0x55        /* an enumeration */
     }
 
-    class Il2CppType
+    public class Il2CppType
     {
         public ulong datapoint;
         public Anonymous data { get; set; }
@@ -127,14 +126,14 @@ namespace Il2CppDumper.v23._64bit
         }
     }
 
-    class Il2CppGenericClass
+    public class Il2CppGenericClass
     {
         public long typeDefinitionIndex;    /* the generic type definition */
         public Il2CppGenericContext context;   /* a context that contains the type instantiation doesn't contain any method instantiation */
         public ulong cached_class;  /* if present, the Il2CppClass corresponding to the instantiation.  */
     }
 
-    class Il2CppGenericContext
+    public class Il2CppGenericContext
     {
         /* The instantiation corresponding to the class generic parameters */
         public ulong class_inst;
@@ -142,13 +141,13 @@ namespace Il2CppDumper.v23._64bit
         public ulong method_inst;
     }
 
-    class Il2CppGenericInst
+    public class Il2CppGenericInst
     {
         public ulong type_argc;
         public ulong type_argv;
     }
 
-    class Il2CppArrayType
+    public class Il2CppArrayType
     {
         public ulong etype;
         public byte rank;

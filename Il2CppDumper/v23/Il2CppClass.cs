@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-#pragma warning disable CS0169
-#pragma warning disable CS0649
+
 namespace Il2CppDumper.v23
 {
-    class Il2CppCodeRegistration
+    public class Il2CppCodeRegistration
     {
         public uint methodPointersCount;
         public uint methodPointers;
@@ -24,7 +23,7 @@ namespace Il2CppDumper.v23
         public uint interopData;
     }
 
-    class Il2CppMetadataRegistration
+    public class Il2CppMetadataRegistration
     {
         public int genericClassesCount;
         public uint genericClasses;
@@ -46,7 +45,7 @@ namespace Il2CppDumper.v23
         public uint metadataUsages;
     }
 
-    enum Il2CppTypeEnum
+    public enum Il2CppTypeEnum
     {
         IL2CPP_TYPE_END = 0x00,       /* End of List */
         IL2CPP_TYPE_VOID = 0x01,
@@ -88,7 +87,7 @@ namespace Il2CppDumper.v23
         IL2CPP_TYPE_ENUM = 0x55        /* an enumeration */
     }
 
-    class Il2CppType
+    public class Il2CppType
     {
         public uint datapoint;
         public Anonymous data { get; set; }
@@ -127,14 +126,14 @@ namespace Il2CppDumper.v23
         }
     }
 
-    class Il2CppGenericClass
+    public class Il2CppGenericClass
     {
         public int typeDefinitionIndex;    /* the generic type definition */
         public Il2CppGenericContext context;   /* a context that contains the type instantiation doesn't contain any method instantiation */
         public uint cached_class;  /* if present, the Il2CppClass corresponding to the instantiation.  */
     }
 
-    class Il2CppGenericContext
+    public class Il2CppGenericContext
     {
         /* The instantiation corresponding to the class generic parameters */
         public uint class_inst;
@@ -142,13 +141,13 @@ namespace Il2CppDumper.v23
         public uint method_inst;
     }
 
-    class Il2CppGenericInst
+    public class Il2CppGenericInst
     {
         public uint type_argc;
         public uint type_argv;
     }
 
-    class Il2CppArrayType
+    public class Il2CppArrayType
     {
         public uint etype;
         public byte rank;

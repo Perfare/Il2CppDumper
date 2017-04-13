@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Il2CppDumper
+namespace Il2CppDumper.v20
 {
     public class Il2CppGlobalMetadataHeader
     {
@@ -63,10 +63,6 @@ namespace Il2CppDumper
         public int fieldRefsCount;
         public int referencedAssembliesOffset; // int32_t
         public int referencedAssembliesCount;
-        public int attributesInfoOffset; // Il2CppCustomAttributeTypeRange
-        public int attributesInfoCount;
-        public int attributeTypesOffset; // TypeIndex
-        public int attributeTypesCount;
     }
 
     public class Il2CppImageDefinition
@@ -100,8 +96,6 @@ namespace Il2CppDumper
 
         public int delegateWrapperFromManagedToNativeIndex;
         public int marshalingFunctionsIndex;
-        public int ccwFunctionIndex;
-        public int guidIndex;
 
         public uint flags;
 
@@ -186,11 +180,5 @@ namespace Il2CppDumper
         public uint attrs;
         public int customAttributeIndex;
         public uint token;
-    }
-
-    public class Il2CppCustomAttributeTypeRange
-    {
-        public int start;
-        public int count;
     }
 }

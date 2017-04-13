@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-#pragma warning disable CS0169
-#pragma warning disable CS0649
+
 namespace Il2CppDumper.v23
 {
-    class Il2CppGlobalMetadataHeader
+    public class Il2CppGlobalMetadataHeader
     {
         public uint sanity;
         public int version;
@@ -62,7 +61,7 @@ namespace Il2CppDumper.v23
         public int metadataUsagePairsCount;
         public int fieldRefsOffset; // Il2CppFieldRef
         public int fieldRefsCount;
-        public int referencedAssembliesOffset; // int
+        public int referencedAssembliesOffset; // int32_t
         public int referencedAssembliesCount;
         public int attributesInfoOffset; // Il2CppCustomAttributeTypeRange
         public int attributesInfoCount;
@@ -76,7 +75,7 @@ namespace Il2CppDumper.v23
         public int windowsRuntimeTypeNamesSize;
     }
 
-    class Il2CppImageDefinition
+    public class Il2CppImageDefinition
     {
         public int nameIndex;
         public int assemblyIndex;
@@ -88,7 +87,7 @@ namespace Il2CppDumper.v23
         public uint token;
     }
 
-    class Il2CppTypeDefinition
+    public class Il2CppTypeDefinition
     {
         public int nameIndex;
         public int namespaceIndex;
@@ -137,7 +136,7 @@ namespace Il2CppDumper.v23
         public uint token;
     }
 
-    class Il2CppMethodDefinition
+    public class Il2CppMethodDefinition
     {
         public int nameIndex;
         public int declaringType;
@@ -157,7 +156,7 @@ namespace Il2CppDumper.v23
         public ushort parameterCount;
     }
 
-    class Il2CppParameterDefinition
+    public class Il2CppParameterDefinition
     {
         public int nameIndex;
         public uint token;
@@ -165,7 +164,7 @@ namespace Il2CppDumper.v23
         public int typeIndex;
     }
 
-    class Il2CppFieldDefinition
+    public class Il2CppFieldDefinition
     {
         public int nameIndex;
         public int typeIndex;
@@ -173,14 +172,14 @@ namespace Il2CppDumper.v23
         public uint token;
     }
 
-    class Il2CppFieldDefaultValue
+    public class Il2CppFieldDefaultValue
     {
         public int fieldIndex;
         public int typeIndex;
         public int dataIndex;
     }
 
-    class Il2CppPropertyDefinition
+    public class Il2CppPropertyDefinition
     {
         public int nameIndex;
         public int get;
@@ -190,7 +189,7 @@ namespace Il2CppDumper.v23
         public uint token;
     }
 
-    class Il2CppCustomAttributeTypeRange
+    public class Il2CppCustomAttributeTypeRange
     {
         public int start;
         public int count;

@@ -33,15 +33,13 @@ namespace Il2CppDumper
 
         public byte[] GetFirstMacho()
         {
-            var fat = fats.First();
-            Position = fat.file_offset;
-            return ReadBytes((int)fat.size);
+            Position = fats[0].file_offset;
+            return ReadBytes((int)fats[0].size);
         }
 
         public uint GetFirstMachoMagic()
         {
-            var fat = fats.First();
-            return fat.magic;
+            return fats[0].magic;
         }
     }
 }

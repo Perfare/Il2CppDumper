@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-#pragma warning disable CS0649
+
 namespace Il2CppDumper
 {
     public class Il2CppCodeRegistration
@@ -28,7 +28,7 @@ namespace Il2CppDumper
         public uint guids; // Il2CppGuid
     }
 
-    class Il2CppMetadataRegistration
+    public class Il2CppMetadataRegistration
     {
         public int genericClassesCount;
         public uint genericClasses;

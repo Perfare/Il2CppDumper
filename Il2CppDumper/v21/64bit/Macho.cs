@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using static Il2CppDumper.ArmHelper;
 
-namespace Il2CppDumper.v23._64bit
+namespace Il2CppDumper._64bit
 {
     class Macho : Il2Cpp
     {

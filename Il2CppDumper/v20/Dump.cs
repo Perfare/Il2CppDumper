@@ -4,21 +4,25 @@ using System.IO;
 using System.Text;
 using static Il2CppDumper.DefineConstants;
 
-namespace Il2CppDumper.v16
+namespace Il2CppDumper.v20
 {
     class Dump
     {
         static Metadata metadata;
-        static Macho il2cpp;
+        static Il2Cpp il2cpp;
 
-        public static void Dumpv16(byte[] il2cppfile, byte[] metadatafile)
+        public static void Dumpv20(byte[] il2cppfile, byte[] metadatafile)
         {
             //判断il2cpp的magic
             var il2cppmagic = BitConverter.ToUInt32(il2cppfile, 0);
+            var isElf = false;
             switch (il2cppmagic)
             {
                 default:
                     throw new Exception("ERROR: il2cpp file not supported.");
+                case 0x464c457f:
+                    isElf = true;
+                    goto case 0xFEEDFACE;
                 case 0xCAFEBABE:
                 case 0xBEBAFECA:
                     Console.WriteLine("WARNING: fat macho will only dump the first object file.");
@@ -38,7 +42,10 @@ namespace Il2CppDumper.v16
                     if (key.KeyChar == '2')
                     {
                         metadata = new Metadata(new MemoryStream(metadatafile));
-                        il2cpp = new Macho(new MemoryStream(il2cppfile));
+                        if (isElf)
+                            il2cpp = new Elf(new MemoryStream(il2cppfile));
+                        else
+                            il2cpp = new Macho(new MemoryStream(il2cppfile));
                         if (!il2cpp.Auto())
                         {
                             throw new Exception(
@@ -52,7 +59,12 @@ namespace Il2CppDumper.v16
                         Console.Write("Input MetadataRegistration(R1): ");
                         var metadataRegistration = Convert.ToUInt32(Console.ReadLine(), 16);
                         metadata = new Metadata(new MemoryStream(metadatafile));
-                        il2cpp = new Macho(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration);
+                        if (isElf)
+                            il2cpp = new Elf(new MemoryStream(il2cppfile), codeRegistration,
+                                metadataRegistration);
+                        else
+                            il2cpp = new Macho(new MemoryStream(il2cppfile), codeRegistration,
+                                metadataRegistration);
                     }
                     else
                     {

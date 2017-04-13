@@ -4,21 +4,25 @@ using System.IO;
 using System.Text;
 using static Il2CppDumper.DefineConstants;
 
-namespace Il2CppDumper.v16
+namespace Il2CppDumper.v22
 {
     class Dump
     {
         static Metadata metadata;
-        static Macho il2cpp;
+        static Il2Cpp il2cpp;
 
-        public static void Dumpv16(byte[] il2cppfile, byte[] metadatafile)
+        public static void Dumpv22(byte[] il2cppfile, byte[] metadatafile)
         {
             //判断il2cpp的magic
             var il2cppmagic = BitConverter.ToUInt32(il2cppfile, 0);
+            var isElf = false;
             switch (il2cppmagic)
             {
                 default:
                     throw new Exception("ERROR: il2cpp file not supported.");
+                case 0x464c457f:
+                    isElf = true;
+                    goto case 0xFEEDFACE;
                 case 0xCAFEBABE:
                 case 0xBEBAFECA:
                     Console.WriteLine("WARNING: fat macho will only dump the first object file.");
@@ -38,7 +42,10 @@ namespace Il2CppDumper.v16
                     if (key.KeyChar == '2')
                     {
                         metadata = new Metadata(new MemoryStream(metadatafile));
-                        il2cpp = new Macho(new MemoryStream(il2cppfile));
+                        if (isElf)
+                            il2cpp = new Elf(new MemoryStream(il2cppfile));
+                        else
+                            il2cpp = new Macho(new MemoryStream(il2cppfile));
                         if (!il2cpp.Auto())
                         {
                             throw new Exception(
@@ -52,7 +59,12 @@ namespace Il2CppDumper.v16
                         Console.Write("Input MetadataRegistration(R1): ");
                         var metadataRegistration = Convert.ToUInt32(Console.ReadLine(), 16);
                         metadata = new Metadata(new MemoryStream(metadatafile));
-                        il2cpp = new Macho(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration);
+                        if (isElf)
+                            il2cpp = new Elf(new MemoryStream(il2cppfile), codeRegistration,
+                                metadataRegistration);
+                        else
+                            il2cpp = new Macho(new MemoryStream(il2cppfile), codeRegistration,
+                                metadataRegistration);
                     }
                     else
                     {
@@ -74,6 +86,7 @@ namespace Il2CppDumper.v16
                             //dump_class(i);
                             var typeDef = metadata.typeDefs[idx];
                             writer.Write($"\n// Namespace: {metadata.GetString(typeDef.namespaceIndex)}\n");
+                            writer.Write(GetCustomAttribute(typeDef.customAttributeIndex));
                             if ((typeDef.flags & TYPE_ATTRIBUTE_SERIALIZABLE) != 0)
                                 writer.Write("[Serializable]\n");
                             if ((typeDef.flags & TYPE_ATTRIBUTE_VISIBILITY_MASK) == TYPE_ATTRIBUTE_PUBLIC)
@@ -108,6 +121,7 @@ namespace Il2CppDumper.v16
                                     var pField = metadata.fieldDefs[i];
                                     var pType = il2cpp.types[pField.typeIndex];
                                     var pDefault = metadata.GetFieldDefaultFromIndex(i);
+                                    writer.Write(GetCustomAttribute(pField.customAttributeIndex, "\t"));
                                     writer.Write("\t");
                                     if ((pType.attrs & FIELD_ATTRIBUTE_FIELD_ACCESS_MASK) ==
                                         FIELD_ATTRIBUTE_PRIVATE)
@@ -181,7 +195,8 @@ namespace Il2CppDumper.v16
                                                 writer.Write($" = {multi}");
                                         }
                                     }
-                                    writer.Write("; // 0x{0:x}\n", il2cpp.GetFieldOffsetFromIndex(i));
+                                    writer.Write("; // 0x{0:x}\n",
+                                        il2cpp.GetFieldOffsetFromIndex(idx, i - typeDef.fieldStart));
                                 }
                                 writer.Write("\n");
                             }
@@ -193,6 +208,7 @@ namespace Il2CppDumper.v16
                                 for (var i = typeDef.propertyStart; i < propertyEnd; ++i)
                                 {
                                     var propertydef = metadata.propertyDefs[i];
+                                    writer.Write(GetCustomAttribute(propertydef.customAttributeIndex, "\t"));
                                     writer.Write("\t");
                                     if (propertydef.get >= 0)
                                     {
@@ -258,6 +274,7 @@ namespace Il2CppDumper.v16
                                 {
                                     //dump_method(i);
                                     var methodDef = metadata.methodDefs[i];
+                                    writer.Write(GetCustomAttribute(methodDef.customAttributeIndex, "\t"));
                                     writer.Write("\t");
                                     var pReturnType = il2cpp.types[methodDef.returnType];
                                     if ((methodDef.flags & METHOD_ATTRIBUTE_MEMBER_ACCESS_MASK) ==
@@ -364,6 +381,18 @@ namespace Il2CppDumper.v16
                     ret = szTypeString[(int)pType.type];
             }
             return ret;
+        }
+
+        private static string GetCustomAttribute(int index, string padding = "")
+        {
+            var attributeTypeRange = metadata.attributesInfos[index];
+            var sb = new StringBuilder();
+            for (var i = 0; i < attributeTypeRange.count; i++)
+            {
+                var typeIndex = metadata.attributeTypes[attributeTypeRange.start + i];
+                sb.AppendFormat("{0}[{1}] // {2:x}\n", padding, get_type_name(il2cpp.types[typeIndex]), il2cpp.customAttributeGenerators[index]);
+            }
+            return sb.ToString();
         }
     }
 }

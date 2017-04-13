@@ -14,6 +14,15 @@ namespace Il2CppDumper
         public uint end;
     }
 
+    class MachoSection64bit
+    {
+        public string section_name;
+        public ulong address;
+        public ulong size;
+        public ulong offset;
+        public ulong end;
+    }
+
     class Fat
     {
         public uint file_offset;

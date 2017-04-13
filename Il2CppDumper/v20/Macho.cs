@@ -5,42 +5,42 @@ using System.Linq;
 using System.Text;
 using static Il2CppDumper.ArmHelper;
 
-namespace Il2CppDumper.v23._64bit
+namespace Il2CppDumper.v20
 {
     class Macho : Il2Cpp
     {
-        private List<MachoSection64bit> sections = new List<MachoSection64bit>();
-        private static byte[] FeatureBytes1 = { 0x2, 0x0, 0x80, 0xD2 };//MOV X2, #0
-        private static byte[] FeatureBytes2 = { 0x3, 0x0, 0x80, 0x52 };//MOV W3, #0
+        private List<MachoSection> sections = new List<MachoSection>();
+        private static byte[] FeatureBytes1 = { 0x0, 0x22 };//MOVS R2, #0
+        private static byte[] FeatureBytes2 = { 0x78, 0x44, 0x79, 0x44 };//ADD R0, PC and ADD R1, PC
 
 
         public Macho(Stream stream) : base(stream)
         {
             Position += 16;//skip
             var ncmds = ReadUInt32();
-            Position += 12;//skip
+            Position += 8;//skip
             for (var i = 0; i < ncmds; i++)
             {
                 var offset = Position;
                 var loadCommandType = ReadUInt32();
                 var command_size = ReadUInt32();
-                if (loadCommandType == 0x19) //SEGMENT_64
+                if (loadCommandType == 1) //SEGMENT
                 {
                     var segment_name = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
                     if (segment_name == "__TEXT" || segment_name == "__DATA")
                     {
-                        Position += 40;//skip
+                        Position += 24;//skip
                         var number_of_sections = ReadUInt32();
                         Position += 4;//skip
                         for (var j = 0; j < number_of_sections; j++)
                         {
                             var section_name = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
-                            Position += 16;//skip
-                            var address = ReadUInt64();
-                            var size = ReadUInt64();
-                            var offset2 = (uint)ReadUInt64();
+                            Position += 16;
+                            var address = ReadUInt32();
+                            var size = ReadUInt32();
+                            var offset2 = ReadUInt32();
                             var end = address + size;
-                            sections.Add(new MachoSection64bit() { section_name = section_name, address = address, size = size, offset = offset2, end = end });
+                            sections.Add(new MachoSection() { section_name = section_name, address = address, size = size, offset = offset2, end = end });
                             Position += 24;
                         }
                     }
@@ -49,12 +49,12 @@ namespace Il2CppDumper.v23._64bit
             }
         }
 
-        public Macho(Stream stream, ulong codeRegistration, ulong metadataRegistration) : this(stream)
+        public Macho(Stream stream, uint codeRegistration, uint metadataRegistration) : this(stream)
         {
             Init(codeRegistration, metadataRegistration);
         }
 
-        public override ulong MapVATR(ulong uiAddr)
+        public override uint MapVATR(uint uiAddr)
         {
             var section = sections.First(x => uiAddr >= x.address && uiAddr <= x.end);
             return uiAddr - (section.address - section.offset);
@@ -63,27 +63,33 @@ namespace Il2CppDumper.v23._64bit
         public override bool Auto()
         {
             var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
-            var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
-            foreach (var i in addrs)
+            var addrs = ReadClassArray<uint>(__mod_init_func.offset, (int)__mod_init_func.size / 4);
+            foreach (var a in addrs)
             {
-                if (i > 0)
+                if (a > 0)
                 {
+                    var i = a - 1;
                     Position = MapVATR(i);
-                    var buff = ReadBytes(4);
+                    Position += 4;
+                    var buff = ReadBytes(2);
                     if (FeatureBytes1.SequenceEqual(buff))
                     {
+                        Position += 12;
                         buff = ReadBytes(4);
                         if (FeatureBytes2.SequenceEqual(buff))
                         {
-                            Position += 8;
-                            var subaddr = decodeAdr(i + 16, ReadBytes(4));
+                            Position = MapVATR(i) + 10;
+                            var subaddr = decodeMov(ReadBytes(8)) + i + 24u - 1u;
                             var rsubaddr = MapVATR(subaddr);
                             Position = rsubaddr;
-                            var codeRegistration = decodeAdrp(subaddr, ReadBytes(4));
-                            codeRegistration += decodeAdd(ReadBytes(4));
+                            var ptr = decodeMov(ReadBytes(8)) + subaddr + 16u;
+                            Position = MapVATR(ptr);
+                            var metadataRegistration = ReadUInt32();
                             Position = rsubaddr + 8;
-                            var metadataRegistration = decodeAdrp(subaddr + 8, ReadBytes(4));
-                            metadataRegistration += decodeAdd(ReadBytes(4));
+                            buff = ReadBytes(4);
+                            Position = rsubaddr + 14;
+                            buff = buff.Concat(ReadBytes(4)).ToArray();
+                            var codeRegistration = decodeMov(buff) + subaddr + 22u;
                             Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                             Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
                             Init(codeRegistration, metadataRegistration);

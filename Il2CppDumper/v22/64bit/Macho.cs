@@ -5,11 +5,11 @@ using System.Linq;
 using System.Text;
 using static Il2CppDumper.ArmHelper;
 
-namespace Il2CppDumper._64bit
+namespace Il2CppDumper.v22._64bit
 {
     class Macho : Il2Cpp
     {
-        private List<MachoSection> sections = new List<MachoSection>();
+        private List<MachoSection64bit> sections = new List<MachoSection64bit>();
         private static byte[] FeatureBytes1 = { 0x2, 0x0, 0x80, 0xD2 };//MOV X2, #0
         private static byte[] FeatureBytes2 = { 0x3, 0x0, 0x80, 0x52 };//MOV W3, #0
 
@@ -40,7 +40,7 @@ namespace Il2CppDumper._64bit
                             var size = ReadUInt64();
                             var offset2 = (uint)ReadUInt64();
                             var end = address + size;
-                            sections.Add(new MachoSection() { section_name = section_name, address = address, size = size, offset = offset2, end = end });
+                            sections.Add(new MachoSection64bit() { section_name = section_name, address = address, size = size, offset = offset2, end = end });
                             Position += 24;
                         }
                     }

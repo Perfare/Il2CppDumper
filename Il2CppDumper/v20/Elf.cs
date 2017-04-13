@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace Il2CppDumper.v16
+namespace Il2CppDumper.v20
 {
     class Elf : Il2Cpp
     {

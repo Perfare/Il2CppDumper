@@ -40,8 +40,8 @@ namespace Il2CppDumper
             methodPointers = Array.ConvertAll(MapVATR<uint>(pCodeRegistration.methodPointers, (int)pCodeRegistration.methodPointersCount), x => (ulong)x);
             customAttributeGenerators = Array.ConvertAll(MapVATR<uint>(pCodeRegistration.customAttributeGenerators, pCodeRegistration.customAttributeCount), x => (ulong)x);
             fieldOffsets = Array.ConvertAll(MapVATR<int>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount), x => (long)x);
-            //TODO 在21版本中存在两种FieldOffset，通过对第一非0数值进行判断确认是指针还是int
-            isNew21 = version > 21 || (version == 21 && fieldOffsets.First(x => x > 0) > 100);
+            //TODO 在21版本中存在两种FieldOffset，通过判断前5个数值是否为0确认是指针还是int
+            isNew21 = version > 21 || (version == 21 && fieldOffsets.ToList().FindIndex(x => x > 0) == 5);
             var ptypes = MapVATR<uint>(pMetadataRegistration.types, pMetadataRegistration.typesCount);
             types = new Il2CppType[pMetadataRegistration.typesCount];
             t = Type.GetType(@namespace + "Il2CppType");
@@ -68,8 +68,10 @@ namespace Il2CppDumper
             methodPointers = MapVATR<ulong>(pCodeRegistration.methodPointers, (int)pCodeRegistration.methodPointersCount);
             customAttributeGenerators = MapVATR<ulong>(pCodeRegistration.customAttributeGenerators, pCodeRegistration.customAttributeCount);
             fieldOffsets = MapVATR<long>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount);
-            //TODO 在21版本中存在两种FieldOffset，通过对第一非0数值进行判断确认是指针还是int
-            isNew21 = version > 21 || (version == 21 && fieldOffsets.First(x => x > 0) > 100);
+            //TODO 在21版本中存在两种FieldOffset，通过判断前5个数值是否为0确认是指针还是int
+            isNew21 = version > 21 || (version == 21 && fieldOffsets.ToList().FindIndex(x => x > 0) == 5);
+            if (!isNew21)
+                fieldOffsets = Array.ConvertAll(MapVATR<int>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount), x => (long)x);
             var ptypes = MapVATR<ulong>(pMetadataRegistration.types, pMetadataRegistration.typesCount);
             types = new Il2CppType[pMetadataRegistration.typesCount];
             t = Type.GetType(@namespace + "Il2CppType");

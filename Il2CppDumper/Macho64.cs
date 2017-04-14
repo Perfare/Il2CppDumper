@@ -18,10 +18,7 @@ namespace Il2CppDumper
         {
             this.version = version;
             @namespace = "Il2CppDumper.v" + version + "._64bit.";
-            if (version < 21)
-                Search = Searchv16;
-            else
-                Search = Searchv21;
+            Search = Searchv16_23;
             Position += 16;//skip
             var ncmds = ReadUInt32();
             Position += 12;//skip
@@ -88,12 +85,7 @@ namespace Il2CppDumper
             return pointers;
         }
 
-        private bool Searchv16()
-        {
-            throw new NotSupportedException("未完工");
-        }
-
-        private bool Searchv21()
+        private bool Searchv16_23()
         {
             var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
             var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);

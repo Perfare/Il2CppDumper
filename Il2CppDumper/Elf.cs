@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    class Elf : Il2Cpp
+    class Elf : Il2CppGeneric
     {
         private elf_header elf_header;
         private program_header_table[] program_table_element;
@@ -14,8 +14,14 @@ namespace Il2CppDumper
         private static byte[] X86FeatureBytes = { 0x55, 0x89, 0xE5, 0x53, 0x83, 0xE4, 0xF0, 0x83, 0xEC, 0x20, 0xE8, 0x00, 0x00, 0x00, 0x00, 0x5B };
 
 
-        public Elf(Stream stream) : base(stream)
+        public Elf(Stream stream, int version) : base(stream)
         {
+            this.version = version;
+            @namespace = "Il2CppDumper.v" + version + ".";
+            if (version < 21)
+                Search = Searchv20;
+            else
+                Search = Searchv21;
             elf_header = new elf_header();
             elf_header.m_dwFormat = ReadUInt32();
             elf_header.m_arch = ReadByte();
@@ -44,18 +50,23 @@ namespace Il2CppDumper
             program_table_element = ReadClassArray<program_header_table>(elf_header.e_phoff, elf_header.e_phnum);
         }
 
-        public Elf(Stream stream, uint codeRegistration, uint metadataRegistration) : this(stream)
+        public Elf(Stream stream, ulong codeRegistration, ulong metadataRegistration, int version) : this(stream, version)
         {
             Init(codeRegistration, metadataRegistration);
         }
 
-        public override uint MapVATR(uint uiAddr)
+        protected override dynamic MapVATR(dynamic uiAddr)
         {
             var program_header_table = program_table_element.First(x => uiAddr >= x.p_vaddr && uiAddr <= (x.p_vaddr + x.p_memsz));
             return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
         }
 
-        public override bool Auto()
+        private bool Searchv20()
+        {
+            throw new NotSupportedException("未完工");
+        }
+
+        private bool Searchv21()
         {
             //取.dynamic
             var dynamic = new elf_32_shdr();

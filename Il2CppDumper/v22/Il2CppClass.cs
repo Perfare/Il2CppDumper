@@ -97,7 +97,7 @@ namespace Il2CppDumper.v22
     public class Il2CppType
     {
         public uint datapoint;
-        public Anonymous data { get; set; }
+        public Union data { get; set; }
         public uint bits;
         public uint attrs { get; set; }
         public Il2CppTypeEnum type { get; set; }
@@ -117,17 +117,15 @@ namespace Il2CppDumper.v22
             num_mods = Convert.ToUInt32(str.Substring(2, 6), 2);
             byref = Convert.ToUInt32(str.Substring(1, 1), 2);
             pinned = Convert.ToUInt32(str.Substring(0, 1), 2);
-            data = new Anonymous() { dummy = datapoint };
+            data = new Union { dummy = datapoint };
         }
 
-        public class Anonymous
+        public class Union
         {
             public uint dummy;
             public int klassIndex => (int)dummy;
-
             public uint type => dummy;
             public uint array => dummy;
-
             public int genericParameterIndex => (int)dummy;
             public uint generic_class => dummy;
         }
@@ -147,7 +145,6 @@ namespace Il2CppDumper.v22
         /* The instantiation corresponding to the method generic parameters */
         public uint method_inst;
     }
-
 
     public class Il2CppGenericInst
     {

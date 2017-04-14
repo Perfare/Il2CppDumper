@@ -5,17 +5,23 @@ using System.Linq;
 using System.Text;
 using static Il2CppDumper.ArmHelper;
 
-namespace Il2CppDumper.v22._64bit
+namespace Il2CppDumper
 {
-    class Macho : Il2Cpp
+    class Macho64 : Il2CppGeneric
     {
         private List<MachoSection64bit> sections = new List<MachoSection64bit>();
         private static byte[] FeatureBytes1 = { 0x2, 0x0, 0x80, 0xD2 };//MOV X2, #0
         private static byte[] FeatureBytes2 = { 0x3, 0x0, 0x80, 0x52 };//MOV W3, #0
 
 
-        public Macho(Stream stream) : base(stream)
+        public Macho64(Stream stream, int version) : base(stream)
         {
+            this.version = version;
+            @namespace = "Il2CppDumper.v" + version + "._64bit.";
+            if (version < 21)
+                Search = Searchv16;
+            else
+                Search = Searchv21;
             Position += 16;//skip
             var ncmds = ReadUInt32();
             Position += 12;//skip
@@ -40,7 +46,7 @@ namespace Il2CppDumper.v22._64bit
                             var size = ReadUInt64();
                             var offset2 = (uint)ReadUInt64();
                             var end = address + size;
-                            sections.Add(new MachoSection64bit() { section_name = section_name, address = address, size = size, offset = offset2, end = end });
+                            sections.Add(new MachoSection64bit { section_name = section_name, address = address, size = size, offset = offset2, end = end });
                             Position += 24;
                         }
                     }
@@ -49,18 +55,45 @@ namespace Il2CppDumper.v22._64bit
             }
         }
 
-        public Macho(Stream stream, ulong codeRegistration, ulong metadataRegistration) : this(stream)
+        public Macho64(Stream stream, ulong codeRegistration, ulong metadataRegistration, int version) : this(stream, version)
         {
-            Init(codeRegistration, metadataRegistration);
+            Init64(codeRegistration, metadataRegistration);
         }
 
-        public override ulong MapVATR(ulong uiAddr)
+        protected override dynamic MapVATR(dynamic uiAddr)
         {
             var section = sections.First(x => uiAddr >= x.address && uiAddr <= x.end);
             return uiAddr - (section.address - section.offset);
         }
 
-        public override bool Auto()
+        public override long GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex)
+        {
+            if (isNew21)
+            {
+                var ptr = fieldOffsets[typeIndex];
+                if (ptr >= 0)
+                {
+                    Position = MapVATR((ulong)ptr) + 4ul * (ulong)fieldIndexInType;
+                    return ReadInt32();
+                }
+                return 0;
+            }
+            return fieldOffsets[fieldIndex];
+        }
+
+
+        public override ulong[] GetPointers(ulong pointer, long count)
+        {
+            var pointers = MapVATR<ulong>(pointer, count);
+            return pointers;
+        }
+
+        private bool Searchv16()
+        {
+            throw new NotSupportedException("未完工");
+        }
+
+        private bool Searchv21()
         {
             var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
             var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
@@ -86,7 +119,7 @@ namespace Il2CppDumper.v22._64bit
                             metadataRegistration += decodeAdd(ReadBytes(4));
                             Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                             Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                            Init(codeRegistration, metadataRegistration);
+                            Init64(codeRegistration, metadataRegistration);
                             return true;
                         }
                     }

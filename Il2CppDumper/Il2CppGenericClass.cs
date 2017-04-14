@@ -1,46 +1,24 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
-namespace Il2CppDumper.v16
+namespace Il2CppDumper
 {
     public class Il2CppCodeRegistration
     {
-        public uint methodPointersCount;
-        public uint methodPointers;
-        public uint delegateWrappersFromNativeToManagedCount;
-        public uint delegateWrappersFromNativeToManaged; // note the double indirection to handle different calling conventions
-        public uint delegateWrappersFromManagedToNativeCount;
-        public uint delegateWrappersFromManagedToNative;
-        public uint marshalingFunctionsCount;
-        public uint marshalingFunctions;
-        public uint genericMethodPointersCount;
-        public uint genericMethodPointers;
-        public uint invokerPointersCount;
-        public uint invokerPointers;
-        public int customAttributeCount;
-        public uint customAttributeGenerators;
+        public ulong methodPointersCount;
+        public ulong methodPointers;
+        public long customAttributeCount;
+        public ulong customAttributeGenerators;
     }
 
     public class Il2CppMetadataRegistration
     {
-        public int genericClassesCount;
-        public uint genericClasses;
-        public int genericInstsCount;
-        public uint genericInsts;
-        public int genericMethodTableCount;
-        public uint genericMethodTable;
-        public int typesCount;
-        public uint types;
-        public int methodSpecsCount;
-        public uint methodSpecs;
-        public int methodReferencesCount;
-        public uint methodReferences;
-
-        public int fieldOffsetsCount;
-        public uint fieldOffsets;
-
-        public int typeDefinitionsSizesCount;
-        public uint typeDefinitionsSizes;
+        public long typesCount;
+        public ulong types;
+        public long fieldOffsetsCount;
+        public ulong fieldOffsets;
     }
 
     public enum Il2CppTypeEnum
@@ -87,7 +65,7 @@ namespace Il2CppDumper.v16
 
     public class Il2CppType
     {
-        public uint datapoint;
+        public ulong datapoint;
         public Union data { get; set; }
         public uint bits;
         public uint attrs { get; set; }
@@ -113,43 +91,35 @@ namespace Il2CppDumper.v16
 
         public class Union
         {
-            public uint dummy;
-            public int klassIndex => (int)dummy;
-            public uint type => dummy;
-            public uint array => dummy;
-            public int genericParameterIndex => (int)dummy;
-            public uint generic_class => dummy;
+            public ulong dummy;
+            public long klassIndex => (long)dummy;
+            public ulong type => dummy;
+            public ulong array => dummy;
+            public long genericParameterIndex => (long)dummy;
+            public ulong generic_class => dummy;
         }
     }
 
     public class Il2CppGenericClass
     {
-        public int typeDefinitionIndex;    /* the generic type definition */
+        public long typeDefinitionIndex;    /* the generic type definition */
         public Il2CppGenericContext context;   /* a context that contains the type instantiation doesn't contain any method instantiation */
-        public uint cached_class; /* if present, the Il2CppClass corresponding to the instantiation.  */
     }
 
     public class Il2CppGenericContext
     {
         /* The instantiation corresponding to the class generic parameters */
-        public uint class_inst;
-        /* The instantiation corresponding to the method generic parameters */
-        public uint method_inst;
+        public ulong class_inst;
     }
 
     public class Il2CppGenericInst
     {
-        public uint type_argc;
-        public uint type_argv;
+        public ulong type_argc;
+        public ulong type_argv;
     }
 
     public class Il2CppArrayType
     {
-        public uint etype;
-        public byte rank;
-        public byte numsizes;
-        public byte numlobounds;
-        public uint sizes;
-        public uint lobounds;
+        public ulong etype;
     }
 }

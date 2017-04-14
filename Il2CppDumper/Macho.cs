@@ -58,12 +58,19 @@ namespace Il2CppDumper
         public Macho(Stream stream, ulong codeRegistration, ulong metadataRegistration, int version) : this(stream, version)
         {
             Init(codeRegistration, metadataRegistration);
+            FixMethodPointerAddr();
         }
 
         protected override dynamic MapVATR(dynamic uiAddr)
         {
             var section = sections.First(x => uiAddr >= x.address && uiAddr <= x.end);
             return uiAddr - (section.address - section.offset);
+        }
+
+        private void FixMethodPointerAddr()
+        {
+            methodPointers = methodPointers.Select(x => x - 1).ToArray();
+            customAttributeGenerators = methodPointers.Select(x => x - 1).ToArray();
         }
 
         private bool Searchv21()
@@ -99,6 +106,7 @@ namespace Il2CppDumper
                             Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                             Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
                             Init(codeRegistration, metadataRegistration);
+                            FixMethodPointerAddr();
                             return true;
                         }
                     }

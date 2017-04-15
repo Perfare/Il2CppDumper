@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Il2CppDumper
 {
@@ -33,12 +31,7 @@ namespace Il2CppDumper
 
         public static ulong decodeAdrp(ulong pc, byte[] label)
         {
-            var pcbin = Convert.ToString((long)pc, 2);
-            if (pcbin.Length < 64)
-            {
-                pcbin = new string(Enumerable.Repeat('0', 64 - pcbin.Length).Concat(pcbin.ToCharArray()).ToArray());
-            }
-            pcbin = pcbin.Substring(0, 52) + new string(Enumerable.Repeat('0', 12).ToArray());
+            pc &= 0xFFFFFFFFFFFFF000;
             var bin = "";
             foreach (var b in label)
             {
@@ -52,7 +45,7 @@ namespace Il2CppDumper
             var uint64 = new string(Enumerable.Repeat(bin[16], 32).ToArray())
                          + bin.Substring(17, 7) + bin.Substring(8, 8) + bin.Substring(0, 3) + bin.Substring(25, 2)
                          + new string(Enumerable.Repeat('0', 12).ToArray());
-            return Convert.ToUInt64(pcbin, 2) + Convert.ToUInt64(uint64, 2);
+            return pc + Convert.ToUInt64(uint64, 2);
         }
 
         public static ulong decodeAdd(byte[] ins)

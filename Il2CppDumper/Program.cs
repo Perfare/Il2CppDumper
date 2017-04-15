@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
+using System.Web.Script.Serialization;
 using static Il2CppDumper.DefineConstants;
 
 namespace Il2CppDumper
@@ -11,10 +12,12 @@ namespace Il2CppDumper
     {
         static MetadataGeneric metadata;
         static Il2CppGeneric il2cpp;
+        private static Config config;
 
         [STAThread]
         static void Main(string[] args)
         {
+            config = File.Exists("config.json") ? new JavaScriptSerializer().Deserialize<Config>(File.ReadAllText("config.json")) : new Config();
             var ofd = new OpenFileDialog();
             ofd.Filter = "ELF file or Mach-O file|*.*";
             if (ofd.ShowDialog() == DialogResult.OK)
@@ -136,7 +139,7 @@ namespace Il2CppDumper
                                                 writer.Write($" : {parentname}");
                                         }
                                         writer.Write($" // TypeDefIndex: {idx}\n{{\n");
-                                        if (typeDef.field_count > 0)
+                                        if (config.dumpfield && typeDef.field_count > 0)
                                         {
                                             writer.Write("\t// Fields\n");
                                             var fieldEnd = typeDef.fieldStart + typeDef.field_count;
@@ -225,7 +228,7 @@ namespace Il2CppDumper
                                             }
                                             writer.Write("\n");
                                         }
-                                        if (typeDef.property_count > 0)
+                                        if (config.dumpproperty && typeDef.property_count > 0)
                                         {
                                             //dump_property(i);
                                             writer.Write("\t// Properties\n");
@@ -291,7 +294,7 @@ namespace Il2CppDumper
                                             }
                                             writer.Write("\n");
                                         }
-                                        if (typeDef.method_count > 0)
+                                        if (config.dumpmethod && typeDef.method_count > 0)
                                         {
                                             writer.Write("\t// Methods\n");
                                             var methodEnd = typeDef.methodStart + typeDef.method_count;
@@ -422,7 +425,7 @@ namespace Il2CppDumper
 
         private static string GetCustomAttribute(int index, string padding = "")
         {
-            if (metadata.version < 21)
+            if (!config.dumpattribute || metadata.version < 21)
                 return "";
             var attributeTypeRange = metadata.attributesInfos[index];
             var sb = new StringBuilder();

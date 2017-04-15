@@ -95,8 +95,7 @@ namespace Il2CppDumper
                                 {
                                     foreach (var i in DumpString())
                                     {
-                                        scriptwriter.WriteLine($"f = '{ToUnicodeString(i.Value)}'");
-                                        scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:x}, f.decode('unicode-escape'))");
+                                        scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:x}, '{ToUnicodeString(i.Value)}')");
                                     }
                                 }
                                 //
@@ -345,8 +344,8 @@ namespace Il2CppDumper
                                                 {
                                                     writer.Write("); // {0:x}\n", il2cpp.methodPointers[methodDef.methodIndex]);
                                                     //Script
-                                                    scriptwriter.WriteLine($"f = '{ToUnicodeString(metadata.GetString(typeDef.nameIndex) + "$$" + metadata.GetString(methodDef.nameIndex))}'");
-                                                    scriptwriter.WriteLine($"SetMethod(0x{il2cpp.methodPointers[methodDef.methodIndex]:x}, f.decode('unicode-escape'))");
+                                                    var name = ToUnicodeString(metadata.GetString(typeDef.nameIndex) + "$$" + metadata.GetString(methodDef.nameIndex));
+                                                    scriptwriter.WriteLine($"SetMethod(0x{il2cpp.methodPointers[methodDef.methodIndex]:x}, '{name}')");
                                                     //
                                                 }
                                                 else

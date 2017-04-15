@@ -85,6 +85,15 @@ namespace Il2CppDumper
                                 }
                                 var writer = new StreamWriter(new FileStream("dump.cs", FileMode.Create));
                                 Console.WriteLine("Dumping...");
+                                //Script
+                                var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create));
+                                scriptwriter.WriteLine(File.ReadAllText("ida"));
+                                foreach (var i in DumpString())
+                                {
+                                    scriptwriter.WriteLine($"f = '{ToUnicodeString(i.Value)}'");
+                                    scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:x}, f.decode('unicode-escape'))");
+                                }
+                                //
                                 //dump_image();
                                 for (var imageIndex = 0; imageIndex < metadata.uiImageCount; imageIndex++)
                                 {
@@ -327,8 +336,13 @@ namespace Il2CppDumper
                                                     }
                                                 }
                                                 if (methodDef.methodIndex >= 0)
-                                                    writer.Write("); // {0:x}\n",
-                                                        il2cpp.methodPointers[methodDef.methodIndex]);
+                                                {
+                                                    writer.Write("); // {0:x}\n", il2cpp.methodPointers[methodDef.methodIndex]);
+                                                    //Script
+                                                    scriptwriter.WriteLine($"f = '{ToUnicodeString(metadata.GetString(typeDef.nameIndex) + "$$" + metadata.GetString(methodDef.nameIndex))}'");
+                                                    scriptwriter.WriteLine($"SetMethod(0x{il2cpp.methodPointers[methodDef.methodIndex]:x}, f.decode('unicode-escape'))");
+                                                    //
+                                                }
                                                 else
                                                     writer.Write("); // 0\n");
                                             }
@@ -344,6 +358,7 @@ namespace Il2CppDumper
                                     }
                                 }
                                 writer.Close();
+                                scriptwriter.Close();
                                 Console.WriteLine("Done !");
                                 break;
                         }
@@ -414,6 +429,52 @@ namespace Il2CppDumper
                 sb.AppendFormat("{0}[{1}] // {2:x}\n", padding, get_type_name(il2cpp.types[typeIndex]), il2cpp.customAttributeGenerators[index]);
             }
             return sb.ToString();
+        }
+
+        private static SortedDictionary<uint, string> DumpString()
+        {
+            var dic = new SortedDictionary<uint, string>();
+            foreach (var metadataUsageList in metadata.metadataUsageLists)
+            {
+                for (int i = 0; i < metadataUsageList.count; i++)
+                {
+                    var offset = metadataUsageList.start + i;
+                    var metadataUsagePairs = metadata.metadataUsagePairs[offset];
+                    var usage = GetEncodedIndexType(metadataUsagePairs.encodedSourceIndex);
+                    var decodedIndex = GetDecodedMethodIndex(metadataUsagePairs.encodedSourceIndex);
+                    if (usage == 5) //kIl2CppMetadataUsageStringLiteral
+                    {
+                        dic[metadataUsagePairs.destinationIndex] = metadata.GetStringLiteralFromIndex(decodedIndex);
+                    }
+                }
+            }
+            return dic;
+        }
+
+        private static uint GetEncodedIndexType(uint index)
+        {
+            return ((index & 0xE0000000) >> 29);
+        }
+
+        private static uint GetDecodedMethodIndex(uint index)
+        {
+            return index & 0x1FFFFFFFU;
+        }
+
+        private static string ToUnicodeString(string str)
+        {
+            StringBuilder strResult = new StringBuilder();
+            if (!string.IsNullOrEmpty(str))
+            {
+                for (int i = 0; i < str.Length; i++)
+                {
+                    strResult.Append("\\u");
+                    var c = ((int)str[i]).ToString("x4");
+                    c = c.Replace("000a", @"005c\u0072").Replace("000d", @"005c\u006e");
+                    strResult.Append(c);
+                }
+            }
+            return strResult.ToString();
         }
     }
 }

@@ -2,6 +2,9 @@
 {
     public class Il2CppGlobalMetadataHeader
     {
+        public int stringLiteralOffset; // string data for managed code
+        public int stringLiteralCount;
+        public int stringLiteralDataOffset;
         public int stringOffset; // string data for metadata
         public int propertiesOffset; // Il2CppPropertyDefinition
         public int propertiesCount;
@@ -18,6 +21,10 @@
         public int typeDefinitionsCount;
         public int imagesOffset; // Il2CppImageDefinition
         public int imagesCount;
+        public int metadataUsageListsOffset; // Il2CppMetadataUsageList
+        public int metadataUsageListsCount;
+        public int metadataUsagePairsOffset; // Il2CppMetadataUsagePair
+        public int metadataUsagePairsCount;
         public int attributesInfoOffset; // Il2CppCustomAttributeTypeRange
         public int attributesInfoCount;
         public int attributeTypesOffset; // TypeIndex
@@ -88,5 +95,23 @@
     {
         public int start;
         public int count;
+    }
+
+    public class Il2CppMetadataUsageList
+    {
+        public uint start;
+        public uint count;
+    }
+
+    public class Il2CppMetadataUsagePair
+    {
+        public uint destinationIndex;
+        public uint encodedSourceIndex;
+    }
+
+    public class Il2CppStringLiteral
+    {
+        public uint length;
+        public int dataIndex;
     }
 }

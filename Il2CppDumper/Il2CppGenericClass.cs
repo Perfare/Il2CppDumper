@@ -19,6 +19,8 @@ namespace Il2CppDumper
         public ulong types;
         public long fieldOffsetsCount;
         public ulong fieldOffsets;
+        public ulong metadataUsagesCount;
+        public ulong metadataUsages;
     }
 
     public enum Il2CppTypeEnum

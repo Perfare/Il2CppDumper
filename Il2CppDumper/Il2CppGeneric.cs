@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using static Il2CppDumper.MyCopy;
 
 namespace Il2CppDumper
@@ -18,6 +17,7 @@ namespace Il2CppDumper
         protected long[] fieldOffsets;
         public Il2CppType[] types;
         private Dictionary<ulong, Il2CppType> typesdic = new Dictionary<ulong, Il2CppType>();
+        public ulong[] metadataUsages;
         protected bool isNew21;
 
         public Func<bool> Search;
@@ -52,6 +52,8 @@ namespace Il2CppDumper
                 types[i].Init();
                 typesdic.Add(ptypes[i], types[i]);
             }
+            if (version > 16)
+                metadataUsages = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.metadataUsages, (long)pMetadataRegistration.metadataUsagesCount), x => (ulong)x);
         }
 
         protected void Init64(ulong codeRegistration, ulong metadataRegistration)
@@ -82,6 +84,8 @@ namespace Il2CppDumper
                 types[i].Init();
                 typesdic.Add(ptypes[i], types[i]);
             }
+            if (version > 16)
+                metadataUsages = MapVATR<ulong>(pMetadataRegistration.metadataUsages, (long)pMetadataRegistration.metadataUsagesCount);
         }
 
         public virtual long GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex)

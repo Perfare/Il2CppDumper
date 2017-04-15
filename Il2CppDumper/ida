@@ -1,0 +1,23 @@
+﻿import idaapi
+import random
+import os, sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+def SetString(addr, comm):
+	global index
+	name = "StringLiteral_" + str(index);
+	ret = idc.MakeNameEx(addr, name, SN_NOWARN)
+	idc.MakeComm(addr, str(comm))
+	index += 1
+
+def SetMethod(addr, name):
+	i = 0
+	ret = idc.MakeNameEx(addr, str(name), SN_NOWARN)
+	while ret == 0 and i < 5: # failed
+		new_name = name + '_' + str(random.randint(0, 99999))
+		ret = idc.MakeNameEx(addr, str(new_name), SN_NOWARN)
+		i = i + 1
+
+info = idaapi.get_inf_structure()
+index = 1

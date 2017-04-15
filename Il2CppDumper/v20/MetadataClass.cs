@@ -181,4 +181,22 @@ namespace Il2CppDumper.v20
         public int customAttributeIndex;
         public uint token;
     }
+
+    public class Il2CppMetadataUsageList
+    {
+        public uint start;
+        public uint count;
+    }
+
+    public class Il2CppMetadataUsagePair
+    {
+        public uint destinationIndex;
+        public uint encodedSourceIndex;
+    }
+
+    public class Il2CppStringLiteral
+    {
+        public uint length;
+        public int dataIndex;
+    }
 }

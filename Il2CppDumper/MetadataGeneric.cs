@@ -2,6 +2,7 @@
 using System.Collections;
 using System.IO;
 using System.Linq;
+using System.Text;
 using static Il2CppDumper.MyCopy;
 
 namespace Il2CppDumper
@@ -20,6 +21,9 @@ namespace Il2CppDumper
         private Il2CppFieldDefaultValue[] fieldDefaultValues;
         public Il2CppPropertyDefinition[] propertyDefs;
         public Il2CppCustomAttributeTypeRange[] attributesInfos;
+        private Il2CppStringLiteral[] stringLiterals;
+        public Il2CppMetadataUsageList[] metadataUsageLists;
+        public Il2CppMetadataUsagePair[] metadataUsagePairs;
         public int[] attributeTypes;
 
         public MetadataGeneric(Stream stream) : base(stream)
@@ -67,6 +71,21 @@ namespace Il2CppDumper
             t = Type.GetType(@namespace + "Il2CppPropertyDefinition");
             m = ReadClassArray.MakeGenericMethod(t);
             Copy(out propertyDefs, (IList)m.Invoke(this, new object[] { pMetadataHdr.propertiesOffset, pMetadataHdr.propertiesCount / MySizeOf(t) }));
+            //Il2CppStringLiteral
+            t = Type.GetType(@namespace + "Il2CppStringLiteral");
+            m = ReadClassArray.MakeGenericMethod(t);
+            Copy(out stringLiterals, (IList)m.Invoke(this, new object[] { pMetadataHdr.stringLiteralOffset, pMetadataHdr.stringLiteralCount / MySizeOf(t) }));
+            if (version > 16)
+            {
+                //Il2CppMetadataUsageList
+                t = Type.GetType(@namespace + "Il2CppMetadataUsageList");
+                m = ReadClassArray.MakeGenericMethod(t);
+                Copy(out metadataUsageLists, (IList)m.Invoke(this, new object[] { pMetadataHdr.metadataUsageListsOffset, pMetadataHdr.metadataUsageListsCount / MySizeOf(t) }));
+                //Il2CppMetadataUsagePair
+                t = Type.GetType(@namespace + "Il2CppMetadataUsagePair");
+                m = ReadClassArray.MakeGenericMethod(t);
+                Copy(out metadataUsagePairs, (IList)m.Invoke(this, new object[] { pMetadataHdr.metadataUsagePairsOffset, pMetadataHdr.metadataUsagePairsCount / MySizeOf(t) }));
+            }
             if (version > 20)
             {
                 //CustomAttributeTypeRange
@@ -91,6 +110,13 @@ namespace Il2CppDumper
         public string GetString(int idx)
         {
             return ReadStringToNull(pMetadataHdr.stringOffset + idx);
+        }
+
+        public string GetStringLiteralFromIndex(uint index)
+        {
+            var stringLiteral = stringLiterals[index];
+            Position = pMetadataHdr.stringLiteralDataOffset + stringLiteral.dataIndex;
+            return Encoding.UTF8.GetString(ReadBytes((int)stringLiteral.length));
         }
 
         private static int MySizeOf(Type type)

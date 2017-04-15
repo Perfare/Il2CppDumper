@@ -78,7 +78,6 @@ namespace Il2CppDumper
             return fieldOffsets[fieldIndex];
         }
 
-
         public override ulong[] GetPointers(ulong pointer, long count)
         {
             var pointers = MapVATR<ulong>(pointer, count);

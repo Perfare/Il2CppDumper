@@ -19,5 +19,4 @@ def SetMethod(addr, name):
 		ret = idc.MakeNameEx(addr, str(new_name), SN_NOWARN)
 		i = i + 1
 
-info = idaapi.get_inf_structure()
 index = 1

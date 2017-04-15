@@ -88,10 +88,13 @@ namespace Il2CppDumper
                                 //Script
                                 var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create));
                                 scriptwriter.WriteLine(File.ReadAllText("ida"));
-                                foreach (var i in DumpString())
+                                if (metadata.version > 16)
                                 {
-                                    scriptwriter.WriteLine($"f = '{ToUnicodeString(i.Value)}'");
-                                    scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:x}, f.decode('unicode-escape'))");
+                                    foreach (var i in DumpString())
+                                    {
+                                        scriptwriter.WriteLine($"f = '{ToUnicodeString(i.Value)}'");
+                                        scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:x}, f.decode('unicode-escape'))");
+                                    }
                                 }
                                 //
                                 //dump_image();

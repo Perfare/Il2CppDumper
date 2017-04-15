@@ -71,12 +71,12 @@ namespace Il2CppDumper
             t = Type.GetType(@namespace + "Il2CppPropertyDefinition");
             m = ReadClassArray.MakeGenericMethod(t);
             Copy(out propertyDefs, (IList)m.Invoke(this, new object[] { pMetadataHdr.propertiesOffset, pMetadataHdr.propertiesCount / MySizeOf(t) }));
-            //Il2CppStringLiteral
-            t = Type.GetType(@namespace + "Il2CppStringLiteral");
-            m = ReadClassArray.MakeGenericMethod(t);
-            Copy(out stringLiterals, (IList)m.Invoke(this, new object[] { pMetadataHdr.stringLiteralOffset, pMetadataHdr.stringLiteralCount / MySizeOf(t) }));
             if (version > 16)
             {
+                //Il2CppStringLiteral
+                t = Type.GetType(@namespace + "Il2CppStringLiteral");
+                m = ReadClassArray.MakeGenericMethod(t);
+                Copy(out stringLiterals, (IList)m.Invoke(this, new object[] { pMetadataHdr.stringLiteralOffset, pMetadataHdr.stringLiteralCount / MySizeOf(t) }));
                 //Il2CppMetadataUsageList
                 t = Type.GetType(@namespace + "Il2CppMetadataUsageList");
                 m = ReadClassArray.MakeGenericMethod(t);

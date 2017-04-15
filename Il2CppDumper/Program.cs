@@ -91,13 +91,6 @@ namespace Il2CppDumper
                                 //Script
                                 var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create));
                                 scriptwriter.WriteLine(File.ReadAllText("ida"));
-                                if (metadata.version > 16)
-                                {
-                                    foreach (var i in DumpString())
-                                    {
-                                        scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:x}, '{ToUnicodeString(i.Value)}')");
-                                    }
-                                }
                                 //
                                 //dump_image();
                                 for (var imageIndex = 0; imageIndex < metadata.uiImageCount; imageIndex++)
@@ -362,6 +355,15 @@ namespace Il2CppDumper
                                         writer.Write("*/\n}\n");
                                     }
                                 }
+                                //Script
+                                if (metadata.version > 16)
+                                {
+                                    foreach (var i in DumpString())
+                                    {
+                                        scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:x}, '{ToUnicodeString(i.Value)}')");
+                                    }
+                                }
+                                //
                                 writer.Close();
                                 scriptwriter.Close();
                                 Console.WriteLine("Done !");

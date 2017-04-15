@@ -70,7 +70,7 @@ namespace Il2CppDumper
         private void FixMethodPointerAddr()
         {
             methodPointers = methodPointers.Select(x => x - 1).ToArray();
-            customAttributeGenerators = methodPointers.Select(x => x - 1).ToArray();
+            customAttributeGenerators = customAttributeGenerators.Select(x => x - 1).ToArray();
         }
 
         private bool Searchv21()

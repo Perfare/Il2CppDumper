@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Il2CppDumper._64bit
+namespace Il2CppDumper.v21._64bit
 {
     public class Il2CppCodeRegistration
     {

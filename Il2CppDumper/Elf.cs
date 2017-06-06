@@ -14,9 +14,10 @@ namespace Il2CppDumper
         private static byte[] X86FeatureBytes = { 0x55, 0x89, 0xE5, 0x53, 0x83, 0xE4, 0xF0, 0x83, 0xEC, 0x20, 0xE8, 0x00, 0x00, 0x00, 0x00, 0x5B };
 
 
-        public Elf(Stream stream, int version) : base(stream)
+        public Elf(Stream stream, int version, long maxmetadataUsages) : base(stream)
         {
             this.version = version;
+            this.maxmetadataUsages = maxmetadataUsages;
             @namespace = "Il2CppDumper.v" + version + ".";
             if (version < 21)
                 Search = Searchv20;
@@ -50,7 +51,7 @@ namespace Il2CppDumper
             program_table_element = ReadClassArray<program_header_table>(elf_header.e_phoff, elf_header.e_phnum);
         }
 
-        public Elf(Stream stream, ulong codeRegistration, ulong metadataRegistration, int version) : this(stream, version)
+        public Elf(Stream stream, ulong codeRegistration, ulong metadataRegistration, int version, long maxmetadataUsages) : this(stream, version, maxmetadataUsages)
         {
             Init(codeRegistration, metadataRegistration);
         }

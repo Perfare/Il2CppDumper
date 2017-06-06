@@ -14,7 +14,7 @@ namespace Il2CppDumper
         private static byte[] FeatureBytes2 = { 0x78, 0x44, 0x79, 0x44 };//ADD R0, PC and ADD R1, PC
 
 
-        public Macho(Stream stream, int version) : base(stream)
+        public Macho(Stream stream, int version, long maxmetadataUsages) : base(stream)
         {
             this.version = version;
             @namespace = "Il2CppDumper.v" + version + ".";
@@ -55,7 +55,7 @@ namespace Il2CppDumper
             }
         }
 
-        public Macho(Stream stream, ulong codeRegistration, ulong metadataRegistration, int version) : this(stream, version)
+        public Macho(Stream stream, ulong codeRegistration, ulong metadataRegistration, int version, long maxmetadataUsages) : this(stream, version, maxmetadataUsages)
         {
             Init(codeRegistration, metadataRegistration);
             FixMethodPointerAddr();

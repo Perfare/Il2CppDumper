@@ -14,9 +14,10 @@ namespace Il2CppDumper
         private static byte[] FeatureBytes2 = { 0x3, 0x0, 0x80, 0x52 };//MOV W3, #0
 
 
-        public Macho64(Stream stream, int version) : base(stream)
+        public Macho64(Stream stream, int version, long maxmetadataUsages) : base(stream)
         {
             this.version = version;
+            this.maxmetadataUsages = maxmetadataUsages;
             @namespace = "Il2CppDumper.v" + version + "._64bit.";
             Search = Searchv16_23;
             Position += 16;//skip
@@ -52,7 +53,7 @@ namespace Il2CppDumper
             }
         }
 
-        public Macho64(Stream stream, ulong codeRegistration, ulong metadataRegistration, int version) : this(stream, version)
+        public Macho64(Stream stream, ulong codeRegistration, ulong metadataRegistration, int version, long maxmetadataUsages) : this(stream, version, maxmetadataUsages)
         {
             Init64(codeRegistration, metadataRegistration);
         }

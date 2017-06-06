@@ -19,6 +19,7 @@ namespace Il2CppDumper
         private Dictionary<ulong, Il2CppType> typesdic = new Dictionary<ulong, Il2CppType>();
         public ulong[] metadataUsages;
         protected bool isNew21;
+        protected long maxmetadataUsages;
 
         public Func<bool> Search;
 
@@ -53,7 +54,7 @@ namespace Il2CppDumper
                 typesdic.Add(ptypes[i], types[i]);
             }
             if (version > 16)
-                metadataUsages = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.metadataUsages, (long)pMetadataRegistration.metadataUsagesCount), x => (ulong)x);
+                metadataUsages = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.metadataUsages, maxmetadataUsages), x => (ulong)x);
         }
 
         protected void Init64(ulong codeRegistration, ulong metadataRegistration)
@@ -85,7 +86,7 @@ namespace Il2CppDumper
                 typesdic.Add(ptypes[i], types[i]);
             }
             if (version > 16)
-                metadataUsages = MapVATR<ulong>(pMetadataRegistration.metadataUsages, (long)pMetadataRegistration.metadataUsagesCount);
+                metadataUsages = MapVATR<ulong>(pMetadataRegistration.metadataUsages, maxmetadataUsages);
         }
 
         public virtual long GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex)

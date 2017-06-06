@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -25,6 +26,9 @@ namespace Il2CppDumper
         public Il2CppMetadataUsageList[] metadataUsageLists;
         public Il2CppMetadataUsagePair[] metadataUsagePairs;
         public int[] attributeTypes;
+        public SortedDictionary<uint, string> stringLiteralsdic;
+        public long maxmetadataUsages;
+
 
         public MetadataGeneric(Stream stream) : base(stream)
         {
@@ -85,6 +89,7 @@ namespace Il2CppDumper
                 t = Type.GetType(@namespace + "Il2CppMetadataUsagePair");
                 m = ReadClassArray.MakeGenericMethod(t);
                 Copy(out metadataUsagePairs, (IList)m.Invoke(this, new object[] { pMetadataHdr.metadataUsagePairsOffset, pMetadataHdr.metadataUsagePairsCount / MySizeOf(t) }));
+                CreateStringLiteralDic();
             }
             if (version > 20)
             {
@@ -112,11 +117,42 @@ namespace Il2CppDumper
             return ReadStringToNull(pMetadataHdr.stringOffset + idx);
         }
 
-        public string GetStringLiteralFromIndex(uint index)
+        private string GetStringLiteralFromIndex(uint index)
         {
             var stringLiteral = stringLiterals[index];
             Position = pMetadataHdr.stringLiteralDataOffset + stringLiteral.dataIndex;
             return Encoding.UTF8.GetString(ReadBytes((int)stringLiteral.length));
+        }
+
+        private void CreateStringLiteralDic()
+        {
+            stringLiteralsdic = new SortedDictionary<uint, string>();
+            foreach (var metadataUsageList in metadataUsageLists)
+            {
+                for (int i = 0; i < metadataUsageList.count; i++)
+                {
+                    var offset = metadataUsageList.start + i;
+                    var metadataUsagePair = metadataUsagePairs[offset];
+                    var usage = GetEncodedIndexType(metadataUsagePair.encodedSourceIndex);
+                    var decodedIndex = GetDecodedMethodIndex(metadataUsagePair.encodedSourceIndex);
+                    if (usage == 5) //kIl2CppMetadataUsageStringLiteral
+                    {
+                        stringLiteralsdic[metadataUsagePair.destinationIndex] = GetStringLiteralFromIndex(decodedIndex);
+                    }
+                }
+            }
+            maxmetadataUsages = stringLiteralsdic.Last().Key + 1;
+        }
+
+
+        private uint GetEncodedIndexType(uint index)
+        {
+            return (index & 0xE0000000) >> 29;
+        }
+
+        private uint GetDecodedMethodIndex(uint index)
+        {
+            return index & 0x1FFFFFFFU;
         }
 
         private static int MySizeOf(Type type)

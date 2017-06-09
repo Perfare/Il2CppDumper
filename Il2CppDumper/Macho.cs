@@ -17,6 +17,7 @@ namespace Il2CppDumper
         public Macho(Stream stream, int version, long maxmetadataUsages) : base(stream)
         {
             this.version = version;
+            this.maxmetadataUsages = maxmetadataUsages;
             @namespace = "Il2CppDumper.v" + version + ".";
             if (version < 21)
                 Search = Searchv16;

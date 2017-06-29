@@ -19,7 +19,10 @@ namespace Il2CppDumper
             this.version = version;
             this.maxmetadataUsages = maxmetadataUsages;
             @namespace = "Il2CppDumper.v" + version + "._64bit.";
-            Search = Searchv16_23;
+            if (version < 23)
+                Search = Searchv16_22;
+            else
+                Search = Searchv23;
             Position += 16;//skip
             var ncmds = ReadUInt32();
             Position += 12;//skip
@@ -85,7 +88,7 @@ namespace Il2CppDumper
             return pointers;
         }
 
-        private bool Searchv16_23()
+        private bool Searchv16_22()
         {
             var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
             var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
@@ -102,6 +105,41 @@ namespace Il2CppDumper
                         {
                             Position += 8;
                             var subaddr = decodeAdr(i + 16, ReadBytes(4));
+                            var rsubaddr = MapVATR(subaddr);
+                            Position = rsubaddr;
+                            var codeRegistration = decodeAdrp(subaddr, ReadBytes(4));
+                            codeRegistration += decodeAdd(ReadBytes(4));
+                            Position = rsubaddr + 8;
+                            var metadataRegistration = decodeAdrp(subaddr + 8, ReadBytes(4));
+                            metadataRegistration += decodeAdd(ReadBytes(4));
+                            Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                            Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                            Init64(codeRegistration, metadataRegistration);
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        private bool Searchv23()
+        {
+            var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
+            var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
+            foreach (var i in addrs)
+            {
+                if (i > 0)
+                {
+                    Position = MapVATR(i) + 16;
+                    var buff = ReadBytes(4);
+                    if (FeatureBytes1.SequenceEqual(buff))
+                    {
+                        buff = ReadBytes(4);
+                        if (FeatureBytes2.SequenceEqual(buff))
+                        {
+                            Position -= 16;
+                            var subaddr = decodeAdr(i + 8, ReadBytes(4));
                             var rsubaddr = MapVATR(subaddr);
                             Position = rsubaddr;
                             var codeRegistration = decodeAdrp(subaddr, ReadBytes(4));

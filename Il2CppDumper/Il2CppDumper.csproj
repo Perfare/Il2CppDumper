@@ -75,6 +75,9 @@
     <Compile Include="Macho64.cs" />
     <Compile Include="v23\Il2CppClass.cs" />
     <Compile Include="v23\MetadataClass.cs" />
+    <Compile Include="v24\64bit\Il2CppClass.cs" />
+    <Compile Include="v24\Il2CppClass.cs" />
+    <Compile Include="v24\MetadataClass.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json">

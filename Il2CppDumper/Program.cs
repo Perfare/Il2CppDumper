@@ -64,7 +64,14 @@ namespace Il2CppDumper
                                         il2cpp = new Macho64(new MemoryStream(il2cppfile), metadata.version, metadata.maxmetadataUsages);
                                     else
                                         il2cpp = new Macho(new MemoryStream(il2cppfile), metadata.version, metadata.maxmetadataUsages);
-                                    if (!il2cpp.Search())
+                                    try
+                                    {
+                                        if (!il2cpp.Search())
+                                        {
+                                            throw new Exception();
+                                        }
+                                    }
+                                    catch
                                     {
                                         throw new Exception("ERROR: Unable to process file automatically, try to use manual mode.");
                                     }

@@ -36,8 +36,18 @@ namespace Il2CppDumper
             if (sanity != 0xFAB11BAF)
                 throw new Exception("ERROR: Metadata file supplied is not valid metadata file.");
             version = ReadInt32();
-            if (version != 16 && version != 20 && version != 21 && version != 22 && version != 23)
-                throw new Exception($"ERROR: Metadata file supplied is not a supported version[{version}].");
+            switch (version)
+            {
+                case 16:
+                case 20:
+                case 21:
+                case 22:
+                case 23:
+                case 24:
+                    break;
+                default:
+                    throw new Exception($"ERROR: Metadata file supplied is not a supported version[{version}].");
+            }
             Position = 0;
             //pMetadataHdr
             var @namespace = "Il2CppDumper.v" + version + ".";

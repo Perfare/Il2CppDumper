@@ -17,6 +17,8 @@
         public int parametersCount;
         public int fieldsOffset; // Il2CppFieldDefinition
         public int fieldsCount;
+        public int interfacesOffset; // TypeIndex
+        public int interfacesCount;
         public int typeDefinitionsOffset; // Il2CppTypeDefinition
         public int typeDefinitionsCount;
         public int imagesOffset; // Il2CppImageDefinition
@@ -42,14 +44,20 @@
         public int nameIndex;
         public int namespaceIndex;
         public int customAttributeIndex;
+
         public int parentIndex;
+
         public uint flags;
+
         public int fieldStart;
         public int methodStart;
         public int propertyStart;
+        public int interfacesStart;
+
         public ushort method_count;
         public ushort property_count;
         public ushort field_count;
+        public ushort interfaces_count;
     }
 
     public class Il2CppMethodDefinition

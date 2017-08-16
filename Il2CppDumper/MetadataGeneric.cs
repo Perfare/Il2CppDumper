@@ -26,6 +26,7 @@ namespace Il2CppDumper
         public Il2CppMetadataUsageList[] metadataUsageLists;
         public Il2CppMetadataUsagePair[] metadataUsagePairs;
         public int[] attributeTypes;
+        public int[] interfaceIndices;
         public SortedDictionary<uint, string> stringLiteralsdic;
         public long maxmetadataUsages;
 
@@ -85,6 +86,8 @@ namespace Il2CppDumper
             t = Type.GetType(@namespace + "Il2CppPropertyDefinition");
             m = ReadClassArray.MakeGenericMethod(t);
             Copy(out propertyDefs, (IList)m.Invoke(this, new object[] { pMetadataHdr.propertiesOffset, pMetadataHdr.propertiesCount / MySizeOf(t) }));
+            //GetInterfaceFromIndex
+            interfaceIndices = ReadClassArray<int>(pMetadataHdr.interfacesOffset, pMetadataHdr.interfacesCount / 4);
             if (version > 16)
             {
                 //Il2CppStringLiteral

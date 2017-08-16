@@ -4,6 +4,6 @@
 参考代码[Il2CppDumper](https://github.com/Jumboperson/Il2CppDumper)  
 
 支持ELF(arm, x86), Mach-O(32bit, 64bit)  
-支持metadata版本16, 20, 21, 22, 23  
+支持metadata版本16, 20, 21, 22, 23, 24  
 导出包括types, parent, fields, properties, methods, attributes  
-自动生成IDA脚本(重命名MethodName和stringLiteral注释)
+自动生成IDA脚本(重命名methodName和stringLiteral注释)

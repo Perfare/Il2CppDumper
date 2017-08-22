@@ -8,7 +8,7 @@ namespace Il2CppDumper
 {
     class MachoFat : MyBinaryReader
     {
-        private Fat[] fats;
+        public Fat[] fats;
 
         public MachoFat(Stream stream) : base(stream)
         {
@@ -31,15 +31,10 @@ namespace Il2CppDumper
             }
         }
 
-        public byte[] GetFirstMacho()
+        public byte[] GetMacho(int index)
         {
-            Position = fats[0].file_offset;
-            return ReadBytes((int)fats[0].size);
-        }
-
-        public uint GetFirstMachoMagic()
-        {
-            return fats[0].magic;
+            Position = fats[index].file_offset;
+            return ReadBytes((int)fats[index].size);
         }
     }
 }

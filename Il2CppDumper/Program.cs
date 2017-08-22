@@ -43,10 +43,21 @@ namespace Il2CppDumper
                                 goto case 0xFEEDFACE;
                             case 0xCAFEBABE://FAT header
                             case 0xBEBAFECA:
-                                Console.WriteLine("WARNING: fat macho will only dump the first object file.");
-                                var fat = new MachoFat(new MemoryStream(il2cppfile));
-                                il2cppfile = fat.GetFirstMacho();
-                                var magic = fat.GetFirstMachoMagic();
+                                var machofat = new MachoFat(new MemoryStream(il2cppfile));
+                                Console.Write("Select platform: ");
+                                for (var i = 0; i < machofat.fats.Length; i++)
+                                {
+                                    var fat = machofat.fats[i];
+                                    if (fat.magic == 0xFEEDFACF)//64-bit mach object file
+                                        Console.Write($"{i + 1}.64bit ");
+                                    else
+                                        Console.Write($"{i + 1}.32bit ");
+                                }
+                                Console.WriteLine();
+                                var key = Console.ReadKey(true);
+                                var index = int.Parse(key.KeyChar.ToString()) - 1;
+                                var magic = machofat.fats[index].magic;
+                                il2cppfile = machofat.GetMacho(index);
                                 if (magic == 0xFEEDFACF)// 64-bit mach object file
                                     goto case 0xFEEDFACF;
                                 else
@@ -55,8 +66,8 @@ namespace Il2CppDumper
                                 is64bit = true;
                                 goto case 0xFEEDFACE;
                             case 0xFEEDFACE:// 32-bit mach object file
-                                Console.WriteLine("Select Mode: 1. Manual 2.Auto");
-                                var key = Console.ReadKey(true);
+                                Console.WriteLine("Select Mode: 1.Manual 2.Auto");
+                                key = Console.ReadKey(true);
                                 if (key.KeyChar == '2')
                                 {
                                     if (isElf)

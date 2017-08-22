@@ -109,7 +109,7 @@ namespace Il2CppDumper
                                 Console.WriteLine("Dumping...");
                                 //Script
                                 var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create));
-                                scriptwriter.WriteLine(File.ReadAllText("ida"));
+                                scriptwriter.WriteLine(Resource1.ida);
                                 //
                                 //dump image;
                                 for (var imageIndex = 0; imageIndex < metadata.uiImageCount; imageIndex++)

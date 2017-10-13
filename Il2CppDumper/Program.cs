@@ -105,10 +105,10 @@ namespace Il2CppDumper
                                 {
                                     return;
                                 }
-                                var writer = new StreamWriter(new FileStream("dump.cs", FileMode.Create));
+                                var writer = new StreamWriter(new FileStream("dump.cs", FileMode.Create), Encoding.UTF8);
                                 Console.WriteLine("Dumping...");
                                 //Script
-                                var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create));
+                                var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create), Encoding.UTF8);
                                 scriptwriter.WriteLine(Resource1.ida);
                                 //
                                 //dump image;

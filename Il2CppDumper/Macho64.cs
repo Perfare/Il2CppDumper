@@ -157,5 +157,123 @@ namespace Il2CppDumper
             }
             return false;
         }
+
+        public override bool AdvancedSearch(int methodCount)
+        {
+            var __const = sections.First(x => x.section_name == "__const");
+            var __const2 = sections.Last(x => x.section_name == "__const");
+            var __text = sections.First(x => x.section_name == "__text");
+            var __common = sections.First(x => x.section_name == "__common");
+            ulong codeRegistration = 0;
+            ulong metadataRegistration = 0;
+            var pmethodPointers = FindPointersAsc(methodCount, __const, __text);
+            if (pmethodPointers == 0)
+                pmethodPointers = FindPointersAsc(methodCount, __const2, __text);
+            if (pmethodPointers != 0)
+            {
+                codeRegistration = FindReference(pmethodPointers, __const);
+                if (codeRegistration == 0)
+                    codeRegistration = FindReference(pmethodPointers, __const2);
+                if (codeRegistration == 0)
+                {
+                    pmethodPointers = FindPointersDesc(methodCount, __const, __text);
+                    if (pmethodPointers == 0)
+                        pmethodPointers = FindPointersDesc(methodCount, __const2, __text);
+                    if (pmethodPointers != 0)
+                    {
+                        codeRegistration = FindReference(pmethodPointers, __const);
+                        if (codeRegistration == 0)
+                            codeRegistration = FindReference(pmethodPointers, __const2);
+                    }
+                }
+            }
+            var pmetadataUsages = FindPointersAsc(maxmetadataUsages, __const, __common);
+            if (pmetadataUsages == 0)
+                pmetadataUsages = FindPointersAsc(maxmetadataUsages, __const2, __common);
+            if (pmetadataUsages != 0)
+            {
+                metadataRegistration = FindReference(pmetadataUsages, __const);
+                if (metadataRegistration == 0)
+                    metadataRegistration = FindReference(pmetadataUsages, __const2);
+                if (metadataRegistration == 0)
+                {
+                    pmetadataUsages = FindPointersDesc(maxmetadataUsages, __const, __common);
+                    if (pmetadataUsages == 0)
+                        pmetadataUsages = FindPointersDesc(maxmetadataUsages, __const2, __common);
+                    if (pmetadataUsages != 0)
+                    {
+                        metadataRegistration = FindReference(pmetadataUsages, __const);
+                        if (metadataRegistration == 0)
+                            metadataRegistration = FindReference(pmetadataUsages, __const2);
+                    }
+                }
+            }
+            if (codeRegistration != 0 && metadataRegistration != 0)
+            {
+                codeRegistration -= 16ul;
+                metadataRegistration -= 128ul;
+                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                Init64(codeRegistration, metadataRegistration);
+                return true;
+            }
+            return false;
+        }
+
+        private ulong FindPointersAsc(long readCount, MachoSection64bit search, MachoSection64bit range)
+        {
+            var add = 0ul;
+            var searchend = search.offset + search.size;
+            var rangeend = range.address + range.size;
+            while (search.offset + add < searchend)
+            {
+                var temp = ReadClassArray<ulong>(search.offset + add, readCount);
+                var r = Array.FindLastIndex(temp, x => x < range.address || x > rangeend);
+                if (r != -1)
+                {
+                    add += (ulong)(++r * 8);
+                }
+                else
+                {
+                    return search.address + add;//MapRATV
+                }
+            }
+            return 0;
+        }
+
+        private ulong FindPointersDesc(long readCount, MachoSection64bit search, MachoSection64bit range)
+        {
+            var add = 0L;
+            var searchend = search.offset + search.size;
+            var rangeend = range.address + range.size;
+            while ((ulong)((long)searchend + add) > search.offset)
+            {
+                var temp = ReadClassArray<ulong>((long)searchend + add - 8 * readCount, readCount);
+                var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
+                if (r != -1)
+                {
+                    add -= (readCount - r) * 8;
+                }
+                else
+                {
+                    return (ulong)((long)search.address + (long)search.size + add - 8L * readCount);//MapRATV
+                }
+            }
+            return 0;
+        }
+
+        private ulong FindReference(ulong pointer, MachoSection64bit search)
+        {
+            var searchend = search.offset + search.size;
+            Position = search.offset;
+            while ((ulong)Position < searchend)
+            {
+                if (ReadUInt64() == pointer)
+                {
+                    return (ulong)Position - search.offset + search.address;//MapRATV
+                }
+            }
+            return 0;
+        }
     }
 }

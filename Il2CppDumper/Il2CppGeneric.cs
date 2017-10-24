@@ -23,6 +23,8 @@ namespace Il2CppDumper
 
         public Func<bool> Search;
 
+        public abstract bool AdvancedSearch(int methodCount);
+
         protected abstract dynamic MapVATR(dynamic uiAddr);
 
         protected Il2CppGeneric(Stream stream) : base(stream) { }

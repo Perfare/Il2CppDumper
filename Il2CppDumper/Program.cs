@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Web.Script.Serialization;
@@ -44,7 +45,7 @@ namespace Il2CppDumper
                             case 0xCAFEBABE://FAT header
                             case 0xBEBAFECA:
                                 var machofat = new MachoFat(new MemoryStream(il2cppfile));
-                                Console.Write("Select platform: ");
+                                Console.Write("Select Platform: ");
                                 for (var i = 0; i < machofat.fats.Length; i++)
                                 {
                                     var fat = machofat.fats[i];
@@ -66,44 +67,49 @@ namespace Il2CppDumper
                                 is64bit = true;
                                 goto case 0xFEEDFACE;
                             case 0xFEEDFACE:// 32-bit mach object file
-                                Console.WriteLine("Select Mode: 1.Manual 2.Auto");
+                                Console.WriteLine("Select Mode: 1.Manual 2.Auto 3.Auto(Advanced)");
                                 key = Console.ReadKey(true);
-                                if (key.KeyChar == '2')
+                                switch (key.KeyChar)
                                 {
-                                    if (isElf)
-                                        il2cpp = new Elf(new MemoryStream(il2cppfile), metadata.version, metadata.maxmetadataUsages);
-                                    else if (is64bit)
-                                        il2cpp = new Macho64(new MemoryStream(il2cppfile), metadata.version, metadata.maxmetadataUsages);
-                                    else
-                                        il2cpp = new Macho(new MemoryStream(il2cppfile), metadata.version, metadata.maxmetadataUsages);
-                                    try
-                                    {
-                                        if (!il2cpp.Search())
+                                    case '2':
+                                    case '3':
+                                        if (isElf)
+                                            il2cpp = new Elf(new MemoryStream(il2cppfile), metadata.version, metadata.maxmetadataUsages);
+                                        else if (is64bit)
+                                            il2cpp = new Macho64(new MemoryStream(il2cppfile), metadata.version, metadata.maxmetadataUsages);
+                                        else
+                                            il2cpp = new Macho(new MemoryStream(il2cppfile), metadata.version, metadata.maxmetadataUsages);
+                                        try
                                         {
-                                            throw new Exception();
+                                            if (key.KeyChar == '2' ?
+                                                !il2cpp.Search() :
+                                                !il2cpp.AdvancedSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0)))
+                                            {
+                                                throw new Exception();
+                                            }
                                         }
-                                    }
-                                    catch
-                                    {
-                                        throw new Exception("ERROR: Unable to process file automatically, try to use manual mode.");
-                                    }
-                                }
-                                else if (key.KeyChar == '1')
-                                {
-                                    Console.Write("Input CodeRegistration(R0): ");
-                                    var codeRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
-                                    Console.Write("Input MetadataRegistration(R1): ");
-                                    var metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
-                                    if (isElf)
-                                        il2cpp = new Elf(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, metadata.version, metadata.maxmetadataUsages);
-                                    else if (is64bit)
-                                        il2cpp = new Macho64(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, metadata.version, metadata.maxmetadataUsages);
-                                    else
-                                        il2cpp = new Macho(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, metadata.version, metadata.maxmetadataUsages);
-                                }
-                                else
-                                {
-                                    return;
+                                        catch
+                                        {
+                                            throw new Exception("ERROR: Unable to process file automatically, try to use other mode.");
+                                        }
+                                        break;
+                                    case '1':
+                                        {
+                                            Console.Write("Input CodeRegistration(Parameter 1): ");
+                                            var codeRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
+                                            Console.Write("Input MetadataRegistration(Parameter 2): ");
+                                            var metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
+                                            if (isElf)
+                                                il2cpp = new Elf(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, metadata.version, metadata.maxmetadataUsages);
+                                            else if (is64bit)
+                                                il2cpp = new Macho64(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, metadata.version, metadata.maxmetadataUsages);
+                                            else
+                                                il2cpp = new Macho(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, metadata.version, metadata.maxmetadataUsages);
+                                            break;
+                                        }
+
+                                    default:
+                                        return;
                                 }
                                 var writer = new StreamWriter(new FileStream("dump.cs", FileMode.Create), Encoding.UTF8);
                                 Console.WriteLine("Dumping...");

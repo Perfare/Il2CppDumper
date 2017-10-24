@@ -11,7 +11,8 @@ namespace Il2CppDumper
         private elf_header elf_header;
         private program_header_table[] program_table_element;
         private static byte[] ARMFeatureBytes = { 0x1c, 0x0, 0x9f, 0xe5, 0x1c, 0x10, 0x9f, 0xe5, 0x1c, 0x20, 0x9f, 0xe5 };
-        private static byte[] X86FeatureBytes = { 0x55, 0x89, 0xE5, 0x53, 0x83, 0xE4, 0xF0, 0x83, 0xEC, 0x20, 0xE8, 0x00, 0x00, 0x00, 0x00, 0x5B };
+        private static byte[] X86FeatureBytes1 = { 0x8D, 0x83 };//lea eax, X
+        private static byte[] X86FeatureBytes2 = { 0x89, 0x44, 0x24, 0x04, 0x8D, 0x83 };//mov [esp+4], eax and lea eax, X
 
 
         public Elf(Stream stream, int version, long maxmetadataUsages) : base(stream)
@@ -129,21 +130,36 @@ namespace Il2CppDumper
                         }
                         else if (elf_header.e_machine == 0x3)
                         {
-                            var buff = ReadBytes(16);
-                            if (X86FeatureBytes.SequenceEqual(buff))
+                            Position = i + 22;
+                            var buff = ReadBytes(2);
+                            if (X86FeatureBytes1.SequenceEqual(buff))
                             {
-                                Position = i + 0x18;
-                                var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                Position = subaddr + 0x2C;
-                                var codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                                Position = subaddr + 0x22;
-                                var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                Position = MapVATR(ptr);
-                                var metadataRegistration = ReadUInt32();
-                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                                Init(codeRegistration, metadataRegistration);
-                                return true;
+                                Position = i + 28;
+                                buff = ReadBytes(6);
+                                if (X86FeatureBytes2.SequenceEqual(buff))
+                                {
+                                    Position = i + 0x18;
+                                    var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                    Position = subaddr + 0x2C;
+                                    var codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                                    Position = subaddr + 0x20;
+                                    var temp = ReadUInt16();
+                                    uint metadataRegistration;
+                                    if (temp == 0x838D)//lea
+                                    {
+                                        metadataRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                    }
+                                    else//mov
+                                    {
+                                        var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                        Position = MapVATR(ptr);
+                                        metadataRegistration = ReadUInt32();
+                                    }
+                                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                                    Init(codeRegistration, metadataRegistration);
+                                    return true;
+                                }
                             }
                         }
                         else

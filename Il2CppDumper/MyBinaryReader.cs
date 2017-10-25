@@ -9,16 +9,20 @@ namespace Il2CppDumper
     {
         public MyBinaryReader(Stream stream) : base(stream) { }
 
+        public int version;
+
+        protected bool readas32bit;
+
+        private Dictionary<string, string> _64bitTo32bit = new Dictionary<string, string>()
+        {
+            {"Int64", "Int32"},
+            {"UInt64", "UInt32"}
+        };
+
         public dynamic Position
         {
-            get
-            {
-                return BaseStream.Position;
-            }
-            set
-            {
-                BaseStream.Position = (long)value;
-            }
+            get => BaseStream.Position;
+            set => BaseStream.Position = (long)value;
         }
 
         public T ReadClass<T>(dynamic addr) where T : new()
@@ -32,25 +36,27 @@ namespace Il2CppDumper
             var type = typeof(T);
             if (type.IsPrimitive)
             {
-                if (type == typeof(int))
+                var typename = type.Name;
+                if (readas32bit && _64bitTo32bit.ContainsKey(typename))
+                    typename = _64bitTo32bit[typename];
+                switch (typename)
                 {
-                    return (T)(object)ReadInt32();
-                }
-                else if (type == typeof(uint))
-                {
-                    return (T)(object)ReadUInt32();
-                }
-                else if (type == typeof(long))
-                {
-                    return (T)(object)ReadInt64();
-                }
-                else if (type == typeof(ulong))
-                {
-                    return (T)(object)ReadUInt64();
-                }
-                else
-                {
-                    return default(T);
+                    case "Int32":
+                        return (T)(object)ReadInt32();
+                    case "UInt32":
+                        return (T)(object)ReadUInt32();
+                    case "Int16":
+                        return (T)(object)ReadInt16();
+                    case "UInt16":
+                        return (T)(object)ReadUInt16();
+                    case "Byte":
+                        return (T)(object)ReadByte();
+                    case "Int64":
+                        return (T)(object)ReadInt64();
+                    case "UInt64":
+                        return (T)(object)ReadUInt64();
+                    default:
+                        return default(T);
                 }
             }
             else
@@ -58,40 +64,44 @@ namespace Il2CppDumper
                 var t = new T();
                 foreach (var i in t.GetType().GetFields())
                 {
-                    if (i.FieldType == typeof(int))
+                    var attr = (VersionAttribute)Attribute.GetCustomAttribute(i, typeof(VersionAttribute));
+                    if (attr != null)
                     {
-                        i.SetValue(t, ReadInt32());
+                        if (version < attr.Min || version > attr.Max)
+                            continue;
                     }
-                    else if (i.FieldType == typeof(uint))
+                    var typename = i.FieldType.Name;
+                    if (readas32bit && _64bitTo32bit.ContainsKey(typename))
+                        typename = _64bitTo32bit[typename];
+                    switch (typename)
                     {
-                        i.SetValue(t, ReadUInt32());
-                    }
-                    else if (i.FieldType == typeof(short))
-                    {
-                        i.SetValue(t, ReadInt16());
-                    }
-                    else if (i.FieldType == typeof(ushort))
-                    {
-                        i.SetValue(t, ReadUInt16());
-                    }
-                    else if (i.FieldType == typeof(byte))
-                    {
-                        i.SetValue(t, ReadByte());
-                    }
-                    else if (i.FieldType == typeof(long))
-                    {
-                        i.SetValue(t, ReadInt64());
-                    }
-                    else if (i.FieldType == typeof(ulong))
-                    {
-                        i.SetValue(t, ReadUInt64());
-                    }
-                    else
-                    {
-                        var mi = GetType().GetMethod("ReadClass", Type.EmptyTypes);
-                        var mi2 = mi.MakeGenericMethod(i.FieldType);
-                        var o = mi2.Invoke(this, null);
-                        i.SetValue(t, o);
+                        case "Int32":
+                            i.SetValue(t, ReadInt32());
+                            break;
+                        case "UInt32":
+                            i.SetValue(t, ReadUInt32());
+                            break;
+                        case "Int16":
+                            i.SetValue(t, ReadInt16());
+                            break;
+                        case "UInt16":
+                            i.SetValue(t, ReadUInt16());
+                            break;
+                        case "Byte":
+                            i.SetValue(t, ReadByte());
+                            break;
+                        case "Int64":
+                            i.SetValue(t, ReadInt64());
+                            break;
+                        case "UInt64":
+                            i.SetValue(t, ReadUInt64());
+                            break;
+                        default:
+                            var mi = GetType().GetMethod("ReadClass", Type.EmptyTypes);
+                            var mi2 = mi.MakeGenericMethod(i.FieldType);
+                            var o = mi2.Invoke(this, null);
+                            i.SetValue(t, o);
+                            break;
                     }
                 }
                 return t;

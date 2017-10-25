@@ -12,7 +12,7 @@ namespace Il2CppDumper
     class Program
     {
         private static MetadataGeneric metadata;
-        private static Il2CppGeneric il2cpp;
+        private static Il2Cpp il2cpp;
         private static Config config;
         private static Dictionary<Il2CppMethodDefinition, string> methodModifiers = new Dictionary<Il2CppMethodDefinition, string>();
 
@@ -401,11 +401,11 @@ namespace Il2CppDumper
             }
             else if (pType.type == Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST)
             {
-                var generic_class = il2cpp.GetIl2CppGenericClass(pType.data.generic_class);
+                var generic_class = il2cpp.MapVATR<Il2CppGenericClass>(pType.data.generic_class);
                 var pMainDef = metadata.typeDefs[generic_class.typeDefinitionIndex];
                 ret = metadata.GetString(pMainDef.nameIndex);
                 var typeNames = new List<string>();
-                var pInst = il2cpp.GetIl2CppGenericInst(generic_class.context.class_inst);
+                var pInst = il2cpp.MapVATR<Il2CppGenericInst>(generic_class.context.class_inst);
                 var pointers = il2cpp.GetPointers(pInst.type_argv, (long)pInst.type_argc);
                 for (uint i = 0; i < pInst.type_argc; ++i)
                 {
@@ -416,7 +416,7 @@ namespace Il2CppDumper
             }
             else if (pType.type == Il2CppTypeEnum.IL2CPP_TYPE_ARRAY)
             {
-                var arrayType = il2cpp.GetIl2CppArrayType(pType.data.array);
+                var arrayType = il2cpp.MapVATR<Il2CppArrayType>(pType.data.array);
                 var type = il2cpp.GetIl2CppType(arrayType.etype);
                 ret = $"{get_type_name(type)}[]";
             }

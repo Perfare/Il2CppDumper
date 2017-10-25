@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    class Elf : Il2CppGeneric
+    class Elf : Il2Cpp
     {
         private elf_header elf_header;
         private program_header_table[] program_table_element;
@@ -19,7 +19,7 @@ namespace Il2CppDumper
         {
             this.version = version;
             this.maxmetadataUsages = maxmetadataUsages;
-            @namespace = "Il2CppDumper.v" + version + ".";
+            readas32bit = true;
             if (version < 21)
                 Search = Searchv20;
             else
@@ -89,7 +89,8 @@ namespace Il2CppDumper
 
         private bool Searchv20()
         {
-            throw new NotSupportedException("未完工");
+            Console.WriteLine("ERROR: Auto mode not support this version.");
+            return false;
         }
 
         private bool Searchv21()

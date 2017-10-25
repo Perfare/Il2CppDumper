@@ -1,25 +1,48 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace Il2CppDumper.v24._64bit
+namespace Il2CppDumper
 {
     public class Il2CppCodeRegistration
     {
         public ulong methodPointersCount;
         public ulong methodPointers;
+        [Version(Max = 21)]
+        public ulong delegateWrappersFromNativeToManagedCount;
+        [Version(Max = 21)]
+        public ulong delegateWrappersFromNativeToManaged; // note the double indirection to handle different calling conventions
+        [Version(Min = 22)]
         public ulong reversePInvokeWrapperCount;
+        [Version(Min = 22)]
         public ulong reversePInvokeWrappers;
+        [Version(Max = 22)]
+        public ulong delegateWrappersFromManagedToNativeCount;
+        [Version(Max = 22)]
+        public ulong delegateWrappersFromManagedToNative;
+        [Version(Max = 22)]
+        public ulong marshalingFunctionsCount;
+        [Version(Max = 22)]
+        public ulong marshalingFunctions;
+        [Version(Min = 21, Max = 22)]
+        public ulong ccwMarshalingFunctionsCount;
+        [Version(Min = 21, Max = 22)]
+        public ulong ccwMarshalingFunctions;
         public ulong genericMethodPointersCount;
         public ulong genericMethodPointers;
         public ulong invokerPointersCount;
         public ulong invokerPointers;
         public long customAttributeCount;
         public ulong customAttributeGenerators;
+        [Version(Min = 21, Max = 22)]
+        public long guidCount;
+        [Version(Min = 21, Max = 22)]
+        public ulong guids; // Il2CppGuid
+        [Version(Min = 22)]
         public ulong unresolvedVirtualCallCount;
+        [Version(Min = 22)]
         public ulong unresolvedVirtualCallPointers;
+        [Version(Min = 23)]
         public ulong interopDataCount;
+        [Version(Min = 23)]
         public ulong interopData;
     }
 
@@ -30,18 +53,24 @@ namespace Il2CppDumper.v24._64bit
         public long genericInstsCount;
         public ulong genericInsts;
         public long genericMethodTableCount;
-        public ulong genericMethodTable;
+        public ulong genericMethodTable; // Il2CppGenericMethodFunctionsDefinitions
         public long typesCount;
         public ulong types;
         public long methodSpecsCount;
         public ulong methodSpecs;
+        [Version(Max = 16)]
+        public long methodReferencesCount;
+        [Version(Max = 16)]
+        public ulong methodReferences;
 
         public long fieldOffsetsCount;
         public ulong fieldOffsets;
 
         public long typeDefinitionsSizesCount;
         public ulong typeDefinitionsSizes;
+        [Version(Min = 20)]
         public ulong metadataUsagesCount;
+        [Version(Min = 20)]
         public ulong metadataUsages;
     }
 
@@ -90,8 +119,8 @@ namespace Il2CppDumper.v24._64bit
     public class Il2CppType
     {
         public ulong datapoint;
-        public Union data { get; set; }
         public uint bits;
+        public Union data { get; set; }
         public uint attrs { get; set; }
         public Il2CppTypeEnum type { get; set; }
         public uint num_mods { get; set; }
@@ -100,16 +129,11 @@ namespace Il2CppDumper.v24._64bit
 
         public void Init()
         {
-            var str = Convert.ToString(bits, 2);
-            if (str.Length != 32)
-            {
-                str = new string(Enumerable.Repeat('0', 32 - str.Length).Concat(str.ToCharArray()).ToArray());
-            }
-            attrs = Convert.ToUInt32(str.Substring(16, 16), 2);
-            type = (Il2CppTypeEnum)Convert.ToInt32(str.Substring(8, 8), 2);
-            num_mods = Convert.ToUInt32(str.Substring(2, 6), 2);
-            byref = Convert.ToUInt32(str.Substring(1, 1), 2);
-            pinned = Convert.ToUInt32(str.Substring(0, 1), 2);
+            attrs = bits & 0xffff;
+            type = (Il2CppTypeEnum)((bits >> 16) & 0xff);
+            num_mods = (bits >> 24) & 0x3f;
+            byref = (bits >> 30) & 1;
+            pinned = bits >> 31;
             data = new Union { dummy = datapoint };
         }
 
@@ -128,7 +152,7 @@ namespace Il2CppDumper.v24._64bit
     {
         public long typeDefinitionIndex;    /* the generic type definition */
         public Il2CppGenericContext context;   /* a context that contains the type instantiation doesn't contain any method instantiation */
-        public ulong cached_class;  /* if present, the Il2CppClass corresponding to the instantiation.  */
+        public ulong cached_class; /* if present, the Il2CppClass corresponding to the instantiation.  */
     }
 
     public class Il2CppGenericContext

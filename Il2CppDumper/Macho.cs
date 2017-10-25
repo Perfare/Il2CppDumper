@@ -7,7 +7,7 @@ using static Il2CppDumper.ArmHelper;
 
 namespace Il2CppDumper
 {
-    class Macho : Il2CppGeneric
+    class Macho : Il2Cpp
     {
         private List<MachoSection> sections = new List<MachoSection>();
         private static byte[] FeatureBytes1 = { 0x0, 0x22 };//MOVS R2, #0
@@ -18,7 +18,7 @@ namespace Il2CppDumper
         {
             this.version = version;
             this.maxmetadataUsages = maxmetadataUsages;
-            @namespace = "Il2CppDumper.v" + version + ".";
+            readas32bit = true;
             if (version < 21)
                 Search = Searchv16;
             else

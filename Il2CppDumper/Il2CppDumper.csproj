@@ -43,46 +43,28 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Elf.cs" />
-    <Compile Include="Il2CppGeneric.cs" />
-    <Compile Include="Il2CppGenericClass.cs" />
+    <Compile Include="Il2CppClass.cs" />
+    <Compile Include="Il2Cpp.cs" />
     <Compile Include="Macho.cs" />
     <Compile Include="MetadataGeneric.cs" />
     <Compile Include="MetadataGenericClass.cs" />
-    <Compile Include="MyCopy.cs" />
     <Compile Include="Resource1.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resource1.resx</DependentUpon>
     </Compile>
-    <Compile Include="v16\64bit\Il2CppClass.cs" />
-    <Compile Include="v20\64bit\Il2CppClass.cs" />
-    <Compile Include="v21\64bit\Il2CppClass.cs" />
     <Compile Include="ArmHelper.cs" />
     <Compile Include="DefineConstants.cs" />
     <Compile Include="ElfClass.cs" />
-    <Compile Include="v21\Il2CppClass.cs" />
     <Compile Include="MachoClass.cs" />
     <Compile Include="MachoFat.cs" />
-    <Compile Include="v21\MetadataClass.cs" />
     <Compile Include="MyBinaryReader.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="v16\Il2CppClass.cs" />
-    <Compile Include="v16\MetadataClass.cs" />
-    <Compile Include="v20\Il2CppClass.cs" />
-    <Compile Include="v20\MetadataClass.cs" />
-    <Compile Include="v22\64bit\Il2CppClass.cs" />
-    <Compile Include="v22\Il2CppClass.cs" />
-    <Compile Include="v22\MetadataClass.cs" />
-    <Compile Include="v23\64bit\Il2CppClass.cs" />
     <Compile Include="Macho64.cs" />
-    <Compile Include="v23\Il2CppClass.cs" />
-    <Compile Include="v23\MetadataClass.cs" />
-    <Compile Include="v24\64bit\Il2CppClass.cs" />
-    <Compile Include="v24\Il2CppClass.cs" />
-    <Compile Include="v24\MetadataClass.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json">

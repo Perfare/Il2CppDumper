@@ -60,7 +60,7 @@ namespace Il2CppDumper
             Init64(codeRegistration, metadataRegistration);
         }
 
-        protected override dynamic MapVATR(dynamic uiAddr)
+        public override dynamic MapVATR(dynamic uiAddr)
         {
             var section = sections.First(x => uiAddr >= x.address && uiAddr <= x.end);
             return uiAddr - (section.address - section.offset);

@@ -22,7 +22,7 @@ namespace Il2CppDumper
 
         public abstract bool AdvancedSearch(int methodCount);
 
-        protected abstract dynamic MapVATR(dynamic uiAddr);
+        public abstract dynamic MapVATR(dynamic uiAddr);
 
         protected Il2Cpp(Stream stream) : base(stream) { }
 

@@ -11,5 +11,6 @@ namespace Il2CppDumper
         public bool dumpfield = true;
         public bool dumpproperty = false;
         public bool dumpattribute = false;
+        public bool dumpfieldOffset = true;
     }
 }

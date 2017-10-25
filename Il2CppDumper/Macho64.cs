@@ -186,6 +186,13 @@ namespace Il2CppDumper
                     }
                 }
             }
+            if (version == 16)
+            {
+                codeRegistration -= 16ul;
+                Console.WriteLine("WARNING: Version 16 can only get CodeRegistration");
+                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                return false;
+            }
             var pmetadataUsages = FindPointersAsc(maxmetadataUsages, __const, __common);
             if (pmetadataUsages == 0)
                 pmetadataUsages = FindPointersAsc(maxmetadataUsages, __const2, __common);

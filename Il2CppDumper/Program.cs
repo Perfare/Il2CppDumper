@@ -275,7 +275,7 @@ namespace Il2CppDumper
                                                     }
                                                 }
                                                 if (config.dumpfieldOffset)
-                                                    writer.Write("; // 0x{0:x}\n", il2cpp.GetFieldOffsetFromIndex(idx, i - typeDef.fieldStart, i));
+                                                    writer.Write("; // 0x{0:X}\n", il2cpp.GetFieldOffsetFromIndex(idx, i - typeDef.fieldStart, i));
                                                 else
                                                     writer.Write(";\n");
                                             }
@@ -349,7 +349,7 @@ namespace Il2CppDumper
                                                 }
                                                 if (methodDef.methodIndex >= 0)
                                                 {
-                                                    writer.Write("); // RVA: 0x{0:x} File Offset: 0x{1:x}\n", il2cpp.methodPointers[methodDef.methodIndex], il2cpp.MapVATR(il2cpp.methodPointers[methodDef.methodIndex]));
+                                                    writer.Write("); // RVA: 0x{0:X} File Offset: 0x{1:X}\n", il2cpp.methodPointers[methodDef.methodIndex], il2cpp.MapVATR(il2cpp.methodPointers[methodDef.methodIndex]));
                                                     //Script
                                                     var name = ToUnicodeString(metadata.GetString(typeDef.nameIndex) + "$$" + metadata.GetString(methodDef.nameIndex));
                                                     scriptwriter.WriteLine($"SetMethod(0x{il2cpp.methodPointers[methodDef.methodIndex]:x}, '{name}')");
@@ -447,7 +447,7 @@ namespace Il2CppDumper
             for (var i = 0; i < attributeTypeRange.count; i++)
             {
                 var typeIndex = metadata.attributeTypes[attributeTypeRange.start + i];
-                sb.AppendFormat("{0}[{1}] // {2:x}\n", padding, GetTypeName(il2cpp.types[typeIndex]), il2cpp.customAttributeGenerators[index]);
+                sb.AppendFormat("{0}[{1}] // 0x{2:X}\n", padding, GetTypeName(il2cpp.types[typeIndex]), il2cpp.customAttributeGenerators[index]);
             }
             return sb.ToString();
         }

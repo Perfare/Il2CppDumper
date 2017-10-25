@@ -349,7 +349,7 @@ namespace Il2CppDumper
                                                 }
                                                 if (methodDef.methodIndex >= 0)
                                                 {
-                                                    writer.Write("); // RVA: {0:x} File Offset: {1:x}\n", il2cpp.methodPointers[methodDef.methodIndex], il2cpp.MapVATR(il2cpp.methodPointers[methodDef.methodIndex]));
+                                                    writer.Write("); // RVA: 0x{0:x} File Offset: 0x{1:x}\n", il2cpp.methodPointers[methodDef.methodIndex], il2cpp.MapVATR(il2cpp.methodPointers[methodDef.methodIndex]));
                                                     //Script
                                                     var name = ToUnicodeString(metadata.GetString(typeDef.nameIndex) + "$$" + metadata.GetString(methodDef.nameIndex));
                                                     scriptwriter.WriteLine($"SetMethod(0x{il2cpp.methodPointers[methodDef.methodIndex]:x}, '{name}')");

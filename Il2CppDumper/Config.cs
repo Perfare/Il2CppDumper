@@ -12,5 +12,7 @@ namespace Il2CppDumper
         public bool dumpproperty = false;
         public bool dumpattribute = false;
         public bool dumpfieldOffset = true;
+        public bool forceil2cppversion = false;
+        public int forceversion = 16;
     }
 }

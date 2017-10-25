@@ -11,7 +11,7 @@ namespace Il2CppDumper
 {
     class Program
     {
-        private static MetadataGeneric metadata;
+        private static Metadata metadata;
         private static Il2Cpp il2cpp;
         private static Config config;
         private static Dictionary<Il2CppMethodDefinition, string> methodModifiers = new Dictionary<Il2CppMethodDefinition, string>();
@@ -30,7 +30,7 @@ namespace Il2CppDumper
                 {
                     try
                     {
-                        metadata = new MetadataGeneric(new MemoryStream(File.ReadAllBytes(ofd.FileName)));
+                        metadata = new Metadata(new MemoryStream(File.ReadAllBytes(ofd.FileName)));
                         //判断il2cpp的magic
                         var il2cppmagic = BitConverter.ToUInt32(il2cppfile, 0);
                         var isElf = false;

@@ -49,8 +49,8 @@
     <Compile Include="Il2CppClass.cs" />
     <Compile Include="Il2Cpp.cs" />
     <Compile Include="Macho.cs" />
-    <Compile Include="MetadataGeneric.cs" />
-    <Compile Include="MetadataGenericClass.cs" />
+    <Compile Include="Metadata.cs" />
+    <Compile Include="MetadataClass.cs" />
     <Compile Include="Resource1.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

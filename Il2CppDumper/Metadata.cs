@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    class MetadataGeneric : MyBinaryReader
+    class Metadata : MyBinaryReader
     {
         private Il2CppGlobalMetadataHeader pMetadataHdr;
         public int uiImageCount;
@@ -28,7 +28,7 @@ namespace Il2CppDumper
         public long maxmetadataUsages;
 
 
-        public MetadataGeneric(Stream stream) : base(stream)
+        public Metadata(Stream stream) : base(stream)
         {
             var sanity = ReadUInt32();
             if (sanity != 0xFAB11BAF)

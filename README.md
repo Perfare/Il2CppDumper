@@ -24,11 +24,18 @@
 作为文本文件打开即可
 
 ### 关于script.py
-需要安装IDA所需的python。在IDA中File-Script file选择脚本运行即可，会重命名methodName和添加stringLiteral注释
+需要安装IDA所需的python。在IDA中File-Script file选择script.py运行即可，会重命名methodName和添加stringLiteral注释
 
 ### 关于config.json
-```dumpmethod```，```dumpfield```，```dumpproperty```，```dumpattribute```，```dumpfieldOffset```  
+`dumpmethod`，`dumpfield`，`dumpproperty`，`dumpattribute`，`dumpfieldoffset`  
 控制程序是否在dump.cs输出相应的内容  
 
-```forceil2cppversion```，```forceversion```  
-当forceil2cppversion为true时，程序将根据forceversion指定的版本读取il2cpp的可执行文件（Metadata仍然使用header里的版本），这在部分低版本的il2cpp中将会有用（比如安卓20版本下，你可能需要设置forceversion为16程序才能正常工作）
+`forceil2cppversion`，`forceversion` 
+当forceil2cppversion为true时，程序将根据forceversion指定的版本读取il2cpp的可执行文件（Metadata仍然使用header里的版本），这在部分低版本的il2cpp中将会有用（比如安卓20版本下，你可能需要设置forceversion为16程序才能正常工作）  
+
+## 常见问题
+#### `ERROR: Metadata file supplied is not valid metadata file.`  
+正如它所显示的，你选择的global-metadata.dat不是一个有效的metadata文件，通常是因为游戏加密了global-metadata.dat文件。关于解密的问题最好去破解论坛寻求帮助，请不要在issues提问！  
+
+#### `ERROR: Unable to process file automatically, try to use other mode.`  
+当所有自动模式都无法运行时，你可以在issue提问，提问时请一并上传文件!

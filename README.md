@@ -38,4 +38,4 @@
 正如它所显示的，你选择的global-metadata.dat不是一个有效的metadata文件，通常是因为游戏加密了global-metadata.dat文件。关于解密的问题最好去破解论坛寻求帮助，请不要在issues提问！  
 
 #### `ERROR: Unable to process file automatically, try to use other mode.`  
-当两种自动模式都无法工作时，你可打开一个新的issue，并上传文件
+当两种自动模式都无法工作时，你可以打开一个新的issue，并上传文件，我会尝试解决

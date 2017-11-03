@@ -30,7 +30,7 @@
 `dumpmethod`，`dumpfield`，`dumpproperty`，`dumpattribute`，`dumpfieldoffset`  
 控制程序是否在dump.cs输出相应的内容  
 
-`forceil2cppversion`，`forceversion` 
+`forceil2cppversion`，`forceversion`  
 当forceil2cppversion为true时，程序将根据forceversion指定的版本读取il2cpp的可执行文件（Metadata仍然使用header里的版本），这在部分低版本的il2cpp中将会有用（比如安卓20版本下，你可能需要设置forceversion为16程序才能正常工作）  
 
 ## 常见问题

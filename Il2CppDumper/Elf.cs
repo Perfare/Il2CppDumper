@@ -65,15 +65,12 @@ namespace Il2CppDumper
                 var section_name_block_off = (int)elf_header.e_shoff + (elf_header.e_shentsize * elf_header.e_shtrndx);
                 Position = section_name_block_off + 2 * 4 + 4 + 4;
                 section_name_block_off = ReadInt32();
-                var sectionWithNametmp = new Dictionary<string, elf_32_shdr>();
-                var sectionstmp = new List<elf_32_shdr>();
+                sectionWithName = new Dictionary<string, elf_32_shdr>();
                 for (int i = 0; i < elf_header.e_shnum; i++)
                 {
                     var section = ReadClass<elf_32_shdr>((int)elf_header.e_shoff + (elf_header.e_shentsize * i));
-                    sectionWithNametmp.Add(ReadStringToNull(section_name_block_off + section.sh_name), section);
-                    sectionstmp.Add(section);
+                    sectionWithName.Add(ReadStringToNull(section_name_block_off + section.sh_name), section);
                 }
-                sectionWithName = sectionWithNametmp;
             }
             catch
             {

@@ -3,7 +3,7 @@
   "dumpfield": true,
   "dumpproperty": false,
   "dumpattribute": false,
-  "dumpfieldOffset": true,
+  "dumpfieldoffset": true,
   "forceil2cppversion": false,
   "forceversion": 16
 }

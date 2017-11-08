@@ -69,16 +69,17 @@ namespace Il2CppDumper
                             case 0xFEEDFACE:// 32-bit mach object file
                                 Console.WriteLine("Select Mode: 1.Manual 2.Auto 3.Auto(Advanced)");
                                 key = Console.ReadKey(true);
+                                var version = config.forceil2cppversion ? config.forceversion : metadata.version;
                                 switch (key.KeyChar)
                                 {
                                     case '2':
                                     case '3':
                                         if (isElf)
-                                            il2cpp = new Elf(new MemoryStream(il2cppfile), config.forceil2cppversion ? config.forceversion : metadata.version, metadata.maxmetadataUsages);
+                                            il2cpp = new Elf(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
                                         else if (is64bit)
-                                            il2cpp = new Macho64(new MemoryStream(il2cppfile), config.forceil2cppversion ? config.forceversion : metadata.version, metadata.maxmetadataUsages);
+                                            il2cpp = new Macho64(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
                                         else
-                                            il2cpp = new Macho(new MemoryStream(il2cppfile), config.forceil2cppversion ? config.forceversion : metadata.version, metadata.maxmetadataUsages);
+                                            il2cpp = new Macho(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
                                         try
                                         {
                                             if (key.KeyChar == '2' ?
@@ -100,11 +101,11 @@ namespace Il2CppDumper
                                             Console.Write("Input MetadataRegistration(Parameter 1): ");
                                             var metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
                                             if (isElf)
-                                                il2cpp = new Elf(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, config.forceil2cppversion ? config.forceversion : metadata.version, metadata.maxmetadataUsages);
+                                                il2cpp = new Elf(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, version, metadata.maxmetadataUsages);
                                             else if (is64bit)
-                                                il2cpp = new Macho64(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, config.forceil2cppversion ? config.forceversion : metadata.version, metadata.maxmetadataUsages);
+                                                il2cpp = new Macho64(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, version, metadata.maxmetadataUsages);
                                             else
-                                                il2cpp = new Macho(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, config.forceil2cppversion ? config.forceversion : metadata.version, metadata.maxmetadataUsages);
+                                                il2cpp = new Macho(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, version, metadata.maxmetadataUsages);
                                             break;
                                         }
 
@@ -274,7 +275,7 @@ namespace Il2CppDumper
                                                             writer.Write($" = {multi}");
                                                     }
                                                 }
-                                                if (config.dumpfieldOffset)
+                                                if (config.dumpfieldoffset)
                                                     writer.Write("; // 0x{0:X}\n", il2cpp.GetFieldOffsetFromIndex(idx, i - typeDef.fieldStart, i));
                                                 else
                                                     writer.Write(";\n");

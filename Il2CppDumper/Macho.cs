@@ -67,7 +67,7 @@ namespace Il2CppDumper
             return uiAddr - (section.address - section.offset);
         }
 
-        protected new void Init(ulong codeRegistration, ulong metadataRegistration)
+        protected override void Init(ulong codeRegistration, ulong metadataRegistration)
         {
             base.Init(codeRegistration, metadataRegistration);
             methodPointers = methodPointers.Select(x => x - 1).ToArray();

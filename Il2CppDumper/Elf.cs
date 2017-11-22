@@ -51,6 +51,7 @@ namespace Il2CppDumper
             elf_header.e_shtrndx = ReadUInt16();
             program_table_element = ReadClassArray<program_header_table>(elf_header.e_phoff, elf_header.e_phnum);
             GetSectionWithName();
+            RelocationProcessing();
         }
 
         public Elf(Stream stream, ulong codeRegistration, ulong metadataRegistration, int version, long maxmetadataUsages) : this(stream, version, maxmetadataUsages)
@@ -202,30 +203,6 @@ namespace Il2CppDumper
         {
             if (sectionWithName != null)
             {
-                //处理重定向
-                if (sectionWithName.ContainsKey(".dynsym") && sectionWithName.ContainsKey(".rel.dyn"))
-                {
-                    var dynsym = sectionWithName[".dynsym"];
-                    var rel_dyn = sectionWithName[".rel.dyn"];
-                    var dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsym.sh_offset, dynsym.sh_size / 16);
-                    var rel_dynend = rel_dyn.sh_offset + rel_dyn.sh_size;
-                    Position = rel_dyn.sh_offset;
-                    var writer = new BinaryWriter(BaseStream);
-                    while (Position < rel_dynend)
-                    {
-                        var offset = ReadUInt32();
-                        var type = ReadByte();
-                        var index = ReadByte() | (ReadByte() << 8) | (ReadByte() << 16);
-                        if (type == 2)
-                        {
-                            var dynamic_symbol = dynamic_symbol_table[index];
-                            var position = Position;
-                            writer.BaseStream.Position = offset;
-                            writer.Write(dynamic_symbol.sym_value);
-                            Position = position;
-                        }
-                    }
-                }
                 if (sectionWithName.ContainsKey(".data.rel.ro") && sectionWithName.ContainsKey(".text") && sectionWithName.ContainsKey(".bss"))
                 {
                     var datarelro = sectionWithName[".data.rel.ro"];
@@ -350,6 +327,34 @@ namespace Il2CppDumper
                 }
             }
             return 0;
+        }
+
+        private void RelocationProcessing()
+        {
+            //relocation
+            if (sectionWithName.ContainsKey(".dynsym") && sectionWithName.ContainsKey(".rel.dyn"))
+            {
+                var dynsym = sectionWithName[".dynsym"];
+                var rel_dyn = sectionWithName[".rel.dyn"];
+                var dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsym.sh_offset, dynsym.sh_size / 16);
+                var rel_dynend = rel_dyn.sh_offset + rel_dyn.sh_size;
+                Position = rel_dyn.sh_offset;
+                var writer = new BinaryWriter(BaseStream);
+                while (Position < rel_dynend)
+                {
+                    var offset = ReadUInt32();
+                    var type = ReadByte();
+                    var index = ReadByte() | (ReadByte() << 8) | (ReadByte() << 16);
+                    if (type == 2)
+                    {
+                        var dynamic_symbol = dynamic_symbol_table[index];
+                        var position = Position;
+                        writer.BaseStream.Position = offset;
+                        writer.Write(dynamic_symbol.sym_value);
+                        Position = position;
+                    }
+                }
+            }
         }
     }
 }

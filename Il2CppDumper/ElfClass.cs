@@ -79,4 +79,14 @@ namespace Il2CppDumper
         public uint sh_addralign;
         public uint sh_entsize;
     }
+
+    public class Elf32_Sym
+    {
+        public uint sym_name;
+        public uint sym_value;
+        public uint sym_size;
+        public byte sym_info;
+        public byte sym_other;
+        public ushort sym_shndx;
+    }
 }

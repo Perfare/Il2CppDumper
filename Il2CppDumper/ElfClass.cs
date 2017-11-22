@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    public class elf_header
+    public class Elf32_Ehdr
     {
         // 0x7f followed by ELF in ascii
         public uint m_dwFormat;
@@ -54,7 +54,7 @@ namespace Il2CppDumper
         public ushort e_shtrndx;
     }
 
-    public class program_header_table
+    public class Elf32_Phdr
     {
         public uint p_type;
         public uint p_offset;
@@ -66,7 +66,7 @@ namespace Il2CppDumper
         public uint p_align;
     }
 
-    public class elf_32_shdr
+    public class Elf32_Shdr
     {
         public uint sh_name;
         public uint sh_type;

@@ -8,12 +8,12 @@ namespace Il2CppDumper
 {
     class Elf : Il2Cpp
     {
-        private elf_header elf_header;
-        private program_header_table[] program_table_element;
+        private Elf32_Ehdr elf_header;
+        private Elf32_Phdr[] program_table_element;
         private static byte[] ARMFeatureBytes = { 0x1c, 0x0, 0x9f, 0xe5, 0x1c, 0x10, 0x9f, 0xe5, 0x1c, 0x20, 0x9f, 0xe5 };
         private static byte[] X86FeatureBytes1 = { 0x8D, 0x83 };//lea eax, X
         private static byte[] X86FeatureBytes2 = { 0x89, 0x44, 0x24, 0x04, 0x8D, 0x83 };//mov [esp+4], eax and lea eax, X
-        public Dictionary<string, elf_32_shdr> sectionWithName;
+        public Dictionary<string, Elf32_Shdr> sectionWithName;
 
         public Elf(Stream stream, int version, long maxmetadataUsages) : base(stream)
         {
@@ -24,7 +24,7 @@ namespace Il2CppDumper
                 Search = Searchv20;
             else
                 Search = Searchv21;
-            elf_header = new elf_header();
+            elf_header = new Elf32_Ehdr();
             elf_header.m_dwFormat = ReadUInt32();
             elf_header.m_arch = ReadByte();
             if (elf_header.m_arch == 2)//64
@@ -49,7 +49,7 @@ namespace Il2CppDumper
             elf_header.e_shentsize = ReadUInt16();
             elf_header.e_shnum = ReadUInt16();
             elf_header.e_shtrndx = ReadUInt16();
-            program_table_element = ReadClassArray<program_header_table>(elf_header.e_phoff, elf_header.e_phnum);
+            program_table_element = ReadClassArray<Elf32_Phdr>(elf_header.e_phoff, elf_header.e_phnum);
             GetSectionWithName();
             RelocationProcessing();
         }
@@ -66,10 +66,10 @@ namespace Il2CppDumper
                 var section_name_block_off = (int)elf_header.e_shoff + (elf_header.e_shentsize * elf_header.e_shtrndx);
                 Position = section_name_block_off + 2 * 4 + 4 + 4;
                 section_name_block_off = ReadInt32();
-                sectionWithName = new Dictionary<string, elf_32_shdr>();
+                sectionWithName = new Dictionary<string, Elf32_Shdr>();
                 for (int i = 0; i < elf_header.e_shnum; i++)
                 {
-                    var section = ReadClass<elf_32_shdr>((int)elf_header.e_shoff + (elf_header.e_shentsize * i));
+                    var section = ReadClass<Elf32_Shdr>((int)elf_header.e_shoff + (elf_header.e_shentsize * i));
                     sectionWithName.Add(ReadStringToNull(section_name_block_off + section.sh_name), section);
                 }
             }
@@ -94,13 +94,13 @@ namespace Il2CppDumper
         private bool Searchv21()
         {
             //取.dynamic
-            var dynamic = new elf_32_shdr();
+            var dynamic = new Elf32_Shdr();
             var PT_DYNAMIC = program_table_element.First(x => x.p_type == 2u);
             dynamic.sh_offset = PT_DYNAMIC.p_offset;
             dynamic.sh_size = PT_DYNAMIC.p_filesz;
             //从.dynamic获取_GLOBAL_OFFSET_TABLE_和.init_array
             uint _GLOBAL_OFFSET_TABLE_ = 0;
-            var init_array = new elf_32_shdr();
+            var init_array = new Elf32_Shdr();
             Position = dynamic.sh_offset;
             var dynamicend = dynamic.sh_offset + dynamic.sh_size;
             while (Position < dynamicend)
@@ -208,7 +208,7 @@ namespace Il2CppDumper
                     var datarelro = sectionWithName[".data.rel.ro"];
                     var text = sectionWithName[".text"];
                     var bss = sectionWithName[".bss"];
-                    elf_32_shdr datarelrolocal = null;
+                    Elf32_Shdr datarelrolocal = null;
                     if (sectionWithName.ContainsKey(".data.rel.ro.local"))
                         datarelrolocal = sectionWithName[".data.rel.ro.local"];
                     uint codeRegistration = 0;
@@ -273,7 +273,7 @@ namespace Il2CppDumper
             return false;
         }
 
-        private uint FindPointersAsc(long readCount, elf_32_shdr search, elf_32_shdr range)
+        private uint FindPointersAsc(long readCount, Elf32_Shdr search, Elf32_Shdr range)
         {
             var add = 0;
             var searchend = search.sh_offset + search.sh_size;
@@ -294,7 +294,7 @@ namespace Il2CppDumper
             return 0;
         }
 
-        private uint FindPointersDesc(long readCount, elf_32_shdr search, elf_32_shdr range)
+        private uint FindPointersDesc(long readCount, Elf32_Shdr search, Elf32_Shdr range)
         {
             var add = 0;
             var searchend = search.sh_offset + search.sh_size;
@@ -315,7 +315,7 @@ namespace Il2CppDumper
             return 0;
         }
 
-        private uint FindReference(uint pointer, elf_32_shdr search)
+        private uint FindReference(uint pointer, Elf32_Shdr search)
         {
             var searchend = search.sh_offset + search.sh_size;
             Position = search.sh_offset;

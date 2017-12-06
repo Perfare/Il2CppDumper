@@ -96,9 +96,9 @@ namespace Il2CppDumper
                                         break;
                                     case '1':
                                         {
-                                            Console.Write("Input CodeRegistration(Parameter 0): ");
+                                            Console.Write("Input g_CodeRegistration: ");
                                             var codeRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
-                                            Console.Write("Input MetadataRegistration(Parameter 1): ");
+                                            Console.Write("Input g_MetadataRegistration: ");
                                             var metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
                                             if (isElf)
                                                 il2cpp = new Elf(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, version, metadata.maxmetadataUsages);

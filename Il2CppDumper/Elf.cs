@@ -13,7 +13,7 @@ namespace Il2CppDumper
         private static byte[] ARMFeatureBytes = { 0x1c, 0x0, 0x9f, 0xe5, 0x1c, 0x10, 0x9f, 0xe5, 0x1c, 0x20, 0x9f, 0xe5 };
         private static byte[] X86FeatureBytes1 = { 0x8D, 0x83 };//lea eax, X
         private static byte[] X86FeatureBytes2 = { 0x89, 0x44, 0x24, 0x04, 0x8D, 0x83 };//mov [esp+4], eax and lea eax, X
-        public Dictionary<string, Elf32_Shdr> sectionWithName;
+        public Dictionary<string, Elf32_Shdr> sectionWithName = new Dictionary<string, Elf32_Shdr>();
 
         public Elf(Stream stream, int version, long maxmetadataUsages) : base(stream)
         {
@@ -63,10 +63,9 @@ namespace Il2CppDumper
         {
             try
             {
-                var section_name_block_off = (int)elf_header.e_shoff + (elf_header.e_shentsize * elf_header.e_shtrndx);
-                Position = section_name_block_off + 2 * 4 + 4 + 4;
-                section_name_block_off = ReadInt32();
-                sectionWithName = new Dictionary<string, Elf32_Shdr>();
+                var section_name_off = (int)elf_header.e_shoff + (elf_header.e_shentsize * elf_header.e_shtrndx);
+                Position = section_name_off + 2 * 4 + 4 + 4;//2 * sizeof(Elf32_Word) + sizeof(Elf32_Xword) + sizeof(Elf32_Addr)
+                var section_name_block_off = ReadInt32();
                 for (int i = 0; i < elf_header.e_shnum; i++)
                 {
                     var section = ReadClass<Elf32_Shdr>((int)elf_header.e_shoff + (elf_header.e_shentsize * i));
@@ -168,15 +167,10 @@ namespace Il2CppDumper
                                     Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                                     Position = subaddr + 0x20;
                                     var temp = ReadUInt16();
-                                    uint metadataRegistration;
-                                    if (temp == 0x838D)//lea
+                                    var metadataRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                    if (temp == 0x838B)//mov
                                     {
-                                        metadataRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                    }
-                                    else//mov
-                                    {
-                                        var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                        Position = MapVATR(ptr);
+                                        Position = MapVATR(metadataRegistration);
                                         metadataRegistration = ReadUInt32();
                                     }
                                     Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
@@ -201,74 +195,71 @@ namespace Il2CppDumper
 
         public override bool AdvancedSearch(int methodCount)
         {
-            if (sectionWithName != null)
+            if (sectionWithName.ContainsKey(".data.rel.ro") && sectionWithName.ContainsKey(".text") && sectionWithName.ContainsKey(".bss"))
             {
-                if (sectionWithName.ContainsKey(".data.rel.ro") && sectionWithName.ContainsKey(".text") && sectionWithName.ContainsKey(".bss"))
+                var datarelro = sectionWithName[".data.rel.ro"];
+                var text = sectionWithName[".text"];
+                var bss = sectionWithName[".bss"];
+                Elf32_Shdr datarelrolocal = null;
+                if (sectionWithName.ContainsKey(".data.rel.ro.local"))
+                    datarelrolocal = sectionWithName[".data.rel.ro.local"];
+                uint codeRegistration = 0;
+                uint metadataRegistration = 0;
+                var pmethodPointers = FindPointersAsc(methodCount, datarelro, text);
+                if (pmethodPointers == 0 && datarelrolocal != null)
+                    pmethodPointers = FindPointersAsc(methodCount, datarelrolocal, text);
+                if (pmethodPointers != 0)
                 {
-                    var datarelro = sectionWithName[".data.rel.ro"];
-                    var text = sectionWithName[".text"];
-                    var bss = sectionWithName[".bss"];
-                    Elf32_Shdr datarelrolocal = null;
-                    if (sectionWithName.ContainsKey(".data.rel.ro.local"))
-                        datarelrolocal = sectionWithName[".data.rel.ro.local"];
-                    uint codeRegistration = 0;
-                    uint metadataRegistration = 0;
-                    var pmethodPointers = FindPointersAsc(methodCount, datarelro, text);
-                    if (pmethodPointers == 0 && datarelrolocal != null)
-                        pmethodPointers = FindPointersAsc(methodCount, datarelrolocal, text);
-                    if (pmethodPointers != 0)
+                    codeRegistration = FindReference(pmethodPointers, datarelro);
+                    if (codeRegistration == 0 && datarelrolocal != null)
+                        codeRegistration = FindReference(pmethodPointers, datarelrolocal);
+                    if (codeRegistration == 0)
                     {
-                        codeRegistration = FindReference(pmethodPointers, datarelro);
-                        if (codeRegistration == 0 && datarelrolocal != null)
-                            codeRegistration = FindReference(pmethodPointers, datarelrolocal);
-                        if (codeRegistration == 0)
+                        pmethodPointers = FindPointersDesc(methodCount, datarelro, text);
+                        if (pmethodPointers == 0 && datarelrolocal != null)
+                            pmethodPointers = FindPointersDesc(methodCount, datarelrolocal, text);
+                        if (pmethodPointers != 0)
                         {
-                            pmethodPointers = FindPointersDesc(methodCount, datarelro, text);
-                            if (pmethodPointers == 0 && datarelrolocal != null)
-                                pmethodPointers = FindPointersDesc(methodCount, datarelrolocal, text);
-                            if (pmethodPointers != 0)
-                            {
-                                codeRegistration = FindReference(pmethodPointers, datarelro);
-                                if (codeRegistration == 0 && datarelrolocal != null)
-                                    codeRegistration = FindReference(pmethodPointers, datarelrolocal);
-                            }
+                            codeRegistration = FindReference(pmethodPointers, datarelro);
+                            if (codeRegistration == 0 && datarelrolocal != null)
+                                codeRegistration = FindReference(pmethodPointers, datarelrolocal);
                         }
                     }
-                    var pmetadataUsages = FindPointersAsc(maxmetadataUsages, datarelro, bss);
-                    if (pmetadataUsages == 0 && datarelrolocal != null)
-                        pmetadataUsages = FindPointersAsc(maxmetadataUsages, datarelrolocal, bss);
-                    if (pmetadataUsages != 0)
+                }
+                var pmetadataUsages = FindPointersAsc(maxmetadataUsages, datarelro, bss);
+                if (pmetadataUsages == 0 && datarelrolocal != null)
+                    pmetadataUsages = FindPointersAsc(maxmetadataUsages, datarelrolocal, bss);
+                if (pmetadataUsages != 0)
+                {
+                    metadataRegistration = FindReference(pmetadataUsages, datarelro);
+                    if (metadataRegistration == 0 && datarelrolocal != null)
+                        metadataRegistration = FindReference(pmetadataUsages, datarelrolocal);
+                    if (metadataRegistration == 0)
                     {
-                        metadataRegistration = FindReference(pmetadataUsages, datarelro);
-                        if (metadataRegistration == 0 && datarelrolocal != null)
-                            metadataRegistration = FindReference(pmetadataUsages, datarelrolocal);
-                        if (metadataRegistration == 0)
+                        pmetadataUsages = FindPointersDesc(maxmetadataUsages, datarelro, bss);
+                        if (pmetadataUsages == 0 && datarelrolocal != null)
+                            pmetadataUsages = FindPointersDesc(maxmetadataUsages, datarelrolocal, bss);
+                        if (pmetadataUsages != 0)
                         {
-                            pmetadataUsages = FindPointersDesc(maxmetadataUsages, datarelro, bss);
-                            if (pmetadataUsages == 0 && datarelrolocal != null)
-                                pmetadataUsages = FindPointersDesc(maxmetadataUsages, datarelrolocal, bss);
-                            if (pmetadataUsages != 0)
-                            {
-                                metadataRegistration = FindReference(pmetadataUsages, datarelro);
-                                if (metadataRegistration == 0 && datarelrolocal != null)
-                                    metadataRegistration = FindReference(pmetadataUsages, datarelrolocal);
-                            }
+                            metadataRegistration = FindReference(pmetadataUsages, datarelro);
+                            if (metadataRegistration == 0 && datarelrolocal != null)
+                                metadataRegistration = FindReference(pmetadataUsages, datarelrolocal);
                         }
                     }
-                    if (codeRegistration != 0 && metadataRegistration != 0)
-                    {
-                        codeRegistration -= 8u;
-                        metadataRegistration -= 64u;
-                        Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                        Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                        Init(codeRegistration, metadataRegistration);
-                        return true;
-                    }
                 }
-                else
+                if (codeRegistration != 0 && metadataRegistration != 0)
                 {
-                    Console.WriteLine("ERROR: The necessary section is missing.");
+                    codeRegistration -= 8u;
+                    metadataRegistration -= 64u;
+                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                    Init(codeRegistration, metadataRegistration);
+                    return true;
                 }
+            }
+            else
+            {
+                Console.WriteLine("ERROR: The necessary section is missing.");
             }
             return false;
         }
@@ -331,7 +322,6 @@ namespace Il2CppDumper
 
         private void RelocationProcessing()
         {
-            //relocation
             if (sectionWithName.ContainsKey(".dynsym") && sectionWithName.ContainsKey(".rel.dyn"))
             {
                 var dynsym = sectionWithName[".dynsym"];

@@ -131,6 +131,7 @@ namespace Il2CppDumper
                                     {
                                         var typeDef = metadata.typeDefs[idx];
                                         var isStruct = false;
+                                        var isEnum = false;
                                         var extends = new List<string>();
                                         if (typeDef.parentIndex >= 0)
                                         {
@@ -138,6 +139,8 @@ namespace Il2CppDumper
                                             var parentname = GetTypeName(parent);
                                             if (parentname == "ValueType")
                                                 isStruct = true;
+                                            else if (parentname == "Enum")
+                                                isEnum = true;
                                             else if (parentname != "object")
                                                 extends.Add(parentname);
                                         }
@@ -155,26 +158,39 @@ namespace Il2CppDumper
                                         if (config.dumpattribute && (typeDef.flags & TYPE_ATTRIBUTE_SERIALIZABLE) != 0)
                                             writer.Write("[Serializable]\n");
                                         var visibility = typeDef.flags & TYPE_ATTRIBUTE_VISIBILITY_MASK;
-                                        if (visibility == TYPE_ATTRIBUTE_PUBLIC || visibility == TYPE_ATTRIBUTE_NESTED_PUBLIC)
-                                            writer.Write("public ");
-                                        else if (visibility == TYPE_ATTRIBUTE_NOT_PUBLIC || visibility == TYPE_ATTRIBUTE_NESTED_FAM_AND_ASSEM || visibility == TYPE_ATTRIBUTE_NESTED_ASSEMBLY)
-                                            writer.Write("internal ");
-                                        else if (visibility == TYPE_ATTRIBUTE_NESTED_PRIVATE)
-                                            writer.Write("private ");
-                                        else if (visibility == TYPE_ATTRIBUTE_NESTED_FAMILY)
-                                            writer.Write("protected ");
-                                        else if (visibility == TYPE_ATTRIBUTE_NESTED_FAM_OR_ASSEM)
-                                            writer.Write("protected internal ");
+                                        switch (visibility)
+                                        {
+                                            case TYPE_ATTRIBUTE_PUBLIC:
+                                            case TYPE_ATTRIBUTE_NESTED_PUBLIC:
+                                                writer.Write("public ");
+                                                break;
+                                            case TYPE_ATTRIBUTE_NOT_PUBLIC:
+                                            case TYPE_ATTRIBUTE_NESTED_FAM_AND_ASSEM:
+                                            case TYPE_ATTRIBUTE_NESTED_ASSEMBLY:
+                                                writer.Write("internal ");
+                                                break;
+                                            case TYPE_ATTRIBUTE_NESTED_PRIVATE:
+                                                writer.Write("private ");
+                                                break;
+                                            case TYPE_ATTRIBUTE_NESTED_FAMILY:
+                                                writer.Write("protected ");
+                                                break;
+                                            case TYPE_ATTRIBUTE_NESTED_FAM_OR_ASSEM:
+                                                writer.Write("protected internal ");
+                                                break;
+                                        }
                                         if ((typeDef.flags & TYPE_ATTRIBUTE_ABSTRACT) != 0 && (typeDef.flags & TYPE_ATTRIBUTE_SEALED) != 0)
                                             writer.Write("static ");
                                         else if ((typeDef.flags & TYPE_ATTRIBUTE_INTERFACE) == 0 && (typeDef.flags & TYPE_ATTRIBUTE_ABSTRACT) != 0)
                                             writer.Write("abstract ");
-                                        else if (!isStruct && (typeDef.flags & TYPE_ATTRIBUTE_SEALED) != 0)
+                                        else if (!isStruct && !isEnum && (typeDef.flags & TYPE_ATTRIBUTE_SEALED) != 0)
                                             writer.Write("sealed ");
                                         if ((typeDef.flags & TYPE_ATTRIBUTE_INTERFACE) != 0)
                                             writer.Write("interface ");
                                         else if (isStruct)
                                             writer.Write("struct ");
+                                        else if (isEnum)
+                                            writer.Write("enum ");
                                         else
                                             writer.Write("class ");
                                         writer.Write($"{metadata.GetString(typeDef.nameIndex)}");
@@ -195,16 +211,25 @@ namespace Il2CppDumper
                                                 writer.Write(GetCustomAttribute(pField.customAttributeIndex, "\t"));
                                                 writer.Write("\t");
                                                 var access = pType.attrs & FIELD_ATTRIBUTE_FIELD_ACCESS_MASK;
-                                                if (access == FIELD_ATTRIBUTE_PRIVATE)
-                                                    writer.Write("private ");
-                                                else if (access == FIELD_ATTRIBUTE_PUBLIC)
-                                                    writer.Write("public ");
-                                                else if (access == FIELD_ATTRIBUTE_FAMILY)
-                                                    writer.Write("protected ");
-                                                else if (access == FIELD_ATTRIBUTE_ASSEMBLY || access == FIELD_ATTRIBUTE_FAM_AND_ASSEM)
-                                                    writer.Write("internal ");
-                                                else if (access == FIELD_ATTRIBUTE_FAM_OR_ASSEM)
-                                                    writer.Write("protected internal ");
+                                                switch (access)
+                                                {
+                                                    case FIELD_ATTRIBUTE_PRIVATE:
+                                                        writer.Write("private ");
+                                                        break;
+                                                    case FIELD_ATTRIBUTE_PUBLIC:
+                                                        writer.Write("public ");
+                                                        break;
+                                                    case FIELD_ATTRIBUTE_FAMILY:
+                                                        writer.Write("protected ");
+                                                        break;
+                                                    case FIELD_ATTRIBUTE_ASSEMBLY:
+                                                    case FIELD_ATTRIBUTE_FAM_AND_ASSEM:
+                                                        writer.Write("internal ");
+                                                        break;
+                                                    case FIELD_ATTRIBUTE_FAM_OR_ASSEM:
+                                                        writer.Write("protected internal ");
+                                                        break;
+                                                }
                                                 if ((pType.attrs & FIELD_ATTRIBUTE_LITERAL) != 0)
                                                 {
                                                     writer.Write("const ");
@@ -398,44 +423,52 @@ namespace Il2CppDumper
         private static string GetTypeName(Il2CppType pType)
         {
             string ret;
-            if (pType.type == Il2CppTypeEnum.IL2CPP_TYPE_CLASS || pType.type == Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE)
+            switch (pType.type)
             {
-                var klass = metadata.typeDefs[pType.data.klassIndex];
-                ret = metadata.GetString(klass.nameIndex);
+                case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
+                case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
+                    {
+                        var klass = metadata.typeDefs[pType.data.klassIndex];
+                        ret = metadata.GetString(klass.nameIndex);
+                        break;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
+                    {
+                        var generic_class = il2cpp.MapVATR<Il2CppGenericClass>(pType.data.generic_class);
+                        var pMainDef = metadata.typeDefs[generic_class.typeDefinitionIndex];
+                        ret = metadata.GetString(pMainDef.nameIndex);
+                        var typeNames = new List<string>();
+                        var pInst = il2cpp.MapVATR<Il2CppGenericInst>(generic_class.context.class_inst);
+                        var pointers = il2cpp.GetPointers(pInst.type_argv, (long)pInst.type_argc);
+                        for (uint i = 0; i < pInst.type_argc; ++i)
+                        {
+                            var pOriType = il2cpp.GetIl2CppType(pointers[i]);
+                            typeNames.Add(GetTypeName(pOriType));
+                        }
+                        ret += $"<{string.Join(", ", typeNames)}>";
+                        break;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY:
+                    {
+                        var arrayType = il2cpp.MapVATR<Il2CppArrayType>(pType.data.array);
+                        var type = il2cpp.GetIl2CppType(arrayType.etype);
+                        ret = $"{GetTypeName(type)}[]";
+                        break;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY:
+                    {
+                        var type = il2cpp.GetIl2CppType(pType.data.type);
+                        ret = $"{GetTypeName(type)}[]";
+                        break;
+                    }
+                default:
+                    if ((int)pType.type >= szTypeString.Length)
+                        ret = "unknow";
+                    else
+                        ret = szTypeString[(int)pType.type];
+                    break;
             }
-            else if (pType.type == Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST)
-            {
-                var generic_class = il2cpp.MapVATR<Il2CppGenericClass>(pType.data.generic_class);
-                var pMainDef = metadata.typeDefs[generic_class.typeDefinitionIndex];
-                ret = metadata.GetString(pMainDef.nameIndex);
-                var typeNames = new List<string>();
-                var pInst = il2cpp.MapVATR<Il2CppGenericInst>(generic_class.context.class_inst);
-                var pointers = il2cpp.GetPointers(pInst.type_argv, (long)pInst.type_argc);
-                for (uint i = 0; i < pInst.type_argc; ++i)
-                {
-                    var pOriType = il2cpp.GetIl2CppType(pointers[i]);
-                    typeNames.Add(GetTypeName(pOriType));
-                }
-                ret += $"<{string.Join(", ", typeNames)}>";
-            }
-            else if (pType.type == Il2CppTypeEnum.IL2CPP_TYPE_ARRAY)
-            {
-                var arrayType = il2cpp.MapVATR<Il2CppArrayType>(pType.data.array);
-                var type = il2cpp.GetIl2CppType(arrayType.etype);
-                ret = $"{GetTypeName(type)}[]";
-            }
-            else if (pType.type == Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY)
-            {
-                var type = il2cpp.GetIl2CppType(pType.data.type);
-                ret = $"{GetTypeName(type)}[]";
-            }
-            else
-            {
-                if ((int)pType.type >= szTypeString.Length)
-                    ret = "unknow";
-                else
-                    ret = szTypeString[(int)pType.type];
-            }
+
             return ret;
         }
 
@@ -474,16 +507,25 @@ namespace Il2CppDumper
             if (methodModifiers.TryGetValue(methodDef, out string str))
                 return str;
             var access = methodDef.flags & METHOD_ATTRIBUTE_MEMBER_ACCESS_MASK;
-            if (access == METHOD_ATTRIBUTE_PRIVATE)
-                str += "private ";
-            else if (access == METHOD_ATTRIBUTE_PUBLIC)
-                str += "public ";
-            else if (access == METHOD_ATTRIBUTE_FAMILY)
-                str += "protected ";
-            else if (access == METHOD_ATTRIBUTE_ASSEM || access == METHOD_ATTRIBUTE_FAM_AND_ASSEM)
-                str += "internal ";
-            else if (access == METHOD_ATTRIBUTE_FAM_OR_ASSEM)
-                str += "protected internal ";
+            switch (access)
+            {
+                case METHOD_ATTRIBUTE_PRIVATE:
+                    str += "private ";
+                    break;
+                case METHOD_ATTRIBUTE_PUBLIC:
+                    str += "public ";
+                    break;
+                case METHOD_ATTRIBUTE_FAMILY:
+                    str += "protected ";
+                    break;
+                case METHOD_ATTRIBUTE_ASSEM:
+                case METHOD_ATTRIBUTE_FAM_AND_ASSEM:
+                    str += "internal ";
+                    break;
+                case METHOD_ATTRIBUTE_FAM_OR_ASSEM:
+                    str += "protected internal ";
+                    break;
+            }
             if ((methodDef.flags & METHOD_ATTRIBUTE_STATIC) != 0)
                 str += "static ";
             if ((methodDef.flags & METHOD_ATTRIBUTE_ABSTRACT) != 0)

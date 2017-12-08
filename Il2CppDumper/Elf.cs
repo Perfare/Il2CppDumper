@@ -105,21 +105,20 @@ namespace Il2CppDumper
             while (Position < dynamicend)
             {
                 var tag = ReadInt32();
-                if (tag == 3)//DT_PLTGOT
+                switch (tag)
                 {
-                    _GLOBAL_OFFSET_TABLE_ = ReadUInt32();
-                }
-                else if (tag == 25)//DT_INIT_ARRAY
-                {
-                    init_array.sh_offset = MapVATR(ReadUInt32());
-                }
-                else if (tag == 27)//DT_INIT_ARRAYSZ
-                {
-                    init_array.sh_size = ReadUInt32();
-                }
-                else
-                {
-                    Position += 4;//skip
+                    case 3:
+                        _GLOBAL_OFFSET_TABLE_ = ReadUInt32();
+                        break;
+                    case 25:
+                        init_array.sh_offset = MapVATR(ReadUInt32());
+                        break;
+                    case 27:
+                        init_array.sh_size = ReadUInt32();
+                        break;
+                    default:
+                        Position += 4;
+                        break;
                 }
             }
             if (_GLOBAL_OFFSET_TABLE_ != 0)

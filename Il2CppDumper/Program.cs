@@ -117,8 +117,6 @@ namespace Il2CppDumper
                                 //Script
                                 var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create), new UTF8Encoding(false));
                                 scriptwriter.WriteLine(Resource1.ida);
-                                //string
-                                var stringwriter = new StreamWriter(new FileStream("string.txt", FileMode.Create), new UTF8Encoding(false));
                                 //dump image;
                                 for (var imageIndex = 0; imageIndex < metadata.uiImageCount; imageIndex++)
                                 {
@@ -263,7 +261,6 @@ namespace Il2CppDumper
                                                                 multi = metadata.ReadSByte();
                                                                 break;
                                                             case Il2CppTypeEnum.IL2CPP_TYPE_CHAR:
-                                                                //multi = metadata.ReadChar();
                                                                 multi = BitConverter.ToChar(metadata.ReadBytes(2), 0);
                                                                 break;
                                                             case Il2CppTypeEnum.IL2CPP_TYPE_U2:
@@ -296,7 +293,12 @@ namespace Il2CppDumper
                                                                 break;
                                                         }
                                                         if (multi is string)
-                                                            writer.Write($" = \"{multi}\"");
+                                                            writer.Write($" = \"{ToEscapedString((string)multi)}\"");
+                                                        else if (multi is char)
+                                                        {
+                                                            var c = (int)(char)multi;
+                                                            writer.Write($" = '\\x{c:x}'");
+                                                        }
                                                         else if (multi != null)
                                                             writer.Write($" = {multi}");
                                                     }
@@ -378,7 +380,7 @@ namespace Il2CppDumper
                                                 {
                                                     writer.Write("); // 0x{0:X}\n", il2cpp.methodPointers[methodDef.methodIndex]);
                                                     //Script
-                                                    var name = ToUnicodeString(metadata.GetString(typeDef.nameIndex) + "$$" + metadata.GetString(methodDef.nameIndex));
+                                                    var name = ToEscapedString(metadata.GetString(typeDef.nameIndex) + "$$" + metadata.GetString(methodDef.nameIndex));
                                                     scriptwriter.WriteLine($"SetMethod(0x{il2cpp.methodPointers[methodDef.methodIndex]:X}, '{name}')");
                                                     //
                                                 }
@@ -401,8 +403,7 @@ namespace Il2CppDumper
                                 {
                                     foreach (var i in metadata.stringLiteralsdic)
                                     {
-                                        scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:X}, '{ToUnicodeString(i.Value)}')");
-                                        stringwriter.WriteLine($"0x{il2cpp.metadataUsages[i.Key]:X} | {i.Value}");
+                                        scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:X}, r'{ToEscapedString(i.Value)}')");
                                     }
                                 }
                                 //--MakeFunction
@@ -414,7 +415,6 @@ namespace Il2CppDumper
                                 //
                                 writer.Close();
                                 scriptwriter.Close();
-                                stringwriter.Close();
                                 Console.WriteLine("Done !");
                                 break;
                         }
@@ -495,22 +495,6 @@ namespace Il2CppDumper
             return sb.ToString();
         }
 
-        private static string ToUnicodeString(string str)
-        {
-            StringBuilder strResult = new StringBuilder();
-            if (!string.IsNullOrEmpty(str))
-            {
-                for (int i = 0; i < str.Length; i++)
-                {
-                    strResult.Append("\\u");
-                    var c = ((int)str[i]).ToString("x4");
-                    c = c.Replace("000a", @"005c\u0072").Replace("000d", @"005c\u006e");
-                    strResult.Append(c);
-                }
-            }
-            return strResult.ToString();
-        }
-
         private static string GetModifiers(Il2CppMethodDefinition methodDef)
         {
             if (methodModifiers.TryGetValue(methodDef, out string str))
@@ -559,6 +543,57 @@ namespace Il2CppDumper
                 str += "extern ";
             methodModifiers.Add(methodDef, str);
             return str;
+        }
+
+        private static string ToEscapedString(string s)
+        {
+            var re = new StringBuilder(s.Length);
+            foreach (var c in s)
+            {
+                switch (c)
+                {
+                    case '\'':
+                        re.Append(@"\'");
+                        break;
+                    case '"':
+                        re.Append(@"\""");
+                        break;
+                    case '\t':
+                        re.Append(@"\t");
+                        break;
+                    case '\n':
+                        re.Append(@"\n");
+                        break;
+                    case '\r':
+                        re.Append(@"\r");
+                        break;
+                    case '\f':
+                        re.Append(@"\f");
+                        break;
+                    case '\b':
+                        re.Append(@"\b");
+                        break;
+                    case '\\':
+                        re.Append(@"\\");
+                        break;
+                    case '\0':
+                        re.Append(@"\0");
+                        break;
+                    case '\u0085':
+                        re.Append(@"\u0085");
+                        break;
+                    case '\u2028':
+                        re.Append(@"\u2028");
+                        break;
+                    case '\u2029':
+                        re.Append(@"\u2029");
+                        break;
+                    default:
+                        re.Append(c);
+                        break;
+                }
+            }
+            return re.ToString();
         }
     }
 }

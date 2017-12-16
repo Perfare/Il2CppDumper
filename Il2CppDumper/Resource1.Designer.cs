@@ -19,7 +19,7 @@ namespace Il2CppDumper {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resource1 {
@@ -61,26 +61,26 @@ namespace Il2CppDumper {
         }
         
         /// <summary>
-        ///   查找类似 import idaapi
+        ///   查找类似 #encoding: utf-8
+        ///import idaapi
         ///import random
-        ///import os, sys
-        ///reload(sys)
-        ///sys.setdefaultencoding(&apos;utf-8&apos;)
         ///
         ///def SetString(addr, comm):
         ///	global index
         ///	name = &quot;StringLiteral_&quot; + str(index);
         ///	ret = idc.MakeNameEx(addr, name, SN_NOWARN)
-        ///	st = str(comm.decode(&apos;unicode-escape&apos;))
-        ///	idc.MakeComm(addr, st)
+        ///	idc.MakeComm(addr, comm)
         ///	index += 1
         ///
         ///def SetMethod(addr, name):
         ///	i = 0
-        ///	st = str(name.decode(&apos;unicode-escape&apos;))
-        ///	ret = idc.MakeNameEx(addr, st, SN_NOWARN)
+        ///	ret = idc.MakeNameEx(addr, name, SN_NOWARN)
         ///	while ret == 0 and i &lt; 5: # failed
-        ///		new_name = st + &apos;_&apos; + str(random.randint(0, 99 [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        ///		new_name = name + &apos;_&apos; + str(random.randint(0, 99999))
+        ///		ret = idc.MakeNameEx(addr, str(new_name), SN_NOWARN)
+        ///		i = i + 1
+        ///
+        ///index = 1 的本地化字符串。
         /// </summary>
         internal static string ida {
             get {

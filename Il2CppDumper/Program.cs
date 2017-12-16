@@ -112,12 +112,13 @@ namespace Il2CppDumper
                                     default:
                                         return;
                                 }
-                                var writer = new StreamWriter(new FileStream("dump.cs", FileMode.Create), Encoding.UTF8);
+                                var writer = new StreamWriter(new FileStream("dump.cs", FileMode.Create), new UTF8Encoding(false));
                                 Console.WriteLine("Dumping...");
                                 //Script
-                                var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create), Encoding.UTF8);
+                                var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create), new UTF8Encoding(false));
                                 scriptwriter.WriteLine(Resource1.ida);
-                                //
+                                //string
+                                var stringwriter = new StreamWriter(new FileStream("string.txt", FileMode.Create), new UTF8Encoding(false));
                                 //dump image;
                                 for (var imageIndex = 0; imageIndex < metadata.uiImageCount; imageIndex++)
                                 {
@@ -378,7 +379,7 @@ namespace Il2CppDumper
                                                     writer.Write("); // 0x{0:X}\n", il2cpp.methodPointers[methodDef.methodIndex]);
                                                     //Script
                                                     var name = ToUnicodeString(metadata.GetString(typeDef.nameIndex) + "$$" + metadata.GetString(methodDef.nameIndex));
-                                                    scriptwriter.WriteLine($"SetMethod(0x{il2cpp.methodPointers[methodDef.methodIndex]:x}, '{name}')");
+                                                    scriptwriter.WriteLine($"SetMethod(0x{il2cpp.methodPointers[methodDef.methodIndex]:X}, '{name}')");
                                                     //
                                                 }
                                                 else
@@ -400,12 +401,20 @@ namespace Il2CppDumper
                                 {
                                     foreach (var i in metadata.stringLiteralsdic)
                                     {
-                                        scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:x}, '{ToUnicodeString(i.Value)}')");
+                                        scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:X}, '{ToUnicodeString(i.Value)}')");
+                                        stringwriter.WriteLine($"0x{il2cpp.metadataUsages[i.Key]:X} | {i.Value}");
                                     }
+                                }
+                                //--MakeFunction
+                                var orderedPointers = il2cpp.methodPointers.OrderBy(x => x).ToArray();
+                                for (int i = 0; i < orderedPointers.Length - 1; i++)
+                                {
+                                    scriptwriter.WriteLine($"idc.MakeFunction(0x{orderedPointers[i]:X}, 0x{orderedPointers[i + 1]:X})");
                                 }
                                 //
                                 writer.Close();
                                 scriptwriter.Close();
+                                stringwriter.Close();
                                 Console.WriteLine("Done !");
                                 break;
                         }

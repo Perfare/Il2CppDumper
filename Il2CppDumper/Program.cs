@@ -407,10 +407,14 @@ namespace Il2CppDumper
                                     }
                                 }
                                 //--MakeFunction
-                                var orderedPointers = il2cpp.methodPointers.OrderBy(x => x).ToArray();
-                                for (int i = 0; i < orderedPointers.Length - 1; i++)
+                                var orderedPointers = il2cpp.methodPointers.ToList();
+                                orderedPointers.AddRange(il2cpp.genericMethodPointers.Where(x => x > 0));
+                                orderedPointers.AddRange(il2cpp.invokerPointers);
+                                orderedPointers.AddRange(il2cpp.customAttributeGenerators);
+                                orderedPointers = orderedPointers.OrderBy(x => x).ToList();
+                                for (int i = 0; i < orderedPointers.Count - 1; i++)
                                 {
-                                    scriptwriter.WriteLine($"idc.MakeFunction(0x{orderedPointers[i]:X}, 0x{orderedPointers[i + 1]:X})");
+                                    scriptwriter.WriteLine($"MakeFunction(0x{orderedPointers[i]:X}, 0x{orderedPointers[i + 1]:X})");
                                 }
                                 //
                                 writer.Close();

@@ -137,6 +137,12 @@ def SetMethod(addr, name):
 		ret = idc.MakeNameEx(addr, str(new_name), SN_NOWARN)
 		i = i + 1
 
+def MakeFunction(start, end):
+	if GetFunctionAttr(start, FUNCATTR_START) == 0xFFFFFFFF:
+		idc.MakeFunction(start, end)
+	else:
+		idc.SetFunctionEnd(start, end)
+
 index = 1</value>
   </data>
 </root>

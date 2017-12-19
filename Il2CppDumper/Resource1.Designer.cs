@@ -80,7 +80,8 @@ namespace Il2CppDumper {
         ///		ret = idc.MakeNameEx(addr, str(new_name), SN_NOWARN)
         ///		i = i + 1
         ///
-        ///index = 1 的本地化字符串。
+        ///def MakeFunction(start, end):
+        ///	if GetFuncti [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         internal static string ida {
             get {

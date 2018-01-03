@@ -77,7 +77,7 @@ namespace Il2CppDumper
         private bool Searchv21()
         {
             var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
-            var addrs = ReadClassArray<uint>(__mod_init_func.offset, (int)__mod_init_func.size / 4);
+            var addrs = ReadClassArray<uint>(__mod_init_func.offset, __mod_init_func.size / 4u);
             foreach (var a in addrs)
             {
                 if (a > 0)
@@ -118,7 +118,7 @@ namespace Il2CppDumper
         private bool Searchv16()
         {
             var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
-            var addrs = ReadClassArray<uint>(__mod_init_func.offset, (int)__mod_init_func.size / 4);
+            var addrs = ReadClassArray<uint>(__mod_init_func.offset, __mod_init_func.size / 4u);
             foreach (var a in addrs)
             {
                 if (a > 0)
@@ -276,6 +276,131 @@ namespace Il2CppDumper
                 if (ReadUInt32() == pointer)
                 {
                     return (uint)Position - search.offset + search.address;//MapRATV
+                }
+            }
+            return 0;
+        }
+
+        public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
+        {
+            var __const = sections.First(x => x.section_name == "__const");
+            var __const2 = sections.Last(x => x.section_name == "__const");
+            var __text = sections.First(x => x.section_name == "__text");
+            var __common = sections.First(x => x.section_name == "__common");
+            uint codeRegistration = 0;
+            uint metadataRegistration = 0;
+            codeRegistration = FindCodeRegistration(methodCount, __const, __const2, __text);
+            if (codeRegistration == 0)
+            {
+                codeRegistration = FindCodeRegistration(methodCount, __const2, __const2, __text);
+            }
+            if (version == 16)
+            {
+                Console.WriteLine("WARNING: Version 16 can only get CodeRegistration");
+                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                return false;
+            }
+            metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, maxmetadataUsages, __const, __const2, __common);
+            if (metadataRegistration == 0)
+            {
+                metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, maxmetadataUsages, __const2, __const2, __common);
+            }
+            if (codeRegistration != 0 && metadataRegistration != 0)
+            {
+                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                Init(codeRegistration, metadataRegistration);
+                return true;
+            }
+            return false;
+        }
+
+        private uint FindCodeRegistration(int count, MachoSection search, MachoSection search2, MachoSection range)
+        {
+            var searchend = search.offset + search.size;
+            var rangeend = range.address + range.size;
+            var search2end = search2 == null ? 0 : search2.offset + search2.size;
+            Position = search.offset;
+            while (Position < searchend)
+            {
+                var add = Position;
+                if (ReadUInt32() == count)
+                {
+                    try
+                    {
+                        uint pointers = MapVATR(ReadUInt32());
+                        if (pointers >= search.offset && pointers <= searchend)
+                        {
+                            var np = Position;
+                            var temp = ReadClassArray<uint>(pointers, count);
+                            var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
+                            if (r == -1)
+                            {
+                                return (uint)add - search.offset + search.address;//MapRATV
+                            }
+                            Position = np;
+                        }
+                        else if (search2 != null && pointers >= search2.offset && pointers <= search2end)
+                        {
+                            var np = Position;
+                            var temp = ReadClassArray<uint>(pointers, count);
+                            var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
+                            if (r == -1)
+                            {
+                                return (uint)add - search.offset + search.address;//MapRATV
+                            }
+                            Position = np;
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                }
+            }
+            return 0;
+        }
+
+        private uint FindMetadataRegistration(int typeDefinitionsCount, long maxmetadataUsages, MachoSection search, MachoSection search2, MachoSection range)
+        {
+            var searchend = search.offset + search.size;
+            var rangeend = range.address + range.size;
+            var search2end = search2 == null ? 0 : search2.offset + search2.size;
+            Position = search.offset;
+            while (Position < searchend)
+            {
+                var add = Position;
+                if (ReadUInt32() == typeDefinitionsCount)
+                {
+                    try
+                    {
+                        var np = Position;
+                        Position += 8;
+                        uint pointers = MapVATR(ReadUInt32());
+                        if (pointers >= search.offset && pointers <= searchend)
+                        {
+                            var temp = ReadClassArray<uint>(pointers, maxmetadataUsages);
+                            var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
+                            if (r == -1)
+                            {
+                                return (uint)add - 48u - search.offset + search.address;//MapRATV
+                            }
+                        }
+                        else if (search2 != null && pointers >= search2.offset && pointers <= search2end)
+                        {
+                            var temp = ReadClassArray<uint>(pointers, maxmetadataUsages);
+                            var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
+                            if (r == -1)
+                            {
+                                return (uint)add - 48u - search.offset + search.address;//MapRATV
+                            }
+                        }
+                        Position = np;
+                    }
+                    catch
+                    {
+
+                    }
                 }
             }
             return 0;

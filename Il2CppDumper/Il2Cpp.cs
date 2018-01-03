@@ -21,8 +21,8 @@ namespace Il2CppDumper
         protected long maxmetadataUsages;
 
         public Func<bool> Search;
-
         public abstract bool AdvancedSearch(int methodCount);
+        public abstract bool PlusSearch(int methodCount, int typeDefinitionsCount);
 
         public abstract dynamic MapVATR(dynamic uiAddr);
 

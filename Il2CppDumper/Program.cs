@@ -67,13 +67,14 @@ namespace Il2CppDumper
                                 is64bit = true;
                                 goto case 0xFEEDFACE;
                             case 0xFEEDFACE:// 32-bit mach object file
-                                Console.WriteLine("Select Mode: 1.Manual 2.Auto 3.Auto(Advanced)");
+                                Console.WriteLine("Select Mode: 1.Manual 2.Auto 3.Auto(Advanced) 4.Auto(Plus)");
                                 key = Console.ReadKey(true);
                                 var version = config.forceil2cppversion ? config.forceversion : metadata.version;
                                 switch (key.KeyChar)
                                 {
                                     case '2':
                                     case '3':
+                                    case '4':
                                         if (isElf)
                                             il2cpp = new Elf(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
                                         else if (is64bit)
@@ -84,7 +85,9 @@ namespace Il2CppDumper
                                         {
                                             if (key.KeyChar == '2' ?
                                                 !il2cpp.Search() :
-                                                !il2cpp.AdvancedSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0)))
+                                                key.KeyChar == '3' ?
+                                                !il2cpp.AdvancedSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0)) :
+                                                !il2cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length))
                                             {
                                                 throw new Exception();
                                             }

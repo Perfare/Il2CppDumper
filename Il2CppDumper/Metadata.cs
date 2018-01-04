@@ -26,7 +26,7 @@ namespace Il2CppDumper
         public int[] interfaceIndices;
         public SortedDictionary<uint, string> stringLiteralsdic;
         public long maxmetadataUsages;
-
+        private int[] nestedTypeIndices;
 
         public Metadata(Stream stream) : base(stream)
         {
@@ -66,6 +66,8 @@ namespace Il2CppDumper
             propertyDefs = ReadClassArray<Il2CppPropertyDefinition>(pMetadataHdr.propertiesOffset, pMetadataHdr.propertiesCount / MySizeOf(typeof(Il2CppPropertyDefinition)));
             //GetInterfaceFromIndex
             interfaceIndices = ReadClassArray<int>(pMetadataHdr.interfacesOffset, pMetadataHdr.interfacesCount / 4);
+            //GetNestedTypeFromIndex
+            nestedTypeIndices = ReadClassArray<int>(pMetadataHdr.nestedTypesOffset, pMetadataHdr.nestedTypesCount / 4);
             if (version > 16)
             {
                 //Il2CppStringLiteral
@@ -162,6 +164,11 @@ namespace Il2CppDumper
                 }
             }
             return size;
+        }
+
+        public int GetNestedTypeFromIndex(int index)
+        {
+            return nestedTypeIndices[index];
         }
     }
 }

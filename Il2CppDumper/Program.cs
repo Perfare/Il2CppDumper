@@ -9,10 +9,10 @@ using static Il2CppDumper.DefineConstants;
 
 namespace Il2CppDumper
 {
-    class Program
+    static class Program
     {
-        private static Metadata metadata;
-        private static Il2Cpp il2cpp;
+        public static Metadata metadata;
+        public static Il2Cpp il2cpp;
         private static Config config;
         private static Dictionary<Il2CppMethodDefinition, string> methodModifiers = new Dictionary<Il2CppMethodDefinition, string>();
 
@@ -111,12 +111,12 @@ namespace Il2CppDumper
                                                 il2cpp = new Macho(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, version, metadata.maxmetadataUsages);
                                             break;
                                         }
-
                                     default:
                                         return;
                                 }
                                 var writer = new StreamWriter(new FileStream("dump.cs", FileMode.Create), new UTF8Encoding(false));
                                 Console.WriteLine("Dumping...");
+                                DummyDllCreator.AssemblyCreat();
                                 //Script
                                 var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create), new UTF8Encoding(false));
                                 scriptwriter.WriteLine(Resource1.ida);
@@ -207,12 +207,12 @@ namespace Il2CppDumper
                                             for (var i = typeDef.fieldStart; i < fieldEnd; ++i)
                                             {
                                                 //dump_field(i, idx, i - typeDef.fieldStart);
-                                                var pField = metadata.fieldDefs[i];
-                                                var pType = il2cpp.types[pField.typeIndex];
-                                                var pDefault = metadata.GetFieldDefaultFromIndex(i);
-                                                writer.Write(GetCustomAttribute(pField.customAttributeIndex, "\t"));
+                                                var fieldDef = metadata.fieldDefs[i];
+                                                var fieldType = il2cpp.types[fieldDef.typeIndex];
+                                                var fieldDefault = metadata.GetFieldDefaultFromIndex(i);
+                                                writer.Write(GetCustomAttribute(fieldDef.customAttributeIndex, "\t"));
                                                 writer.Write("\t");
-                                                var access = pType.attrs & FIELD_ATTRIBUTE_FIELD_ACCESS_MASK;
+                                                var access = fieldType.attrs & FIELD_ATTRIBUTE_FIELD_ACCESS_MASK;
                                                 switch (access)
                                                 {
                                                     case FIELD_ATTRIBUTE_PRIVATE:
@@ -232,24 +232,24 @@ namespace Il2CppDumper
                                                         writer.Write("protected internal ");
                                                         break;
                                                 }
-                                                if ((pType.attrs & FIELD_ATTRIBUTE_LITERAL) != 0)
+                                                if ((fieldType.attrs & FIELD_ATTRIBUTE_LITERAL) != 0)
                                                 {
                                                     writer.Write("const ");
                                                 }
                                                 else
                                                 {
-                                                    if ((pType.attrs & FIELD_ATTRIBUTE_STATIC) != 0)
+                                                    if ((fieldType.attrs & FIELD_ATTRIBUTE_STATIC) != 0)
                                                         writer.Write("static ");
-                                                    if ((pType.attrs & FIELD_ATTRIBUTE_INIT_ONLY) != 0)
+                                                    if ((fieldType.attrs & FIELD_ATTRIBUTE_INIT_ONLY) != 0)
                                                         writer.Write("readonly ");
                                                 }
-                                                writer.Write($"{GetTypeName(pType)} {metadata.GetString(pField.nameIndex)}");
-                                                if (pDefault != null && pDefault.dataIndex != -1)
+                                                writer.Write($"{GetTypeName(fieldType)} {metadata.GetString(fieldDef.nameIndex)}");
+                                                if (fieldDefault != null && fieldDefault.dataIndex != -1)
                                                 {
-                                                    var pointer = metadata.GetDefaultValueFromIndex(pDefault.dataIndex);
+                                                    var pointer = metadata.GetDefaultValueFromIndex(fieldDefault.dataIndex);
                                                     if (pointer > 0)
                                                     {
-                                                        var pTypeToUse = il2cpp.types[pDefault.typeIndex];
+                                                        var pTypeToUse = il2cpp.types[fieldDefault.typeIndex];
                                                         metadata.Position = pointer;
                                                         object multi = null;
                                                         switch (pTypeToUse.type)
@@ -320,27 +320,27 @@ namespace Il2CppDumper
                                             var propertyEnd = typeDef.propertyStart + typeDef.property_count;
                                             for (var i = typeDef.propertyStart; i < propertyEnd; ++i)
                                             {
-                                                var propertydef = metadata.propertyDefs[i];
-                                                writer.Write(GetCustomAttribute(propertydef.customAttributeIndex, "\t"));
+                                                var propertyDef = metadata.propertyDefs[i];
+                                                writer.Write(GetCustomAttribute(propertyDef.customAttributeIndex, "\t"));
                                                 writer.Write("\t");
-                                                if (propertydef.get >= 0)
+                                                if (propertyDef.get >= 0)
                                                 {
-                                                    var methodDef = metadata.methodDefs[typeDef.methodStart + propertydef.get];
+                                                    var methodDef = metadata.methodDefs[typeDef.methodStart + propertyDef.get];
                                                     writer.Write(GetModifiers(methodDef));
                                                     var pReturnType = il2cpp.types[methodDef.returnType];
-                                                    writer.Write($"{GetTypeName(pReturnType)} {metadata.GetString(propertydef.nameIndex)} {{ ");
+                                                    writer.Write($"{GetTypeName(pReturnType)} {metadata.GetString(propertyDef.nameIndex)} {{ ");
                                                 }
-                                                else if (propertydef.set > 0)
+                                                else if (propertyDef.set > 0)
                                                 {
-                                                    var methodDef = metadata.methodDefs[typeDef.methodStart + propertydef.set];
+                                                    var methodDef = metadata.methodDefs[typeDef.methodStart + propertyDef.set];
                                                     writer.Write(GetModifiers(methodDef));
                                                     var pParam = metadata.parameterDefs[methodDef.parameterStart];
                                                     var pType = il2cpp.types[pParam.typeIndex];
-                                                    writer.Write($"{GetTypeName(pType)} {metadata.GetString(propertydef.nameIndex)} {{ ");
+                                                    writer.Write($"{GetTypeName(pType)} {metadata.GetString(propertyDef.nameIndex)} {{ ");
                                                 }
-                                                if (propertydef.get >= 0)
+                                                if (propertyDef.get >= 0)
                                                     writer.Write("get; ");
-                                                if (propertydef.set >= 0)
+                                                if (propertyDef.set >= 0)
                                                     writer.Write("set; ");
                                                 writer.Write("}");
                                                 writer.Write("\n");

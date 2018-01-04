@@ -32,6 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Mono.Cecil, Version=0.9.6.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\Mono.Cecil.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web.Extensions" />
@@ -45,6 +49,7 @@
   <ItemGroup>
     <Compile Include="Attributes.cs" />
     <Compile Include="Config.cs" />
+    <Compile Include="DummyDllCreator.cs" />
     <Compile Include="Elf.cs" />
     <Compile Include="Il2CppClass.cs" />
     <Compile Include="Il2Cpp.cs" />

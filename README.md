@@ -8,6 +8,7 @@
 * 支持Metadata版本16, 20, 21, 22, 23, 24
 * 导出包括types, fields, properties, methods, attributes
 * 自动生成IDA脚本(重命名methodName和添加stringLiteral注释)
+* 生成DummyDll
 
 ## 使用说明
 运行Il2CppDumper.exe并依次选择il2cpp的可执行文件（ELF或者Mach-O文件）和global-metadata.dat文件，然后选择运行的模式，将生成dump.cs文件和script.py脚本
@@ -29,8 +30,8 @@
 需要安装IDA所需的python。在IDA中File-Script file选择script.py运行即可，会重命名methodName和添加stringLiteral注释
 
 ### 关于DummyDll
-利用Mono.Cecil生成的仿制Dll，完善中，目前输出：types, fields, properties, methods  
-只支持使用[dnSpy](https://github.com/0xd4d/dnSpy)打开
+利用Mono.Cecil生成的仿制Dll，推荐使用[dnSpy](https://github.com/0xd4d/dnSpy)打开  
+部分功能完善中
 
 ### 关于config.json
 `dumpmethod`，`dumpfield`，`dumpproperty`，`dumpattribute`，`dumpfieldoffset`  

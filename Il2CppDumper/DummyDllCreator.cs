@@ -177,7 +177,7 @@ namespace Il2CppDumper
                     {
                         var propertyDef = metadata.propertyDefs[i];
                         var propertyName = metadata.GetString(propertyDef.nameIndex);
-                        TypeReference propertyType;
+                        TypeReference propertyType = null;
                         MethodDefinition GetMethod = null;
                         MethodDefinition SetMethod = null;
                         if (propertyDef.get >= 0)
@@ -185,14 +185,17 @@ namespace Il2CppDumper
                             GetMethod = methodDefinitionDic[typeDef.methodStart + propertyDef.get];
                             propertyType = GetMethod.ReturnType;
                         }
-                        else
+                        if (propertyDef.set >= 0)
                         {
                             SetMethod = methodDefinitionDic[typeDef.methodStart + propertyDef.set];
-                            propertyType = SetMethod.Parameters[0].ParameterType;
+                            if (propertyType == null)
+                                propertyType = SetMethod.Parameters[0].ParameterType;
                         }
-                        var propertyDefinition = new PropertyDefinition(propertyName, (PropertyAttributes)propertyDef.attrs, propertyType);
-                        propertyDefinition.GetMethod = GetMethod;
-                        propertyDefinition.SetMethod = SetMethod;
+                        var propertyDefinition = new PropertyDefinition(propertyName, (PropertyAttributes)propertyDef.attrs, propertyType)
+                        {
+                            GetMethod = GetMethod,
+                            SetMethod = SetMethod
+                        };
                         typeDefinition.Properties.Add(propertyDefinition);
                     }
                 }

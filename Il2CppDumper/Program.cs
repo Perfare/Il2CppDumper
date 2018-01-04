@@ -30,7 +30,9 @@ namespace Il2CppDumper
                 {
                     try
                     {
+                        Console.WriteLine("Initializing...");
                         metadata = new Metadata(new MemoryStream(File.ReadAllBytes(ofd.FileName)));
+                        Console.Clear();
                         //判断il2cpp的magic
                         var il2cppmagic = BitConverter.ToUInt32(il2cppfile, 0);
                         var isElf = false;
@@ -116,7 +118,6 @@ namespace Il2CppDumper
                                 }
                                 var writer = new StreamWriter(new FileStream("dump.cs", FileMode.Create), new UTF8Encoding(false));
                                 Console.WriteLine("Dumping...");
-                                DummyDllCreator.AssemblyCreat();
                                 //Script
                                 var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create), new UTF8Encoding(false));
                                 scriptwriter.WriteLine(Resource1.ida);
@@ -209,7 +210,7 @@ namespace Il2CppDumper
                                                 //dump_field(i, idx, i - typeDef.fieldStart);
                                                 var fieldDef = metadata.fieldDefs[i];
                                                 var fieldType = il2cpp.types[fieldDef.typeIndex];
-                                                var fieldDefault = metadata.GetFieldDefaultFromIndex(i);
+                                                var fieldDefault = metadata.GetFieldDefaultValueFromIndex(i);
                                                 writer.Write(GetCustomAttribute(fieldDef.customAttributeIndex, "\t"));
                                                 writer.Write("\t");
                                                 var access = fieldType.attrs & FIELD_ATTRIBUTE_FIELD_ACCESS_MASK;
@@ -422,6 +423,9 @@ namespace Il2CppDumper
                                 //
                                 writer.Close();
                                 scriptwriter.Close();
+                                Console.WriteLine("Done !");
+                                Console.WriteLine("Create DummyDll...");
+                                DummyDllCreator.AssemblyCreat();
                                 Console.WriteLine("Done !");
                                 break;
                         }

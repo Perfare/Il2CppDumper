@@ -17,6 +17,7 @@ namespace Il2CppDumper
         public Il2CppParameterDefinition[] parameterDefs;
         public Il2CppFieldDefinition[] fieldDefs;
         private Il2CppFieldDefaultValue[] fieldDefaultValues;
+        private Il2CppParameterDefaultValue[] parameterDefaultValues;
         public Il2CppPropertyDefinition[] propertyDefs;
         public Il2CppCustomAttributeTypeRange[] attributesInfos;
         private Il2CppStringLiteral[] stringLiterals;
@@ -62,6 +63,8 @@ namespace Il2CppDumper
             fieldDefs = ReadClassArray<Il2CppFieldDefinition>(pMetadataHdr.fieldsOffset, pMetadataHdr.fieldsCount / MySizeOf(typeof(Il2CppFieldDefinition)));
             //FieldDefaultValue
             fieldDefaultValues = ReadClassArray<Il2CppFieldDefaultValue>(pMetadataHdr.fieldDefaultValuesOffset, pMetadataHdr.fieldDefaultValuesCount / MySizeOf(typeof(Il2CppFieldDefaultValue)));
+            //ParameterDefaultValue
+            parameterDefaultValues = ReadClassArray<Il2CppParameterDefaultValue>(pMetadataHdr.parameterDefaultValuesOffset, pMetadataHdr.parameterDefaultValuesCount / MySizeOf(typeof(Il2CppParameterDefaultValue)));
             //PropertyDefinition
             propertyDefs = ReadClassArray<Il2CppPropertyDefinition>(pMetadataHdr.propertiesOffset, pMetadataHdr.propertiesCount / MySizeOf(typeof(Il2CppPropertyDefinition)));
             //GetInterfaceFromIndex
@@ -87,9 +90,14 @@ namespace Il2CppDumper
             }
         }
 
-        public Il2CppFieldDefaultValue GetFieldDefaultFromIndex(int idx)
+        public Il2CppFieldDefaultValue GetFieldDefaultValueFromIndex(int idx)
         {
             return fieldDefaultValues.FirstOrDefault(x => x.fieldIndex == idx);
+        }
+
+        public Il2CppParameterDefaultValue GetParameterDefaultValueFromIndex(int idx)
+        {
+            return parameterDefaultValues.FirstOrDefault(x => x.parameterIndex == idx);
         }
 
         public int GetDefaultValueFromIndex(int idx)

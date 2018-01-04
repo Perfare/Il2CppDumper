@@ -6,7 +6,7 @@
 ## 功能
 * 支持ELF(arm, x86), Mach-O(32bit, 64bit)
 * 支持Metadata版本16, 20, 21, 22, 23, 24
-* 导出包括types, parent, fields, properties, methods, attributes
+* 导出包括types, fields, properties, methods, attributes
 * 自动生成IDA脚本(重命名methodName和添加stringLiteral注释)
 
 ## 使用说明
@@ -18,13 +18,19 @@
 #### Auto
 原理是通过函数的特征字节找到il2cpp_codegen_register函数并获取传入il2cpp::vm::MetadataCache::Register中的参数1（CodeRegistration）和参数2（MetadataRegistration）。不过由于不同编译器编译出来的结果有差异，对于不常见的形式将无法正常工作。
 #### Auto(Advanced)
-支持Metadata 20及以后的版本，在16版本下只能获取到CodeRegistration地址，能够处理几乎所有包括Auto模式不能处理的文件，不过仍然会有无法处理的文件。
+支持Metadata 20及以后的版本，在16版本下只能获取到CodeRegistration地址，利用指针特征进行搜索，通用性比Auto强。
+#### Auto(Plus)
+支持Metadata 20及以后的版本，在16版本下只能获取到CodeRegistration地址，以metadata的数据作为依据，指针特征作为判读条件进行搜索，对于某些文件处理的比Auto(Advanced)好。
 
 ### 关于dump.cs
 作为文本文件打开即可
 
 ### 关于script.py
 需要安装IDA所需的python。在IDA中File-Script file选择script.py运行即可，会重命名methodName和添加stringLiteral注释
+
+### 关于DummyDll
+利用Mono.Cecil生成的仿制Dll，完善中，目前输出：types, fields, properties, methods  
+只支持使用[dnSpy](https://github.com/0xd4d/dnSpy)打开
 
 ### 关于config.json
 `dumpmethod`，`dumpfield`，`dumpproperty`，`dumpattribute`，`dumpfieldoffset`  

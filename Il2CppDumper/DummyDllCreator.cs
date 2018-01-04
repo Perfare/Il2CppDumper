@@ -40,16 +40,30 @@ namespace Il2CppDumper
                     if (typeName == "<Module>")
                     {
                         typeDefinitionDic.Add(idx, null);
+                        continue;
+                    }
+                    TypeDefinition typeDefinition = null;
+                    if (typeDef.declaringTypeIndex != -1)//nested types
+                    {
+                        typeDefinition = typeDefinitionDic[idx];
                     }
                     else
                     {
-                        var typeDefinition = new TypeDefinition(namespaceName, typeName, (TypeAttributes)typeDef.flags);
+                        typeDefinition = new TypeDefinition(namespaceName, typeName, (TypeAttributes)typeDef.flags);
                         moduleDefinition.Types.Add(typeDefinition);
                         typeDefinitionDic.Add(idx, typeDefinition);
                     }
+                    //nestedtype
+                    for (int i = 0; i < typeDef.nested_type_count; i++)
+                    {
+                        var nestedIndex = metadata.GetNestedTypeFromIndex(typeDef.nestedTypesStart + i);
+                        var nestedTypeDef = metadata.typeDefs[nestedIndex];
+                        var nestedTypeDefinition = new TypeDefinition(metadata.GetString(nestedTypeDef.namespaceIndex), metadata.GetString(nestedTypeDef.nameIndex), (TypeAttributes)nestedTypeDef.flags);
+                        typeDefinition.NestedTypes.Add(nestedTypeDefinition);
+                        typeDefinitionDic.Add(nestedIndex, nestedTypeDefinition);
+                    }
                 }
             }
-            //遍历第二遍，处理parent, nested_type, interfaces, 
             for (var idx = 0; idx < metadata.uiNumTypes; ++idx)
             {
                 var typeDef = metadata.typeDefs[idx];
@@ -60,13 +74,6 @@ namespace Il2CppDumper
                     var parentType = il2cpp.types[typeDef.parentIndex];
                     var parentTypeRef = typeDefinition.Module.GetTypeReference(parentType);
                     typeDefinition.BaseType = parentTypeRef;
-                }
-                //nested_type
-                for (int i = 0; i < typeDef.nested_type_count; i++)
-                {
-                    var nestedIndex = metadata.GetNestedTypeFromIndex(typeDef.nestedTypesStart + i);
-                    var nestedTypeDef = typeDefinitionDic[nestedIndex];
-                    typeDefinition.NestedTypes.Add(nestedTypeDef);
                 }
                 //interfaces
                 for (int i = 0; i < typeDef.interfaces_count; i++)
@@ -185,8 +192,8 @@ namespace Il2CppDumper
                 case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
                 case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
                     {
-                        var typeReference = typeDefinitionDic[pType.data.klassIndex].GetElementType();
-                        return moduleDefinition.Import(typeReference);
+                        var typeDefinition = typeDefinitionDic[pType.data.klassIndex];
+                        return moduleDefinition.Import(typeDefinition);
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY:
                     {

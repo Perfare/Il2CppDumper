@@ -30,7 +30,7 @@
 需要安装IDA所需的python。在IDA中File-Script file选择script.py运行即可，会重命名methodName和添加stringLiteral注释
 
 ### 关于DummyDll
-利用Mono.Cecil生成的仿制Dll，推荐使用[dnSpy](https://github.com/0xd4d/dnSpy)打开  
+利用Mono.Cecil生成的仿制Dll，可以使用反编译工具打开进行查看  
 部分功能完善中
 
 ### 关于config.json

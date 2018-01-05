@@ -135,7 +135,7 @@ namespace Il2CppDumper
                         var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition);//dummy
                         typeDefinition.Methods.Add(methodDefinition);
                         methodDefinition.ReturnType = methodDefinition.GetTypeReference(methodReturnType);
-                        if (methodDefinition.HasBody)
+                        if (methodDefinition.HasBody && typeDefinition.BaseType?.FullName != "System.MulticastDelegate")
                         {
                             var ilprocessor = methodDefinition.Body.GetILProcessor();
                             ilprocessor.Append(ilprocessor.Create(OpCodes.Nop));
@@ -159,6 +159,11 @@ namespace Il2CppDumper
                                     parameterDefinition.Constant = GetDefaultValue(parameterDefault.dataIndex, parameterDefault.typeIndex);
                                 }
                             }
+                        }
+                        if (methodDef.genericContainerIndex >= 0 && !methodDefinition.HasGenericParameters)
+                        {
+                            var genericParameter = new GenericParameter("T", methodDefinition);
+                            methodDefinition.GenericParameters.Add(genericParameter);
                         }
                         /*//address
                         if (methodDef.methodIndex >= 0)
@@ -290,14 +295,15 @@ namespace Il2CppDumper
                         }
                         if (memberReference is MethodDefinition methodDefinition)
                         {
-                            genericParameter = new GenericParameter(methodDefinition.DeclaringType);
+                            var genericName = "T" + (methodDefinition.DeclaringType.GenericParameters.Count + 1);
+                            genericParameter = new GenericParameter(genericName, methodDefinition.DeclaringType);
                             methodDefinition.DeclaringType.GenericParameters.Add(genericParameter);
-                            methodDefinition.GenericParameters.Add(genericParameter);
                             genericParameterDic.Add(pType, genericParameter);
                             return genericParameter;
                         }
                         var typeDefinition = (TypeDefinition)memberReference;
-                        genericParameter = new GenericParameter(typeDefinition);
+                        var genericName2 = "T" + (typeDefinition.GenericParameters.Count + 1);
+                        genericParameter = new GenericParameter(genericName2, typeDefinition);
                         typeDefinition.GenericParameters.Add(genericParameter);
                         genericParameterDic.Add(pType, genericParameter);
                         return genericParameter;
@@ -309,7 +315,8 @@ namespace Il2CppDumper
                             return genericParameter;
                         }
                         var methodDefinition = (MethodDefinition)memberReference;
-                        genericParameter = new GenericParameter(methodDefinition);
+                        var genericName = "T" + (methodDefinition.GenericParameters.Count + 1);
+                        genericParameter = new GenericParameter(genericName, methodDefinition);
                         methodDefinition.GenericParameters.Add(genericParameter);
                         genericParameterDic.Add(pType, genericParameter);
                         return genericParameter;

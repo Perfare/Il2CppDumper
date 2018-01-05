@@ -203,6 +203,17 @@ namespace Il2CppDumper
                         };
                         typeDefinition.Properties.Add(propertyDefinition);
                     }
+                    //
+                    if (typeDef.genericContainerIndex >= 0 && !typeDefinition.HasGenericParameters)
+                    {
+                        var str = typeDefinition.FullName.Substring(typeDefinition.FullName.IndexOf("`") + 1, 1);
+                        var count = int.Parse(str);
+                        for (int i = 1; i <= count; i++)
+                        {
+                            var genericParameter = new GenericParameter("T" + i, typeDefinition);
+                            typeDefinition.GenericParameters.Add(genericParameter);
+                        }
+                    }
                 }
             }
             Directory.CreateDirectory("DummyDll");

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    class Metadata : MyBinaryReader
+    public class Metadata : MyBinaryReader
     {
         private Il2CppGlobalMetadataHeader pMetadataHdr;
         public int uiImageCount;

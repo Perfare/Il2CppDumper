@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    class MyBinaryReader : BinaryReader
+    public class MyBinaryReader : BinaryReader
     {
         public MyBinaryReader(Stream stream) : base(stream) { }
 

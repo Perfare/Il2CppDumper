@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Il2CppDumper
 {
-    internal static class ArmHelper
+    static class ArmHelper
     {
         public static uint decodeMov(byte[] asm)
         {

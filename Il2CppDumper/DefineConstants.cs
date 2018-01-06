@@ -1,6 +1,6 @@
 ﻿namespace Il2CppDumper
 {
-    internal static class DefineConstants
+    static class DefineConstants
     {
         /*
          * Field Attributes (21.1.5).

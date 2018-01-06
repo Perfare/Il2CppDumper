@@ -8,7 +8,7 @@ using Mono.Cecil.Cil;
 
 namespace Il2CppDumper
 {
-    class DummyAssemblyCreator
+    public class DummyAssemblyCreator
     {
         Metadata metadata;
         Il2Cpp il2cpp;

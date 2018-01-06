@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    class MachoSection
+    public class MachoSection
     {
         public string section_name;
         public uint address;
@@ -14,7 +14,7 @@ namespace Il2CppDumper
         public uint end;
     }
 
-    class MachoSection64bit
+    public class MachoSection64bit
     {
         public string section_name;
         public ulong address;
@@ -23,7 +23,7 @@ namespace Il2CppDumper
         public ulong end;
     }
 
-    class Fat
+    public class Fat
     {
         public uint file_offset;
         public uint size;

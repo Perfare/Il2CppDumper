@@ -7,7 +7,7 @@ using static Il2CppDumper.ArmHelper;
 
 namespace Il2CppDumper
 {
-    class Macho : Il2Cpp
+    public class Macho : Il2Cpp
     {
         private List<MachoSection> sections = new List<MachoSection>();
         private static byte[] FeatureBytes1 = { 0x0, 0x22 };//MOVS R2, #0

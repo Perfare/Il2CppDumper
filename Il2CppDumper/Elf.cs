@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    class Elf : Il2Cpp
+    public class Elf : Il2Cpp
     {
         private Elf32_Ehdr elf_header;
         private Elf32_Phdr[] program_table_element;

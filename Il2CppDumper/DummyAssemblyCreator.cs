@@ -308,7 +308,7 @@ namespace Il2CppDumper
                         return new PointerType(GetTypeReference(memberReference, type));
                     }
                 default:
-                    throw new Exception("NOT_IMPLEMENTED");
+                    return moduleDefinition.Import(typeof(Object));
             }
         }
 

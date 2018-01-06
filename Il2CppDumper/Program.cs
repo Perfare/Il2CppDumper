@@ -383,7 +383,7 @@ namespace Il2CppDumper
                                                 if (methodDef.methodIndex >= 0)
                                                 {
                                                     writer.Write("); // 0x{0:X}\n", il2cpp.methodPointers[methodDef.methodIndex]);
-                                                    //Script
+                                                    //Script - method
                                                     var name = ToEscapedString(metadata.GetString(typeDef.nameIndex) + "$$" + metadata.GetString(methodDef.nameIndex));
                                                     scriptwriter.WriteLine($"SetMethod(0x{il2cpp.methodPointers[methodDef.methodIndex]:X}, '{name}')");
                                                     //
@@ -402,7 +402,7 @@ namespace Il2CppDumper
                                         writer.Write("*/\n}\n");
                                     }
                                 }
-                                //Script
+                                //Script - stringLiteral
                                 if (il2cpp.version > 16)
                                 {
                                     foreach (var i in metadata.stringLiteralsdic)
@@ -410,7 +410,7 @@ namespace Il2CppDumper
                                         scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:X}, r'{ToEscapedString(i.Value)}')");
                                     }
                                 }
-                                //--MakeFunction
+                                //Script - MakeFunction
                                 var orderedPointers = il2cpp.methodPointers.ToList();
                                 orderedPointers.AddRange(il2cpp.genericMethodPointers.Where(x => x > 0));
                                 orderedPointers.AddRange(il2cpp.invokerPointers);

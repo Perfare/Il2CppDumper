@@ -17,7 +17,7 @@ namespace Il2CppDumper
         Dictionary<int, MethodDefinition> methodDefinitionDic = new Dictionary<int, MethodDefinition>();
         Dictionary<Il2CppType, GenericParameter> genericParameterDic = new Dictionary<Il2CppType, GenericParameter>();
 
-        //TODO attributes(可能无法实现？), event
+        //TODO attribute, genericContainer
         public DummyAssemblyCreator(Metadata metadata, Il2Cpp il2cpp)
         {
             this.metadata = metadata;
@@ -25,48 +25,48 @@ namespace Il2CppDumper
             //创建程序集，同时创建所有类
             foreach (var imageDef in metadata.imageDefs)
             {
-                var assemblyName = new AssemblyNameDefinition(metadata.GetString(imageDef.nameIndex).Replace(".dll", ""), new Version("3.7.1.6"));
-                var assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, metadata.GetString(imageDef.nameIndex), ModuleKind.Dll);
+                var assemblyName = new AssemblyNameDefinition(metadata.GetStringFromIndex(imageDef.nameIndex).Replace(".dll", ""), new Version("3.7.1.6"));
+                var assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, metadata.GetStringFromIndex(imageDef.nameIndex), ModuleKind.Dll);
                 Assemblies.Add(assemblyDefinition);
                 var moduleDefinition = assemblyDefinition.MainModule;
                 var typeEnd = imageDef.typeStart + imageDef.typeCount;
-                for (var idx = imageDef.typeStart; idx < typeEnd; ++idx)
+                for (var index = imageDef.typeStart; index < typeEnd; ++index)
                 {
-                    var typeDef = metadata.typeDefs[idx];
-                    var namespaceName = metadata.GetString(typeDef.namespaceIndex);
-                    var typeName = metadata.GetString(typeDef.nameIndex);
+                    var typeDef = metadata.typeDefs[index];
+                    var namespaceName = metadata.GetStringFromIndex(typeDef.namespaceIndex);
+                    var typeName = metadata.GetStringFromIndex(typeDef.nameIndex);
                     if (typeName == "<Module>")
                     {
-                        typeDefinitionDic.Add(idx, null);
+                        typeDefinitionDic.Add(index, null);
                         continue;
                     }
                     TypeDefinition typeDefinition = null;
                     if (typeDef.declaringTypeIndex != -1)//nested types
                     {
-                        typeDefinition = typeDefinitionDic[idx];
+                        typeDefinition = typeDefinitionDic[index];
                     }
                     else
                     {
                         typeDefinition = new TypeDefinition(namespaceName, typeName, (TypeAttributes)typeDef.flags);
                         moduleDefinition.Types.Add(typeDefinition);
-                        typeDefinitionDic.Add(idx, typeDefinition);
+                        typeDefinitionDic.Add(index, typeDefinition);
                     }
                     //nestedtype
                     for (int i = 0; i < typeDef.nested_type_count; i++)
                     {
-                        var nestedIndex = metadata.GetNestedTypeFromIndex(typeDef.nestedTypesStart + i);
+                        var nestedIndex = metadata.nestedTypeIndices[typeDef.nestedTypesStart + i];
                         var nestedTypeDef = metadata.typeDefs[nestedIndex];
-                        var nestedTypeDefinition = new TypeDefinition(metadata.GetString(nestedTypeDef.namespaceIndex), metadata.GetString(nestedTypeDef.nameIndex), (TypeAttributes)nestedTypeDef.flags);
+                        var nestedTypeDefinition = new TypeDefinition(metadata.GetStringFromIndex(nestedTypeDef.namespaceIndex), metadata.GetStringFromIndex(nestedTypeDef.nameIndex), (TypeAttributes)nestedTypeDef.flags);
                         typeDefinition.NestedTypes.Add(nestedTypeDefinition);
                         typeDefinitionDic.Add(nestedIndex, nestedTypeDefinition);
                     }
                 }
             }
             //先单独处理，因为不知道会不会有问题
-            for (var idx = 0; idx < metadata.uiNumTypes; ++idx)
+            for (var index = 0; index < metadata.uiNumTypes; ++index)
             {
-                var typeDef = metadata.typeDefs[idx];
-                var typeDefinition = typeDefinitionDic[idx];
+                var typeDef = metadata.typeDefs[index];
+                var typeDefinition = typeDefinitionDic[index];
                 //parent
                 if (typeDef.parentIndex >= 0)
                 {
@@ -89,17 +89,17 @@ namespace Il2CppDumper
                 var assemblyDefinition = Assemblies[imageIndex];
                 var moduleDefinition = assemblyDefinition.MainModule;
                 var typeEnd = imageDef.typeStart + imageDef.typeCount;
-                for (var idx = imageDef.typeStart; idx < typeEnd; ++idx)
+                for (var index = imageDef.typeStart; index < typeEnd; ++index)
                 {
-                    var typeDef = metadata.typeDefs[idx];
-                    var typeDefinition = typeDefinitionDic[idx];
+                    var typeDef = metadata.typeDefs[index];
+                    var typeDefinition = typeDefinitionDic[index];
                     //field
                     var fieldEnd = typeDef.fieldStart + typeDef.field_count;
                     for (var i = typeDef.fieldStart; i < fieldEnd; ++i)
                     {
                         var fieldDef = metadata.fieldDefs[i];
                         var fieldType = il2cpp.types[fieldDef.typeIndex];
-                        var fieldName = metadata.GetString(fieldDef.nameIndex);
+                        var fieldName = metadata.GetStringFromIndex(fieldDef.nameIndex);
                         var fieldTypeRef = GetTypeReference(typeDefinition, fieldType);
                         var fieldDefinition = new FieldDefinition(fieldName, (FieldAttributes)fieldType.attrs, fieldTypeRef);
                         typeDefinition.Fields.Add(fieldDefinition);
@@ -119,7 +119,7 @@ namespace Il2CppDumper
                     {
                         var methodDef = metadata.methodDefs[i];
                         var methodReturnType = il2cpp.types[methodDef.returnType];
-                        var methodName = metadata.GetString(methodDef.nameIndex);
+                        var methodName = metadata.GetStringFromIndex(methodDef.nameIndex);
                         var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition);//dummy
                         typeDefinition.Methods.Add(methodDefinition);
                         methodDefinition.ReturnType = GetTypeReference(methodDefinition, methodReturnType);
@@ -133,7 +133,7 @@ namespace Il2CppDumper
                         for (var j = 0; j < methodDef.parameterCount; ++j)
                         {
                             var pParam = metadata.parameterDefs[methodDef.parameterStart + j];
-                            var parameterName = metadata.GetString(pParam.nameIndex);
+                            var parameterName = metadata.GetStringFromIndex(pParam.nameIndex);
                             var parameterType = il2cpp.types[pParam.typeIndex];
                             var parameterTypeRef = GetTypeReference(methodDefinition, parameterType);
                             var parameterDefinition = new ParameterDefinition(parameterName, (ParameterAttributes)parameterType.attrs, parameterTypeRef);
@@ -148,6 +148,7 @@ namespace Il2CppDumper
                                 }
                             }
                         }
+                        //TODO 可能有多个泛型参数？
                         if (methodDef.genericContainerIndex >= 0 && !methodDefinition.HasGenericParameters)
                         {
                             var genericParameter = new GenericParameter("T", methodDefinition);
@@ -159,7 +160,7 @@ namespace Il2CppDumper
                     for (var i = typeDef.propertyStart; i < propertyEnd; ++i)
                     {
                         var propertyDef = metadata.propertyDefs[i];
-                        var propertyName = metadata.GetString(propertyDef.nameIndex);
+                        var propertyName = metadata.GetStringFromIndex(propertyDef.nameIndex);
                         TypeReference propertyType = null;
                         MethodDefinition GetMethod = null;
                         MethodDefinition SetMethod = null;
@@ -180,6 +181,24 @@ namespace Il2CppDumper
                             SetMethod = SetMethod
                         };
                         typeDefinition.Properties.Add(propertyDefinition);
+                    }
+                    //event
+                    var eventEnd = typeDef.eventStart + typeDef.event_count;
+                    for (var i = typeDef.eventStart; i < eventEnd; ++i)
+                    {
+                        var eventDef = metadata.eventDefs[i];
+                        var eventName = metadata.GetStringFromIndex(eventDef.nameIndex);
+                        var eventType = il2cpp.types[eventDef.typeIndex];
+                        var eventTypeRef = GetTypeReference(typeDefinition, eventType);
+                        var eventDefinition = new EventDefinition(eventName, (EventAttributes)eventType.attrs, eventTypeRef);
+                        if (eventDef.add >= 0)
+                            eventDefinition.AddMethod = methodDefinitionDic[typeDef.methodStart + eventDef.add];
+                        if (eventDef.remove >= 0)
+                            eventDefinition.RemoveMethod = methodDefinitionDic[typeDef.methodStart + eventDef.remove];
+                        if (eventDef.raise >= 0)
+                            eventDefinition.InvokeMethod = methodDefinitionDic[typeDef.methodStart + eventDef.raise];
+                        typeDefinition.Events.Add(eventDefinition);
+
                     }
                     //TODO 需要一个更好的方法来处理？
                     if (typeDef.genericContainerIndex >= 0 && !typeDefinition.HasGenericParameters)

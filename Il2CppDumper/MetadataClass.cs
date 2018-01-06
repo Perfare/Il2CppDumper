@@ -259,4 +259,16 @@ namespace Il2CppDumper
         public int typeIndex;
         public int dataIndex;
     }
+
+    public class Il2CppEventDefinition
+    {
+        public int nameIndex;
+        public int typeIndex;
+        public int add;
+        public int remove;
+        public int raise;
+        public int customAttributeIndex;
+        [Version(Min = 20)]
+        public uint token;
+    }
 }

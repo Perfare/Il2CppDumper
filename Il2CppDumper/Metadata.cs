@@ -27,7 +27,8 @@ namespace Il2CppDumper
         public int[] interfaceIndices;
         public SortedDictionary<uint, string> stringLiteralsdic;
         public long maxmetadataUsages;
-        private int[] nestedTypeIndices;
+        public int[] nestedTypeIndices;
+        public Il2CppEventDefinition[] eventDefs;
 
         public Metadata(Stream stream) : base(stream)
         {
@@ -53,24 +54,26 @@ namespace Il2CppDumper
             uiImageCount = pMetadataHdr.imagesCount / MySizeOf(typeof(Il2CppImageDefinition));
             uiNumTypes = pMetadataHdr.typeDefinitionsCount / MySizeOf(typeof(Il2CppTypeDefinition));
             imageDefs = ReadClassArray<Il2CppImageDefinition>(pMetadataHdr.imagesOffset, uiImageCount);
-            //TypeDefinition
+            //GetTypeDefinitionFromIndex
             typeDefs = ReadClassArray<Il2CppTypeDefinition>(pMetadataHdr.typeDefinitionsOffset, uiNumTypes);
-            //MethodDefinition
+            //GetMethodDefinitionFromIndex
             methodDefs = ReadClassArray<Il2CppMethodDefinition>(pMetadataHdr.methodsOffset, pMetadataHdr.methodsCount / MySizeOf(typeof(Il2CppMethodDefinition)));
-            //ParameterDefinition
+            //GetParameterDefinitionFromIndex
             parameterDefs = ReadClassArray<Il2CppParameterDefinition>(pMetadataHdr.parametersOffset, pMetadataHdr.parametersCount / MySizeOf(typeof(Il2CppParameterDefinition)));
-            //FieldDefinition
+            //GetFieldDefinitionFromIndex
             fieldDefs = ReadClassArray<Il2CppFieldDefinition>(pMetadataHdr.fieldsOffset, pMetadataHdr.fieldsCount / MySizeOf(typeof(Il2CppFieldDefinition)));
             //FieldDefaultValue
             fieldDefaultValues = ReadClassArray<Il2CppFieldDefaultValue>(pMetadataHdr.fieldDefaultValuesOffset, pMetadataHdr.fieldDefaultValuesCount / MySizeOf(typeof(Il2CppFieldDefaultValue)));
             //ParameterDefaultValue
             parameterDefaultValues = ReadClassArray<Il2CppParameterDefaultValue>(pMetadataHdr.parameterDefaultValuesOffset, pMetadataHdr.parameterDefaultValuesCount / MySizeOf(typeof(Il2CppParameterDefaultValue)));
-            //PropertyDefinition
+            //GetPropertyDefinitionFromIndex
             propertyDefs = ReadClassArray<Il2CppPropertyDefinition>(pMetadataHdr.propertiesOffset, pMetadataHdr.propertiesCount / MySizeOf(typeof(Il2CppPropertyDefinition)));
             //GetInterfaceFromIndex
             interfaceIndices = ReadClassArray<int>(pMetadataHdr.interfacesOffset, pMetadataHdr.interfacesCount / 4);
             //GetNestedTypeFromIndex
             nestedTypeIndices = ReadClassArray<int>(pMetadataHdr.nestedTypesOffset, pMetadataHdr.nestedTypesCount / 4);
+            //GetEventDefinitionFromIndex
+            eventDefs = ReadClassArray<Il2CppEventDefinition>(pMetadataHdr.eventsOffset, pMetadataHdr.eventsCount / MySizeOf(typeof(Il2CppEventDefinition)));
             if (version > 16)
             {
                 //Il2CppStringLiteral
@@ -90,24 +93,24 @@ namespace Il2CppDumper
             }
         }
 
-        public Il2CppFieldDefaultValue GetFieldDefaultValueFromIndex(int idx)
+        public Il2CppFieldDefaultValue GetFieldDefaultValueFromIndex(int index)
         {
-            return fieldDefaultValues.FirstOrDefault(x => x.fieldIndex == idx);
+            return fieldDefaultValues.FirstOrDefault(x => x.fieldIndex == index);
         }
 
-        public Il2CppParameterDefaultValue GetParameterDefaultValueFromIndex(int idx)
+        public Il2CppParameterDefaultValue GetParameterDefaultValueFromIndex(int index)
         {
-            return parameterDefaultValues.FirstOrDefault(x => x.parameterIndex == idx);
+            return parameterDefaultValues.FirstOrDefault(x => x.parameterIndex == index);
         }
 
-        public int GetDefaultValueFromIndex(int idx)
+        public int GetDefaultValueFromIndex(int index)
         {
-            return pMetadataHdr.fieldAndParameterDefaultValueDataOffset + idx;
+            return pMetadataHdr.fieldAndParameterDefaultValueDataOffset + index;
         }
 
-        public string GetString(int idx)
+        public string GetStringFromIndex(int index)
         {
-            return ReadStringToNull(pMetadataHdr.stringOffset + idx);
+            return ReadStringToNull(pMetadataHdr.stringOffset + index);
         }
 
         private string GetStringLiteralFromIndex(uint index)
@@ -172,11 +175,6 @@ namespace Il2CppDumper
                 }
             }
             return size;
-        }
-
-        public int GetNestedTypeFromIndex(int index)
-        {
-            return nestedTypeIndices[index];
         }
     }
 }

@@ -49,7 +49,7 @@
   <ItemGroup>
     <Compile Include="Attributes.cs" />
     <Compile Include="Config.cs" />
-    <Compile Include="DummyDllCreator.cs" />
+    <Compile Include="DummyAssemblyCreator.cs" />
     <Compile Include="Elf.cs" />
     <Compile Include="Il2CppClass.cs" />
     <Compile Include="Il2Cpp.cs" />

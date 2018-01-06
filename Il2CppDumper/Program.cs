@@ -9,7 +9,7 @@ using static Il2CppDumper.DefineConstants;
 
 namespace Il2CppDumper
 {
-    static class Program
+    class Program
     {
         public static Metadata metadata;
         public static Il2Cpp il2cpp;
@@ -425,8 +425,20 @@ namespace Il2CppDumper
                                 scriptwriter.Close();
                                 Console.WriteLine("Done !");
                                 Console.WriteLine("Create DummyDll...");
-                                DummyDllCreator.AssemblyCreat();
+                                //DummyDll
+                                if (Directory.Exists("DummyDll"))
+                                    Directory.Delete("DummyDll", true);
+                                Directory.CreateDirectory("DummyDll");
+                                Directory.SetCurrentDirectory("DummyDll");
+                                var dummy = new DummyAssemblyCreator(metadata, il2cpp);
+                                foreach (var assembly in dummy.Assemblies)
+                                {
+                                    var stream = new MemoryStream();
+                                    assembly.Write(stream);
+                                    File.WriteAllBytes(assembly.MainModule.Name, stream.ToArray());
+                                }
                                 Console.WriteLine("Done !");
+                                //
                                 break;
                         }
                     }

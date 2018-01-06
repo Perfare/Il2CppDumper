@@ -8,29 +8,26 @@ using Mono.Cecil.Cil;
 
 namespace Il2CppDumper
 {
-    static class DummyDllCreator
+    class DummyAssemblyCreator
     {
-        static Metadata metadata = Program.metadata;
-        static Il2Cpp il2cpp = Program.il2cpp;
-        static List<AssemblyDefinition> assemblyDefinitions = new List<AssemblyDefinition>();
-        static Dictionary<long, TypeDefinition> typeDefinitionDic = new Dictionary<long, TypeDefinition>();
-        static Dictionary<int, MethodDefinition> methodDefinitionDic = new Dictionary<int, MethodDefinition>();
-        static Dictionary<Il2CppType, GenericParameter> genericParameterDic = new Dictionary<Il2CppType, GenericParameter>();
+        Metadata metadata;
+        Il2Cpp il2cpp;
+        public List<AssemblyDefinition> Assemblies = new List<AssemblyDefinition>();
+        Dictionary<long, TypeDefinition> typeDefinitionDic = new Dictionary<long, TypeDefinition>();
+        Dictionary<int, MethodDefinition> methodDefinitionDic = new Dictionary<int, MethodDefinition>();
+        Dictionary<Il2CppType, GenericParameter> genericParameterDic = new Dictionary<Il2CppType, GenericParameter>();
 
         //TODO attributes(可能无法实现？), event
-        public static void AssemblyCreat()
+        public DummyAssemblyCreator(Metadata metadata, Il2Cpp il2cpp)
         {
-            if (Directory.Exists("DummyDll"))
-                Directory.Delete("DummyDll", true);
-            //var Il2CppDummyDll = AssemblyDefinition.ReadAssembly("Il2CppDummyDll.dll");
-            //var AddressAttribute = Il2CppDummyDll.MainModule.Types.First(x => x.Name == "AddressAttribute").Methods.First();
-            //var FieldOffsetAttribute = Il2CppDummyDll.MainModule.Types.First(x => x.Name == "FieldOffsetAttribute").Methods.First();
+            this.metadata = metadata;
+            this.il2cpp = il2cpp;
             //创建程序集，同时创建所有类
             foreach (var imageDef in metadata.imageDefs)
             {
                 var assemblyName = new AssemblyNameDefinition(metadata.GetString(imageDef.nameIndex).Replace(".dll", ""), new Version("3.7.1.6"));
                 var assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, metadata.GetString(imageDef.nameIndex), ModuleKind.Dll);
-                assemblyDefinitions.Add(assemblyDefinition);
+                Assemblies.Add(assemblyDefinition);
                 var moduleDefinition = assemblyDefinition.MainModule;
                 var typeEnd = imageDef.typeStart + imageDef.typeCount;
                 for (var idx = imageDef.typeStart; idx < typeEnd; ++idx)
@@ -74,14 +71,14 @@ namespace Il2CppDumper
                 if (typeDef.parentIndex >= 0)
                 {
                     var parentType = il2cpp.types[typeDef.parentIndex];
-                    var parentTypeRef = typeDefinition.GetTypeReference(parentType);
+                    var parentTypeRef = GetTypeReference(typeDefinition, parentType);
                     typeDefinition.BaseType = parentTypeRef;
                 }
                 //interfaces
                 for (int i = 0; i < typeDef.interfaces_count; i++)
                 {
                     var interfaceType = il2cpp.types[metadata.interfaceIndices[typeDef.interfacesStart + i]];
-                    var interfaceTypeRef = typeDefinition.GetTypeReference(interfaceType);
+                    var interfaceTypeRef = GetTypeReference(typeDefinition, interfaceType);
                     typeDefinition.Interfaces.Add(interfaceTypeRef);
                 }
             }
@@ -89,7 +86,7 @@ namespace Il2CppDumper
             for (var imageIndex = 0; imageIndex < metadata.uiImageCount; imageIndex++)
             {
                 var imageDef = metadata.imageDefs[imageIndex];
-                var assemblyDefinition = assemblyDefinitions[imageIndex];
+                var assemblyDefinition = Assemblies[imageIndex];
                 var moduleDefinition = assemblyDefinition.MainModule;
                 var typeEnd = imageDef.typeStart + imageDef.typeCount;
                 for (var idx = imageDef.typeStart; idx < typeEnd; ++idx)
@@ -103,7 +100,7 @@ namespace Il2CppDumper
                         var fieldDef = metadata.fieldDefs[i];
                         var fieldType = il2cpp.types[fieldDef.typeIndex];
                         var fieldName = metadata.GetString(fieldDef.nameIndex);
-                        var fieldTypeRef = typeDefinition.GetTypeReference(fieldType);
+                        var fieldTypeRef = GetTypeReference(typeDefinition, fieldType);
                         var fieldDefinition = new FieldDefinition(fieldName, (FieldAttributes)fieldType.attrs, fieldTypeRef);
                         typeDefinition.Fields.Add(fieldDefinition);
                         //fieldDefault
@@ -115,15 +112,6 @@ namespace Il2CppDumper
                                 fieldDefinition.Constant = GetDefaultValue(fieldDefault.dataIndex, fieldDefault.typeIndex);
                             }
                         }
-                        /*//fieldOffset
-                        var fieldOffset = il2cpp.GetFieldOffsetFromIndex(idx, i - typeDef.fieldStart, i);
-                        if (fieldOffset > 0)
-                        {
-                            var customAttribute = new CustomAttribute(moduleDefinition.Import(FieldOffsetAttribute));
-                            var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(Il2CppDummyDll.MainModule.TypeSystem.Int64, fieldOffset));
-                            customAttribute.Fields.Add(offset);
-                            fieldDefinition.CustomAttributes.Add(customAttribute);
-                        }*/
                     }
                     //method
                     var methodEnd = typeDef.methodStart + typeDef.method_count;
@@ -134,7 +122,7 @@ namespace Il2CppDumper
                         var methodName = metadata.GetString(methodDef.nameIndex);
                         var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition);//dummy
                         typeDefinition.Methods.Add(methodDefinition);
-                        methodDefinition.ReturnType = methodDefinition.GetTypeReference(methodReturnType);
+                        methodDefinition.ReturnType = GetTypeReference(methodDefinition, methodReturnType);
                         if (methodDefinition.HasBody && typeDefinition.BaseType?.FullName != "System.MulticastDelegate")
                         {
                             var ilprocessor = methodDefinition.Body.GetILProcessor();
@@ -147,7 +135,7 @@ namespace Il2CppDumper
                             var pParam = metadata.parameterDefs[methodDef.parameterStart + j];
                             var parameterName = metadata.GetString(pParam.nameIndex);
                             var parameterType = il2cpp.types[pParam.typeIndex];
-                            var parameterTypeRef = methodDefinition.GetTypeReference(parameterType);
+                            var parameterTypeRef = GetTypeReference(methodDefinition, parameterType);
                             var parameterDefinition = new ParameterDefinition(parameterName, (ParameterAttributes)parameterType.attrs, parameterTypeRef);
                             methodDefinition.Parameters.Add(parameterDefinition);
                             //ParameterDefault
@@ -165,16 +153,6 @@ namespace Il2CppDumper
                             var genericParameter = new GenericParameter("T", methodDefinition);
                             methodDefinition.GenericParameters.Add(genericParameter);
                         }
-                        /*//address
-                        if (methodDef.methodIndex >= 0)
-                        {
-                            var customAttribute = new CustomAttribute(moduleDefinition.Import(AddressAttribute));
-                            var rva = new CustomAttributeNamedArgument("RVA", new CustomAttributeArgument(Il2CppDummyDll.MainModule.TypeSystem.UInt64, il2cpp.methodPointers[methodDef.methodIndex]));
-                            var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(Il2CppDummyDll.MainModule.TypeSystem.UInt64, il2cpp.MapVATR(il2cpp.methodPointers[methodDef.methodIndex])));
-                            customAttribute.Fields.Add(rva);
-                            customAttribute.Fields.Add(offset);
-                            methodDefinition.CustomAttributes.Add(customAttribute);
-                        }*/
                     }
                     //property
                     var propertyEnd = typeDef.propertyStart + typeDef.property_count;
@@ -203,7 +181,7 @@ namespace Il2CppDumper
                         };
                         typeDefinition.Properties.Add(propertyDefinition);
                     }
-                    //
+                    //TODO 需要一个更好的方法来处理？
                     if (typeDef.genericContainerIndex >= 0 && !typeDefinition.HasGenericParameters)
                     {
                         var str = typeDefinition.FullName.Substring(typeDefinition.FullName.IndexOf("`") + 1, 1);
@@ -216,17 +194,9 @@ namespace Il2CppDumper
                     }
                 }
             }
-            Directory.CreateDirectory("DummyDll");
-            Directory.SetCurrentDirectory("DummyDll");
-            foreach (var assemblyDefinition in assemblyDefinitions)
-            {
-                var stream = new MemoryStream();
-                assemblyDefinition.Write(stream);
-                File.WriteAllBytes(assemblyDefinition.MainModule.Name, stream.ToArray());
-            }
         }
 
-        private static TypeReference GetTypeReference(this MemberReference memberReference, Il2CppType pType)
+        private TypeReference GetTypeReference(MemberReference memberReference, Il2CppType pType)
         {
             var moduleDefinition = memberReference.Module;
             switch (pType.type)
@@ -277,7 +247,7 @@ namespace Il2CppDumper
                     {
                         var arrayType = il2cpp.MapVATR<Il2CppArrayType>(pType.data.array);
                         var type = il2cpp.GetIl2CppType(arrayType.etype);
-                        return new ArrayType(memberReference.GetTypeReference(type), arrayType.rank);
+                        return new ArrayType(GetTypeReference(memberReference, type), arrayType.rank);
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
                     {
@@ -289,14 +259,14 @@ namespace Il2CppDumper
                         foreach (var pointer in pointers)
                         {
                             var pOriType = il2cpp.GetIl2CppType(pointer);
-                            genericInstanceType.GenericArguments.Add(memberReference.GetTypeReference(pOriType));
+                            genericInstanceType.GenericArguments.Add(GetTypeReference(memberReference, pOriType));
                         }
                         return genericInstanceType;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY:
                     {
                         var type = il2cpp.GetIl2CppType(pType.data.type);
-                        return new ArrayType(memberReference.GetTypeReference(type));
+                        return new ArrayType(GetTypeReference(memberReference, type));
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
                     {
@@ -335,14 +305,14 @@ namespace Il2CppDumper
                 case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
                     {
                         var type = il2cpp.GetIl2CppType(pType.data.type);
-                        return new PointerType(memberReference.GetTypeReference(type));
+                        return new PointerType(GetTypeReference(memberReference, type));
                     }
                 default:
                     throw new Exception("NOT_IMPLEMENTED");
             }
         }
 
-        private static object GetDefaultValue(int dataIndex, int typeIndex)
+        private object GetDefaultValue(int dataIndex, int typeIndex)
         {
             var pointer = metadata.GetDefaultValueFromIndex(dataIndex);
             if (pointer > 0)

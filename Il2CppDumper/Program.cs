@@ -66,7 +66,12 @@ namespace Il2CppDumper
                                 is64bit = true;
                                 goto case 0xFEEDFACE;
                             case 0xFEEDFACE:// 32-bit mach object file
-                                Console.WriteLine("Select Mode: 1.Manual 2.Auto 3.Auto(Advanced) 4.Auto(Plus)");
+                                Console.Write("Select Mode: 1.Manual 2.Auto 3.Auto(Advanced) 4.Auto(Plus)");
+                                if (isElf)
+                                {
+                                    Console.Write(" 5.Auto(Symbol)");
+                                }
+                                Console.WriteLine();
                                 key = Console.ReadKey(true);
                                 var version = config.forceil2cppversion ? config.forceversion : metadata.version;
                                 switch (key.KeyChar)
@@ -74,6 +79,7 @@ namespace Il2CppDumper
                                     case '2':
                                     case '3':
                                     case '4':
+                                    case '5':
                                         Console.WriteLine("Initializing il2cpp file...");
                                         if (isElf)
                                             il2cpp = new Elf(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
@@ -83,6 +89,15 @@ namespace Il2CppDumper
                                             il2cpp = new Macho(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
                                         try
                                         {
+                                            if (key.KeyChar == '5')
+                                            {
+                                                var elf = (Elf)il2cpp;
+                                                if (!elf.DetectedSymbol())
+                                                {
+                                                    throw new Exception();
+                                                }
+                                                break;
+                                            }
                                             Console.WriteLine("Searching...");
                                             if (key.KeyChar == '2' ?
                                                 !il2cpp.Search() :
@@ -95,7 +110,7 @@ namespace Il2CppDumper
                                         }
                                         catch
                                         {
-                                            throw new Exception("ERROR: Unable to process file automatically, try to use other mode.");
+                                            throw new Exception("ERROR: Can't use this mode to process file, try another mode.");
                                         }
                                         break;
                                     case '1':

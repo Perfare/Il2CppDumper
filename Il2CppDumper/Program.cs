@@ -73,7 +73,7 @@ namespace Il2CppDumper
                                 }
                                 Console.WriteLine();
                                 key = Console.ReadKey(true);
-                                var version = config.forceil2cppversion ? config.forceversion : metadata.version;
+                                var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.version;
                                 switch (key.KeyChar)
                                 {
                                     case '2':
@@ -172,7 +172,7 @@ namespace Il2CppDumper
                                         }
                                         writer.Write($"\n// Namespace: {metadata.GetStringFromIndex(typeDef.namespaceIndex)}\n");
                                         writer.Write(GetCustomAttribute(typeDef.customAttributeIndex));
-                                        if (config.dumpattribute && (typeDef.flags & TYPE_ATTRIBUTE_SERIALIZABLE) != 0)
+                                        if (config.DumpAttribute && (typeDef.flags & TYPE_ATTRIBUTE_SERIALIZABLE) != 0)
                                             writer.Write("[Serializable]\n");
                                         var visibility = typeDef.flags & TYPE_ATTRIBUTE_VISIBILITY_MASK;
                                         switch (visibility)
@@ -215,7 +215,7 @@ namespace Il2CppDumper
                                             writer.Write($" : {string.Join(", ", extends)}");
                                         writer.Write($" // TypeDefIndex: {idx}\n{{\n");
                                         //dump field
-                                        if (config.dumpfield && typeDef.field_count > 0)
+                                        if (config.DumpField && typeDef.field_count > 0)
                                         {
                                             writer.Write("\t// Fields\n");
                                             var fieldEnd = typeDef.fieldStart + typeDef.field_count;
@@ -321,7 +321,7 @@ namespace Il2CppDumper
                                                             writer.Write($" = {multi}");
                                                     }
                                                 }
-                                                if (config.dumpfieldoffset)
+                                                if (config.DumpFieldOffset)
                                                     writer.Write("; // 0x{0:X}\n", il2cpp.GetFieldOffsetFromIndex(idx, i - typeDef.fieldStart, i));
                                                 else
                                                     writer.Write(";\n");
@@ -329,7 +329,7 @@ namespace Il2CppDumper
                                             writer.Write("\n");
                                         }
                                         //dump property
-                                        if (config.dumpproperty && typeDef.property_count > 0)
+                                        if (config.DumpProperty && typeDef.property_count > 0)
                                         {
                                             writer.Write("\t// Properties\n");
                                             var propertyEnd = typeDef.propertyStart + typeDef.property_count;
@@ -363,7 +363,7 @@ namespace Il2CppDumper
                                             writer.Write("\n");
                                         }
                                         //dump method
-                                        if (config.dumpmethod && typeDef.method_count > 0)
+                                        if (config.DumpMethod && typeDef.method_count > 0)
                                         {
                                             writer.Write("\t// Methods\n");
                                             var methodEnd = typeDef.methodStart + typeDef.method_count;
@@ -436,20 +436,21 @@ namespace Il2CppDumper
                                 scriptwriter.Close();
                                 Console.WriteLine("Done !");
                                 Console.WriteLine("Create DummyDll...");
-                                //DummyDll
-                                if (Directory.Exists("DummyDll"))
-                                    Directory.Delete("DummyDll", true);
-                                Directory.CreateDirectory("DummyDll");
-                                Directory.SetCurrentDirectory("DummyDll");
-                                var dummy = new DummyAssemblyCreator(metadata, il2cpp);
-                                foreach (var assembly in dummy.Assemblies)
+                                if (config.DummyDll)
                                 {
-                                    var stream = new MemoryStream();
-                                    assembly.Write(stream);
-                                    File.WriteAllBytes(assembly.MainModule.Name, stream.ToArray());
+                                    if (Directory.Exists("DummyDll"))
+                                        Directory.Delete("DummyDll", true);
+                                    Directory.CreateDirectory("DummyDll");
+                                    Directory.SetCurrentDirectory("DummyDll");
+                                    var dummy = new DummyAssemblyCreator(metadata, il2cpp);
+                                    foreach (var assembly in dummy.Assemblies)
+                                    {
+                                        var stream = new MemoryStream();
+                                        assembly.Write(stream);
+                                        File.WriteAllBytes(assembly.MainModule.Name, stream.ToArray());
+                                    }
+                                    Console.WriteLine("Done !");
                                 }
-                                Console.WriteLine("Done !");
-                                //
                                 break;
                         }
                     }
@@ -520,7 +521,7 @@ namespace Il2CppDumper
 
         private static string GetCustomAttribute(int index, string padding = "")
         {
-            if (!config.dumpattribute || il2cpp.version < 21)
+            if (!config.DumpAttribute || il2cpp.version < 21)
                 return "";
             var attributeTypeRange = metadata.attributesInfos[index];
             var sb = new StringBuilder();

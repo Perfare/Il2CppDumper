@@ -7,12 +7,13 @@ namespace Il2CppDumper
 {
     class Config
     {
-        public bool dumpmethod = true;
-        public bool dumpfield = true;
-        public bool dumpproperty = false;
-        public bool dumpattribute = false;
-        public bool dumpfieldoffset = true;
-        public bool forceil2cppversion = false;
-        public int forceversion = 16;
+        public bool DumpMethod = true;
+        public bool DumpField = true;
+        public bool DumpProperty = false;
+        public bool DumpAttribute = false;
+        public bool DumpFieldOffset = true;
+        public bool DummyDll = true;
+        public bool ForceIl2CppVersion = false;
+        public int ForceVersion = 16;
     }
 }

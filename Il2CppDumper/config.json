@@ -1,9 +1,10 @@
 {
-  "dumpmethod": true,
-  "dumpfield": true,
-  "dumpproperty": false,
-  "dumpattribute": false,
-  "dumpfieldoffset": true,
-  "forceil2cppversion": false,
-  "forceversion": 16
+  "DumpMethod": true,
+  "DumpField": true,
+  "DumpProperty": false,
+  "DumpAttribute": false,
+  "DumpFieldOffset": true,
+  "DummyDll": true,
+  "ForceIl2CppVersion": false,
+  "ForceVersion": 16
 }

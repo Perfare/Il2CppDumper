@@ -6,14 +6,14 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    public class Elf : Il2Cpp
+    public sealed class Elf : Il2Cpp
     {
         private Elf32_Ehdr elf_header;
         private Elf32_Phdr[] program_table_element;
         private static byte[] ARMFeatureBytes = { 0x1c, 0x0, 0x9f, 0xe5, 0x1c, 0x10, 0x9f, 0xe5, 0x1c, 0x20, 0x9f, 0xe5 };
         private static byte[] X86FeatureBytes1 = { 0x8D, 0x83 };//lea eax, X
         private static byte[] X86FeatureBytes2 = { 0x89, 0x44, 0x24, 0x04, 0x8D, 0x83 };//mov [esp+4], eax and lea eax, X
-        public Dictionary<string, Elf32_Shdr> sectionWithName = new Dictionary<string, Elf32_Shdr>();
+        private Dictionary<string, Elf32_Shdr> sectionWithName = new Dictionary<string, Elf32_Shdr>();
 
         public Elf(Stream stream, int version, long maxmetadataUsages) : base(stream)
         {
@@ -323,6 +323,7 @@ namespace Il2CppDumper
         {
             if (sectionWithName.ContainsKey(".dynsym") && sectionWithName.ContainsKey(".rel.dyn"))
             {
+                Console.WriteLine("Applying relocations...");
                 var dynsym = sectionWithName[".dynsym"];
                 var rel_dyn = sectionWithName[".rel.dyn"];
                 var dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsym.sh_offset, dynsym.sh_size / 16);
@@ -356,17 +357,15 @@ namespace Il2CppDumper
                 Elf32_Shdr datarelrolocal = null;
                 if (sectionWithName.ContainsKey(".data.rel.ro.local"))
                     datarelrolocal = sectionWithName[".data.rel.ro.local"];
-                uint codeRegistration = 0;
-                uint metadataRegistration = 0;
-                codeRegistration = FindCodeRegistration(methodCount, datarelro, datarelrolocal, text);
+                var codeRegistration = FindCodeRegistration(methodCount, datarelro, datarelrolocal, text);
                 if (codeRegistration == 0 && datarelrolocal != null)
                 {
                     codeRegistration = FindCodeRegistration(methodCount, datarelrolocal, datarelrolocal, text);
                 }
-                metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, maxmetadataUsages, datarelro, datarelrolocal, bss);
+                var metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, datarelro, datarelrolocal, bss);
                 if (metadataRegistration == 0 && datarelrolocal != null)
                 {
-                    metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, maxmetadataUsages, datarelrolocal, datarelrolocal, bss);
+                    metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, datarelrolocal, datarelrolocal, bss);
                 }
                 if (codeRegistration != 0 && metadataRegistration != 0)
                 {
@@ -429,7 +428,7 @@ namespace Il2CppDumper
             return 0;
         }
 
-        private uint FindMetadataRegistration(int typeDefinitionsCount, long maxmetadataUsages, Elf32_Shdr search, Elf32_Shdr search2, Elf32_Shdr range)
+        private uint FindMetadataRegistration(int typeDefinitionsCount, Elf32_Shdr search, Elf32_Shdr search2, Elf32_Shdr range)
         {
             var searchend = search.sh_offset + search.sh_size;
             var rangeend = range.sh_addr + range.sh_size;

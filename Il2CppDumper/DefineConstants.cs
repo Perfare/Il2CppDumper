@@ -1,4 +1,6 @@
-﻿namespace Il2CppDumper
+﻿using System.Collections.Generic;
+
+namespace Il2CppDumper
 {
     static class DefineConstants
     {
@@ -70,42 +72,28 @@
         public const int PARAM_ATTRIBUTE_OPTIONAL = 0x0010;
 
 
-        public static string[] szTypeString =
+        public static readonly Dictionary<int, string> TypeString = new Dictionary<int, string>
         {
-            "END",
-            "void",
-            "bool",
-            "char",
-            "sbyte",
-            "byte",
-            "short",
-            "ushort",
-            "int",
-            "uint",
-            "long",
-            "ulong",
-            "float",
-            "double",
-            "string",
-            "PTR", //eg. void*
-            "BYREF",
-            "VALUETYPE",
-            "CLASS",
-            "T",
-            "ARRAY",
-            "GENERICINST",
-            "TYPEDBYREF",
-            "None",
-            "IntPtr",
-            "UIntPtr",
-            "None",
-            "FNPTR",
-            "object",
-            "SZARRAY",
-            "T",
-            "CMOD_REQD",
-            "CMOD_OPT",
-            "INTERNAL",
+            {1,"void"},
+            {2,"bool"},
+            {3,"char"},
+            {4,"sbyte"},
+            {5,"byte"},
+            {6,"short"},
+            {7,"ushort"},
+            {8,"int"},
+            {9,"uint"},
+            {10,"long"},
+            {11,"ulong"},
+            {12,"float"},
+            {13,"double"},
+            {14,"string"},
+            {19,"T"},
+            {22,"System.TypedReference"},
+            {24,"IntPtr"},
+            {25,"UIntPtr"},
+            {28,"object"},
+            {30,"T"},
         };
     }
 }

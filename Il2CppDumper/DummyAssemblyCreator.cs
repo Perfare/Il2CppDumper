@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -10,12 +11,12 @@ namespace Il2CppDumper
 {
     public class DummyAssemblyCreator
     {
-        Metadata metadata;
-        Il2Cpp il2cpp;
+        private Metadata metadata;
+        private Il2Cpp il2cpp;
         public List<AssemblyDefinition> Assemblies = new List<AssemblyDefinition>();
-        Dictionary<long, TypeDefinition> typeDefinitionDic = new Dictionary<long, TypeDefinition>();
-        Dictionary<int, MethodDefinition> methodDefinitionDic = new Dictionary<int, MethodDefinition>();
-        Dictionary<Il2CppType, GenericParameter> genericParameterDic = new Dictionary<Il2CppType, GenericParameter>();
+        private Dictionary<long, TypeDefinition> typeDefinitionDic = new Dictionary<long, TypeDefinition>();
+        private Dictionary<int, MethodDefinition> methodDefinitionDic = new Dictionary<int, MethodDefinition>();
+        private Dictionary<Il2CppType, GenericParameter> genericParameterDic = new Dictionary<Il2CppType, GenericParameter>();
 
         //TODO attribute, genericContainer
         public DummyAssemblyCreator(Metadata metadata, Il2Cpp il2cpp)
@@ -40,7 +41,7 @@ namespace Il2CppDumper
                         typeDefinitionDic.Add(index, null);
                         continue;
                     }
-                    TypeDefinition typeDefinition = null;
+                    TypeDefinition typeDefinition;
                     if (typeDef.declaringTypeIndex != -1)//nested types
                     {
                         typeDefinition = typeDefinitionDic[index];
@@ -83,128 +84,125 @@ namespace Il2CppDumper
                 }
             }
             //处理field, method, property等等
-            for (var imageIndex = 0; imageIndex < metadata.uiImageCount; imageIndex++)
+            for (var index = 0; index < metadata.uiNumTypes; ++index)
             {
-                var imageDef = metadata.imageDefs[imageIndex];
-                var assemblyDefinition = Assemblies[imageIndex];
-                var moduleDefinition = assemblyDefinition.MainModule;
-                var typeEnd = imageDef.typeStart + imageDef.typeCount;
-                for (var index = imageDef.typeStart; index < typeEnd; ++index)
+                var typeDef = metadata.typeDefs[index];
+                var typeDefinition = typeDefinitionDic[index];
+                //field
+                var fieldEnd = typeDef.fieldStart + typeDef.field_count;
+                for (var i = typeDef.fieldStart; i < fieldEnd; ++i)
                 {
-                    var typeDef = metadata.typeDefs[index];
-                    var typeDefinition = typeDefinitionDic[index];
-                    //field
-                    var fieldEnd = typeDef.fieldStart + typeDef.field_count;
-                    for (var i = typeDef.fieldStart; i < fieldEnd; ++i)
+                    var fieldDef = metadata.fieldDefs[i];
+                    var fieldType = il2cpp.types[fieldDef.typeIndex];
+                    var fieldName = metadata.GetStringFromIndex(fieldDef.nameIndex);
+                    var fieldTypeRef = GetTypeReference(typeDefinition, fieldType);
+                    var fieldDefinition = new FieldDefinition(fieldName, (FieldAttributes)fieldType.attrs, fieldTypeRef);
+                    typeDefinition.Fields.Add(fieldDefinition);
+                    //fieldDefault
+                    if (fieldDefinition.HasDefault)
                     {
-                        var fieldDef = metadata.fieldDefs[i];
-                        var fieldType = il2cpp.types[fieldDef.typeIndex];
-                        var fieldName = metadata.GetStringFromIndex(fieldDef.nameIndex);
-                        var fieldTypeRef = GetTypeReference(typeDefinition, fieldType);
-                        var fieldDefinition = new FieldDefinition(fieldName, (FieldAttributes)fieldType.attrs, fieldTypeRef);
-                        typeDefinition.Fields.Add(fieldDefinition);
-                        //fieldDefault
-                        if (fieldDefinition.HasDefault)
+                        var fieldDefault = metadata.GetFieldDefaultValueFromIndex(i);
+                        if (fieldDefault != null && fieldDefault.dataIndex != -1)
                         {
-                            var fieldDefault = metadata.GetFieldDefaultValueFromIndex(i);
-                            if (fieldDefault != null && fieldDefault.dataIndex != -1)
+                            fieldDefinition.Constant = GetDefaultValue(fieldDefault.dataIndex, fieldDefault.typeIndex);
+                        }
+                    }
+                }
+                //method
+                var methodEnd = typeDef.methodStart + typeDef.method_count;
+                for (var i = typeDef.methodStart; i < methodEnd; ++i)
+                {
+                    var methodDef = metadata.methodDefs[i];
+                    var methodReturnType = il2cpp.types[methodDef.returnType];
+                    var methodName = metadata.GetStringFromIndex(methodDef.nameIndex);
+                    var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition);//dummy
+                    typeDefinition.Methods.Add(methodDefinition);
+                    methodDefinition.ReturnType = GetTypeReference(methodDefinition, methodReturnType);
+                    if (methodDefinition.HasBody && typeDefinition.BaseType?.FullName != "System.MulticastDelegate")
+                    {
+                        var ilprocessor = methodDefinition.Body.GetILProcessor();
+                        ilprocessor.Append(ilprocessor.Create(OpCodes.Nop));
+                    }
+                    methodDefinitionDic.Add(i, methodDefinition);
+                    //method parameter
+                    for (var j = 0; j < methodDef.parameterCount; ++j)
+                    {
+                        var pParam = metadata.parameterDefs[methodDef.parameterStart + j];
+                        var parameterName = metadata.GetStringFromIndex(pParam.nameIndex);
+                        var parameterType = il2cpp.types[pParam.typeIndex];
+                        var parameterTypeRef = GetTypeReference(methodDefinition, parameterType);
+                        var parameterDefinition = new ParameterDefinition(parameterName, (ParameterAttributes)parameterType.attrs, parameterTypeRef);
+                        methodDefinition.Parameters.Add(parameterDefinition);
+                        //ParameterDefault
+                        if (parameterDefinition.HasDefault)
+                        {
+                            var parameterDefault = metadata.GetParameterDefaultValueFromIndex(methodDef.parameterStart + j);
+                            if (parameterDefault != null && parameterDefault.dataIndex != -1)
                             {
-                                fieldDefinition.Constant = GetDefaultValue(fieldDefault.dataIndex, fieldDefault.typeIndex);
+                                parameterDefinition.Constant = GetDefaultValue(parameterDefault.dataIndex, parameterDefault.typeIndex);
                             }
                         }
                     }
-                    //method
-                    var methodEnd = typeDef.methodStart + typeDef.method_count;
-                    for (var i = typeDef.methodStart; i < methodEnd; ++i)
+                    //TODO 可能有多个泛型参数？
+                    if (methodDef.genericContainerIndex >= 0 && !methodDefinition.HasGenericParameters)
                     {
-                        var methodDef = metadata.methodDefs[i];
-                        var methodReturnType = il2cpp.types[methodDef.returnType];
-                        var methodName = metadata.GetStringFromIndex(methodDef.nameIndex);
-                        var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition);//dummy
-                        typeDefinition.Methods.Add(methodDefinition);
-                        methodDefinition.ReturnType = GetTypeReference(methodDefinition, methodReturnType);
-                        if (methodDefinition.HasBody && typeDefinition.BaseType?.FullName != "System.MulticastDelegate")
-                        {
-                            var ilprocessor = methodDefinition.Body.GetILProcessor();
-                            ilprocessor.Append(ilprocessor.Create(OpCodes.Nop));
-                        }
-                        methodDefinitionDic.Add(i, methodDefinition);
-                        //method parameter
-                        for (var j = 0; j < methodDef.parameterCount; ++j)
-                        {
-                            var pParam = metadata.parameterDefs[methodDef.parameterStart + j];
-                            var parameterName = metadata.GetStringFromIndex(pParam.nameIndex);
-                            var parameterType = il2cpp.types[pParam.typeIndex];
-                            var parameterTypeRef = GetTypeReference(methodDefinition, parameterType);
-                            var parameterDefinition = new ParameterDefinition(parameterName, (ParameterAttributes)parameterType.attrs, parameterTypeRef);
-                            methodDefinition.Parameters.Add(parameterDefinition);
-                            //ParameterDefault
-                            if (parameterDefinition.HasDefault)
-                            {
-                                var parameterDefault = metadata.GetParameterDefaultValueFromIndex(methodDef.parameterStart + j);
-                                if (parameterDefault != null && parameterDefault.dataIndex != -1)
-                                {
-                                    parameterDefinition.Constant = GetDefaultValue(parameterDefault.dataIndex, parameterDefault.typeIndex);
-                                }
-                            }
-                        }
-                        //TODO 可能有多个泛型参数？
-                        if (methodDef.genericContainerIndex >= 0 && !methodDefinition.HasGenericParameters)
-                        {
-                            var genericParameter = new GenericParameter("T", methodDefinition);
-                            methodDefinition.GenericParameters.Add(genericParameter);
-                        }
+                        var genericParameter = new GenericParameter("T", methodDefinition);
+                        methodDefinition.GenericParameters.Add(genericParameter);
                     }
-                    //property
-                    var propertyEnd = typeDef.propertyStart + typeDef.property_count;
-                    for (var i = typeDef.propertyStart; i < propertyEnd; ++i)
+                }
+                //property
+                var propertyEnd = typeDef.propertyStart + typeDef.property_count;
+                for (var i = typeDef.propertyStart; i < propertyEnd; ++i)
+                {
+                    var propertyDef = metadata.propertyDefs[i];
+                    var propertyName = metadata.GetStringFromIndex(propertyDef.nameIndex);
+                    TypeReference propertyType = null;
+                    MethodDefinition GetMethod = null;
+                    MethodDefinition SetMethod = null;
+                    if (propertyDef.get >= 0)
                     {
-                        var propertyDef = metadata.propertyDefs[i];
-                        var propertyName = metadata.GetStringFromIndex(propertyDef.nameIndex);
-                        TypeReference propertyType = null;
-                        MethodDefinition GetMethod = null;
-                        MethodDefinition SetMethod = null;
-                        if (propertyDef.get >= 0)
-                        {
-                            GetMethod = methodDefinitionDic[typeDef.methodStart + propertyDef.get];
-                            propertyType = GetMethod.ReturnType;
-                        }
-                        if (propertyDef.set >= 0)
-                        {
-                            SetMethod = methodDefinitionDic[typeDef.methodStart + propertyDef.set];
-                            if (propertyType == null)
-                                propertyType = SetMethod.Parameters[0].ParameterType;
-                        }
-                        var propertyDefinition = new PropertyDefinition(propertyName, (PropertyAttributes)propertyDef.attrs, propertyType)
-                        {
-                            GetMethod = GetMethod,
-                            SetMethod = SetMethod
-                        };
-                        typeDefinition.Properties.Add(propertyDefinition);
+                        GetMethod = methodDefinitionDic[typeDef.methodStart + propertyDef.get];
+                        propertyType = GetMethod.ReturnType;
                     }
-                    //event
-                    var eventEnd = typeDef.eventStart + typeDef.event_count;
-                    for (var i = typeDef.eventStart; i < eventEnd; ++i)
+                    if (propertyDef.set >= 0)
                     {
-                        var eventDef = metadata.eventDefs[i];
-                        var eventName = metadata.GetStringFromIndex(eventDef.nameIndex);
-                        var eventType = il2cpp.types[eventDef.typeIndex];
-                        var eventTypeRef = GetTypeReference(typeDefinition, eventType);
-                        var eventDefinition = new EventDefinition(eventName, (EventAttributes)eventType.attrs, eventTypeRef);
-                        if (eventDef.add >= 0)
-                            eventDefinition.AddMethod = methodDefinitionDic[typeDef.methodStart + eventDef.add];
-                        if (eventDef.remove >= 0)
-                            eventDefinition.RemoveMethod = methodDefinitionDic[typeDef.methodStart + eventDef.remove];
-                        if (eventDef.raise >= 0)
-                            eventDefinition.InvokeMethod = methodDefinitionDic[typeDef.methodStart + eventDef.raise];
-                        typeDefinition.Events.Add(eventDefinition);
+                        SetMethod = methodDefinitionDic[typeDef.methodStart + propertyDef.set];
+                        if (propertyType == null)
+                            propertyType = SetMethod.Parameters[0].ParameterType;
+                    }
+                    var propertyDefinition = new PropertyDefinition(propertyName, (PropertyAttributes)propertyDef.attrs, propertyType)
+                    {
+                        GetMethod = GetMethod,
+                        SetMethod = SetMethod
+                    };
+                    typeDefinition.Properties.Add(propertyDefinition);
+                }
+                //event
+                var eventEnd = typeDef.eventStart + typeDef.event_count;
+                for (var i = typeDef.eventStart; i < eventEnd; ++i)
+                {
+                    var eventDef = metadata.eventDefs[i];
+                    var eventName = metadata.GetStringFromIndex(eventDef.nameIndex);
+                    var eventType = il2cpp.types[eventDef.typeIndex];
+                    var eventTypeRef = GetTypeReference(typeDefinition, eventType);
+                    var eventDefinition = new EventDefinition(eventName, (EventAttributes)eventType.attrs, eventTypeRef);
+                    if (eventDef.add >= 0)
+                        eventDefinition.AddMethod = methodDefinitionDic[typeDef.methodStart + eventDef.add];
+                    if (eventDef.remove >= 0)
+                        eventDefinition.RemoveMethod = methodDefinitionDic[typeDef.methodStart + eventDef.remove];
+                    if (eventDef.raise >= 0)
+                        eventDefinition.InvokeMethod = methodDefinitionDic[typeDef.methodStart + eventDef.raise];
+                    typeDefinition.Events.Add(eventDefinition);
 
-                    }
-                    //TODO 需要一个更好的方法来处理？
-                    if (typeDef.genericContainerIndex >= 0 && !typeDefinition.HasGenericParameters)
+                }
+                //TODO 需要一个更好的方法来处理？
+                if (typeDef.genericContainerIndex >= 0 && !typeDefinition.HasGenericParameters)
+                {
+                    var reg = new Regex(@"`(\d+)");
+                    var groups = reg.Match(typeDefinition.FullName).Groups;
+                    if (groups.Count > 1)
                     {
-                        var str = typeDefinition.FullName.Substring(typeDefinition.FullName.IndexOf("`") + 1, 1);
-                        var count = int.Parse(str);
+                        var count = int.Parse(groups[1].Value);
                         for (int i = 1; i <= count; i++)
                         {
                             var genericParameter = new GenericParameter("T" + i, typeDefinition);

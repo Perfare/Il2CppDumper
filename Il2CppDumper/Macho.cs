@@ -7,7 +7,7 @@ using static Il2CppDumper.ArmHelper;
 
 namespace Il2CppDumper
 {
-    public class Macho : Il2Cpp
+    public sealed class Macho : Il2Cpp
     {
         private List<MachoSection> sections = new List<MachoSection>();
         private static byte[] FeatureBytes1 = { 0x0, 0x22 };//MOVS R2, #0
@@ -93,17 +93,17 @@ namespace Il2CppDumper
                         if (FeatureBytes2.SequenceEqual(buff))
                         {
                             Position = MapVATR(i) + 10;
-                            var subaddr = decodeMov(ReadBytes(8)) + i + 24u - 1u;
+                            var subaddr = DecodeMov(ReadBytes(8)) + i + 24u - 1u;
                             var rsubaddr = MapVATR(subaddr);
                             Position = rsubaddr;
-                            var ptr = decodeMov(ReadBytes(8)) + subaddr + 16u;
+                            var ptr = DecodeMov(ReadBytes(8)) + subaddr + 16u;
                             Position = MapVATR(ptr);
                             var metadataRegistration = ReadUInt32();
                             Position = rsubaddr + 8;
                             buff = ReadBytes(4);
                             Position = rsubaddr + 14;
                             buff = buff.Concat(ReadBytes(4)).ToArray();
-                            var codeRegistration = decodeMov(buff) + subaddr + 26u;
+                            var codeRegistration = DecodeMov(buff) + subaddr + 26u;
                             Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                             Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
                             Init(codeRegistration, metadataRegistration);
@@ -134,17 +134,17 @@ namespace Il2CppDumper
                         if (FeatureBytes2.SequenceEqual(buff))
                         {
                             Position = MapVATR(i) + 10;
-                            var subaddr = decodeMov(ReadBytes(8)) + i + 24u - 1u;
+                            var subaddr = DecodeMov(ReadBytes(8)) + i + 24u - 1u;
                             var rsubaddr = MapVATR(subaddr);
                             Position = rsubaddr;
-                            var ptr = decodeMov(ReadBytes(8)) + subaddr + 16u;
+                            var ptr = DecodeMov(ReadBytes(8)) + subaddr + 16u;
                             Position = MapVATR(ptr);
                             var metadataRegistration = ReadUInt32();
                             Position = rsubaddr + 8;
                             buff = ReadBytes(4);
                             Position = rsubaddr + 14;
                             buff = buff.Concat(ReadBytes(4)).ToArray();
-                            var codeRegistration = decodeMov(buff) + subaddr + 22u;
+                            var codeRegistration = DecodeMov(buff) + subaddr + 22u;
                             Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                             Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
                             Init(codeRegistration, metadataRegistration);
@@ -287,9 +287,7 @@ namespace Il2CppDumper
             var __const2 = sections.Last(x => x.section_name == "__const");
             var __text = sections.First(x => x.section_name == "__text");
             var __common = sections.First(x => x.section_name == "__common");
-            uint codeRegistration = 0;
-            uint metadataRegistration = 0;
-            codeRegistration = FindCodeRegistration(methodCount, __const, __const2, __text);
+            var codeRegistration = FindCodeRegistration(methodCount, __const, __const2, __text);
             if (codeRegistration == 0)
             {
                 codeRegistration = FindCodeRegistration(methodCount, __const2, __const2, __text);
@@ -300,10 +298,10 @@ namespace Il2CppDumper
                 Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                 return false;
             }
-            metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, maxmetadataUsages, __const, __const2, __common);
+            var metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, __const, __const2, __common);
             if (metadataRegistration == 0)
             {
-                metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, maxmetadataUsages, __const2, __const2, __common);
+                metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, __const2, __const2, __common);
             }
             if (codeRegistration != 0 && metadataRegistration != 0)
             {
@@ -361,7 +359,7 @@ namespace Il2CppDumper
             return 0;
         }
 
-        private uint FindMetadataRegistration(int typeDefinitionsCount, long maxmetadataUsages, MachoSection search, MachoSection search2, MachoSection range)
+        private uint FindMetadataRegistration(int typeDefinitionsCount, MachoSection search, MachoSection search2, MachoSection range)
         {
             var searchend = search.offset + search.size;
             var rangeend = range.address + range.size;

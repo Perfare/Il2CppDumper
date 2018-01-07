@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    public class Metadata : MyBinaryReader
+    public sealed class Metadata : MyBinaryReader
     {
         private Il2CppGlobalMetadataHeader pMetadataHdr;
         public int uiImageCount;
@@ -21,8 +21,8 @@ namespace Il2CppDumper
         public Il2CppPropertyDefinition[] propertyDefs;
         public Il2CppCustomAttributeTypeRange[] attributesInfos;
         private Il2CppStringLiteral[] stringLiterals;
-        public Il2CppMetadataUsageList[] metadataUsageLists;
-        public Il2CppMetadataUsagePair[] metadataUsagePairs;
+        private Il2CppMetadataUsageList[] metadataUsageLists;
+        private Il2CppMetadataUsagePair[] metadataUsagePairs;
         public int[] attributeTypes;
         public int[] interfaceIndices;
         public SortedDictionary<uint, string> stringLiteralsdic;

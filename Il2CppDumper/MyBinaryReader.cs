@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
 
 namespace Il2CppDumper
 {
     public class MyBinaryReader : BinaryReader
     {
-        public MyBinaryReader(Stream stream) : base(stream) { }
+        public MyBinaryReader(Stream stream) : base(stream)
+        {
+            readClass = GetType().GetMethod("ReadClass", Type.EmptyTypes);
+        }
 
         public int version;
 
@@ -24,6 +28,8 @@ namespace Il2CppDumper
             get => BaseStream.Position;
             set => BaseStream.Position = (long)value;
         }
+
+        private MethodInfo readClass;
 
         public T ReadClass<T>(dynamic addr) where T : new()
         {
@@ -97,9 +103,8 @@ namespace Il2CppDumper
                             i.SetValue(t, ReadUInt64());
                             break;
                         default:
-                            var mi = GetType().GetMethod("ReadClass", Type.EmptyTypes);
-                            var mi2 = mi.MakeGenericMethod(i.FieldType);
-                            var o = mi2.Invoke(this, null);
+                            var gm = readClass.MakeGenericMethod(i.FieldType);
+                            var o = gm.Invoke(this, null);
                             i.SetValue(t, o);
                             break;
                     }

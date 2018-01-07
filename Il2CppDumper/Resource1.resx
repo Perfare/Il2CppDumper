@@ -143,6 +143,7 @@ def MakeFunction(start, end):
 	else:
 		idc.SetFunctionEnd(start, end)
 
-index = 1</value>
+index = 1
+print('Making method name...')</value>
   </data>
 </root>

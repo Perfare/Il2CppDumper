@@ -414,6 +414,8 @@ namespace Il2CppDumper
                                     }
                                 }
                                 //Script - stringLiteral
+                                scriptwriter.WriteLine("print('Make method name done')");
+                                scriptwriter.WriteLine("print('Setting String...')");
                                 if (il2cpp.version > 16)
                                 {
                                     foreach (var i in metadata.stringLiteralsdic)
@@ -421,16 +423,20 @@ namespace Il2CppDumper
                                         scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:X}, r'{ToEscapedString(i.Value)}')");
                                     }
                                 }
+                                scriptwriter.WriteLine("print('Set string done')");
                                 //Script - MakeFunction
                                 var orderedPointers = il2cpp.methodPointers.ToList();
                                 orderedPointers.AddRange(il2cpp.genericMethodPointers.Where(x => x > 0));
                                 orderedPointers.AddRange(il2cpp.invokerPointers);
                                 orderedPointers.AddRange(il2cpp.customAttributeGenerators);
                                 orderedPointers = orderedPointers.OrderBy(x => x).ToList();
+                                scriptwriter.WriteLine("print('Making function...')");
                                 for (int i = 0; i < orderedPointers.Count - 1; i++)
                                 {
                                     scriptwriter.WriteLine($"MakeFunction(0x{orderedPointers[i]:X}, 0x{orderedPointers[i + 1]:X})");
                                 }
+                                scriptwriter.WriteLine("print('Make function done, please wait for IDA to complete the analysis')");
+                                scriptwriter.WriteLine("print('Script finish !')");
                                 //
                                 writer.Close();
                                 scriptwriter.Close();

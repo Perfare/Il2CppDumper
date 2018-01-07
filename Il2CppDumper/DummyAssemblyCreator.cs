@@ -18,7 +18,7 @@ namespace Il2CppDumper
         private Dictionary<int, MethodDefinition> methodDefinitionDic = new Dictionary<int, MethodDefinition>();
         private Dictionary<Il2CppType, GenericParameter> genericParameterDic = new Dictionary<Il2CppType, GenericParameter>();
 
-        //TODO attribute, genericContainer
+
         public DummyAssemblyCreator(Metadata metadata, Il2Cpp il2cpp)
         {
             this.metadata = metadata;
@@ -143,11 +143,18 @@ namespace Il2CppDumper
                             }
                         }
                     }
-                    //TODO 可能有多个泛型参数？
-                    if (methodDef.genericContainerIndex >= 0 && !methodDefinition.HasGenericParameters)
+                    //补充泛型参数
+                    if (methodDef.genericContainerIndex >= 0)
                     {
-                        var genericParameter = new GenericParameter("T", methodDefinition);
-                        methodDefinition.GenericParameters.Add(genericParameter);
+                        var genericContainer = metadata.genericContainers[methodDef.genericContainerIndex];
+                        if (genericContainer.type_argc > methodDefinition.GenericParameters.Count)
+                        {
+                            for (int j = methodDefinition.GenericParameters.Count + 1; j <= genericContainer.type_argc; j++)
+                            {
+                                var genericParameter = new GenericParameter("T" + j, methodDefinition);
+                                methodDefinition.GenericParameters.Add(genericParameter);
+                            }
+                        }
                     }
                 }
                 //property
@@ -195,17 +202,15 @@ namespace Il2CppDumper
                     typeDefinition.Events.Add(eventDefinition);
 
                 }
-                //TODO 需要一个更好的方法来处理？
-                if (typeDef.genericContainerIndex >= 0 && !typeDefinition.HasGenericParameters)
+                //补充泛型参数
+                if (typeDef.genericContainerIndex >= 0)
                 {
-                    var reg = new Regex(@"`(\d+)");
-                    var groups = reg.Match(typeDefinition.FullName).Groups;
-                    if (groups.Count > 1)
+                    var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
+                    if (genericContainer.type_argc > typeDefinition.GenericParameters.Count)
                     {
-                        var count = int.Parse(groups[1].Value);
-                        for (int i = 1; i <= count; i++)
+                        for (int j = typeDefinition.GenericParameters.Count + 1; j <= genericContainer.type_argc; j++)
                         {
-                            var genericParameter = new GenericParameter("T" + i, typeDefinition);
+                            var genericParameter = new GenericParameter("T" + j, typeDefinition);
                             typeDefinition.GenericParameters.Add(genericParameter);
                         }
                     }

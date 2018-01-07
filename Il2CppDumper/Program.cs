@@ -56,7 +56,7 @@ namespace Il2CppDumper
                                 Console.WriteLine();
                                 var key = Console.ReadKey(true);
                                 var index = int.Parse(key.KeyChar.ToString()) - 1;
-                                var magic = machofat.fats[index].magic;
+                                var magic = machofat.fats[index % 2].magic;
                                 il2cppfile = machofat.GetMacho(index);
                                 if (magic == 0xFEEDFACF)// 64-bit mach object file
                                     goto case 0xFEEDFACF;

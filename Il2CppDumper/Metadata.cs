@@ -29,6 +29,7 @@ namespace Il2CppDumper
         public long maxmetadataUsages;
         public int[] nestedTypeIndices;
         public Il2CppEventDefinition[] eventDefs;
+        public Il2CppGenericContainer[] genericContainers;
 
         public Metadata(Stream stream) : base(stream)
         {
@@ -74,6 +75,8 @@ namespace Il2CppDumper
             nestedTypeIndices = ReadClassArray<int>(pMetadataHdr.nestedTypesOffset, pMetadataHdr.nestedTypesCount / 4);
             //GetEventDefinitionFromIndex
             eventDefs = ReadClassArray<Il2CppEventDefinition>(pMetadataHdr.eventsOffset, pMetadataHdr.eventsCount / MySizeOf(typeof(Il2CppEventDefinition)));
+            //GetGenericContainerFromIndex
+            genericContainers = ReadClassArray<Il2CppGenericContainer>(pMetadataHdr.genericContainersOffset, pMetadataHdr.genericContainersCount / MySizeOf(typeof(Il2CppGenericContainer)));
             if (version > 16)
             {
                 //Il2CppStringLiteral

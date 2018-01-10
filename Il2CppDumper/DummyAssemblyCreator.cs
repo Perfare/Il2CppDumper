@@ -30,17 +30,13 @@ namespace Il2CppDumper
                 var assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, metadata.GetStringFromIndex(imageDef.nameIndex), ModuleKind.Dll);
                 Assemblies.Add(assemblyDefinition);
                 var moduleDefinition = assemblyDefinition.MainModule;
+                moduleDefinition.Types.Clear();//清除自动创建的<Module>类
                 var typeEnd = imageDef.typeStart + imageDef.typeCount;
                 for (var index = imageDef.typeStart; index < typeEnd; ++index)
                 {
                     var typeDef = metadata.typeDefs[index];
                     var namespaceName = metadata.GetStringFromIndex(typeDef.namespaceIndex);
                     var typeName = metadata.GetStringFromIndex(typeDef.nameIndex);
-                    if (typeName == "<Module>")
-                    {
-                        typeDefinitionDic.Add(index, null);
-                        continue;
-                    }
                     TypeDefinition typeDefinition;
                     if (typeDef.declaringTypeIndex != -1)//nested types
                     {
@@ -115,7 +111,7 @@ namespace Il2CppDumper
                     var methodDef = metadata.methodDefs[i];
                     var methodReturnType = il2cpp.types[methodDef.returnType];
                     var methodName = metadata.GetStringFromIndex(methodDef.nameIndex);
-                    var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition);//dummy
+                    var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition.Module.Import(typeof(void)));
                     typeDefinition.Methods.Add(methodDefinition);
                     methodDefinition.ReturnType = GetTypeReference(methodDefinition, methodReturnType);
                     if (methodDefinition.HasBody && typeDefinition.BaseType?.FullName != "System.MulticastDelegate")

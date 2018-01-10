@@ -8,28 +8,49 @@ namespace Il2CppDumper
 {
     public class MyBinaryReader : BinaryReader
     {
+        public int version;
+        protected bool readAs32Bit;
+        private MethodInfo readClass;
+
+
         public MyBinaryReader(Stream stream) : base(stream)
         {
             readClass = GetType().GetMethod("ReadClass", Type.EmptyTypes);
         }
 
-        public int version;
-
-        protected bool readas32bit;
-
-        private Dictionary<string, string> _64bitTo32bit = new Dictionary<string, string>()
+        private object ReadPrimitive(Type type)
         {
-            {"Int64", "Int32"},
-            {"UInt64", "UInt32"}
-        };
+            var typename = type.Name;
+            switch (typename)
+            {
+                case "Int32":
+                    return ReadInt32();
+                case "UInt32":
+                    return ReadUInt32();
+                case "Int16":
+                    return ReadInt16();
+                case "UInt16":
+                    return ReadUInt16();
+                case "Byte":
+                    return ReadByte();
+                case "Int64" when readAs32Bit:
+                    return ReadInt32();
+                case "Int64":
+                    return ReadInt64();
+                case "UInt64" when readAs32Bit:
+                    return ReadUInt32();
+                case "UInt64":
+                    return ReadUInt64();
+                default:
+                    return null;
+            }
+        }
 
         public dynamic Position
         {
             get => BaseStream.Position;
             set => BaseStream.Position = (long)value;
         }
-
-        private MethodInfo readClass;
 
         public T ReadClass<T>(dynamic addr) where T : new()
         {
@@ -42,28 +63,7 @@ namespace Il2CppDumper
             var type = typeof(T);
             if (type.IsPrimitive)
             {
-                var typename = type.Name;
-                if (readas32bit && _64bitTo32bit.ContainsKey(typename))
-                    typename = _64bitTo32bit[typename];
-                switch (typename)
-                {
-                    case "Int32":
-                        return (T)(object)ReadInt32();
-                    case "UInt32":
-                        return (T)(object)ReadUInt32();
-                    case "Int16":
-                        return (T)(object)ReadInt16();
-                    case "UInt16":
-                        return (T)(object)ReadUInt16();
-                    case "Byte":
-                        return (T)(object)ReadByte();
-                    case "Int64":
-                        return (T)(object)ReadInt64();
-                    case "UInt64":
-                        return (T)(object)ReadUInt64();
-                    default:
-                        return default(T);
-                }
+                return (T)ReadPrimitive(type);
             }
             else
             {
@@ -76,37 +76,16 @@ namespace Il2CppDumper
                         if (version < attr.Min || version > attr.Max)
                             continue;
                     }
-                    var typename = i.FieldType.Name;
-                    if (readas32bit && _64bitTo32bit.ContainsKey(typename))
-                        typename = _64bitTo32bit[typename];
-                    switch (typename)
+                    if (i.FieldType.IsPrimitive)
                     {
-                        case "Int32":
-                            i.SetValue(t, ReadInt32());
-                            break;
-                        case "UInt32":
-                            i.SetValue(t, ReadUInt32());
-                            break;
-                        case "Int16":
-                            i.SetValue(t, ReadInt16());
-                            break;
-                        case "UInt16":
-                            i.SetValue(t, ReadUInt16());
-                            break;
-                        case "Byte":
-                            i.SetValue(t, ReadByte());
-                            break;
-                        case "Int64":
-                            i.SetValue(t, ReadInt64());
-                            break;
-                        case "UInt64":
-                            i.SetValue(t, ReadUInt64());
-                            break;
-                        default:
-                            var gm = readClass.MakeGenericMethod(i.FieldType);
-                            var o = gm.Invoke(this, null);
-                            i.SetValue(t, o);
-                            break;
+                        i.SetValue(t, ReadPrimitive(i.FieldType));
+                    }
+                    else
+                    {
+                        var gm = readClass.MakeGenericMethod(i.FieldType);
+                        var o = gm.Invoke(this, null);
+                        i.SetValue(t, o);
+                        break;
                     }
                 }
                 return t;

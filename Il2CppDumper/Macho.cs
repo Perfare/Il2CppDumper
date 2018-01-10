@@ -18,7 +18,7 @@ namespace Il2CppDumper
         {
             this.version = version;
             this.maxmetadataUsages = maxmetadataUsages;
-            readas32bit = true;
+            readAs32Bit = true;
             if (version < 21)
                 Search = Searchv16;
             else

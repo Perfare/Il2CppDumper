@@ -28,7 +28,7 @@ namespace Il2CppDumper
 
         protected Il2Cpp(Stream stream) : base(stream) { }
 
-        protected virtual void Init(ulong codeRegistration, ulong metadataRegistration)
+        public virtual void Init(ulong codeRegistration, ulong metadataRegistration)
         {
             pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
             pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
@@ -51,7 +51,7 @@ namespace Il2CppDumper
                 metadataUsages = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.metadataUsages, maxmetadataUsages), x => (ulong)x);
         }
 
-        protected void Init64(ulong codeRegistration, ulong metadataRegistration)
+        public void Init64(ulong codeRegistration, ulong metadataRegistration)
         {
             pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
             pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);

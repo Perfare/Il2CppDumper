@@ -55,11 +55,6 @@ namespace Il2CppDumper
             }
         }
 
-        public Macho64(Stream stream, ulong codeRegistration, ulong metadataRegistration, int version, long maxmetadataUsages) : this(stream, version, maxmetadataUsages)
-        {
-            Init64(codeRegistration, metadataRegistration);
-        }
-
         public override dynamic MapVATR(dynamic uiAddr)
         {
             var section = sections.First(x => uiAddr >= x.address && uiAddr <= x.end);

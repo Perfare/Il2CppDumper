@@ -74,19 +74,19 @@ namespace Il2CppDumper
                                 Console.WriteLine();
                                 key = Console.ReadKey(true);
                                 var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.version;
+                                Console.WriteLine("Initializing il2cpp file...");
+                                if (isElf)
+                                    il2cpp = new Elf(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
+                                else if (is64bit)
+                                    il2cpp = new Macho64(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
+                                else
+                                    il2cpp = new Macho(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
                                 switch (key.KeyChar)
                                 {
                                     case '2':
                                     case '3':
                                     case '4':
                                     case '5':
-                                        Console.WriteLine("Initializing il2cpp file...");
-                                        if (isElf)
-                                            il2cpp = new Elf(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
-                                        else if (is64bit)
-                                            il2cpp = new Macho64(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
-                                        else
-                                            il2cpp = new Macho(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
                                         try
                                         {
                                             if (key.KeyChar == '5')
@@ -119,12 +119,10 @@ namespace Il2CppDumper
                                             var codeRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
                                             Console.Write("Input MetadataRegistration: ");
                                             var metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
-                                            if (isElf)
-                                                il2cpp = new Elf(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, version, metadata.maxmetadataUsages);
-                                            else if (is64bit)
-                                                il2cpp = new Macho64(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, version, metadata.maxmetadataUsages);
+                                            if (is64bit)
+                                                il2cpp.Init64(codeRegistration, metadataRegistration);
                                             else
-                                                il2cpp = new Macho(new MemoryStream(il2cppfile), codeRegistration, metadataRegistration, version, metadata.maxmetadataUsages);
+                                                il2cpp.Init(codeRegistration, metadataRegistration);
                                             break;
                                         }
                                     default:
@@ -441,9 +439,9 @@ namespace Il2CppDumper
                                 writer.Close();
                                 scriptwriter.Close();
                                 Console.WriteLine("Done !");
-                                Console.WriteLine("Create DummyDll...");
                                 if (config.DummyDll)
                                 {
+                                    Console.WriteLine("Create DummyDll...");
                                     if (Directory.Exists("DummyDll"))
                                         Directory.Delete("DummyDll", true);
                                     Directory.CreateDirectory("DummyDll");

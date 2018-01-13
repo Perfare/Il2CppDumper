@@ -57,11 +57,6 @@ namespace Il2CppDumper
             RelocationProcessing();
         }
 
-        public Elf(Stream stream, ulong codeRegistration, ulong metadataRegistration, int version, long maxmetadataUsages) : this(stream, version, maxmetadataUsages)
-        {
-            Init(codeRegistration, metadataRegistration);
-        }
-
         private void GetSectionWithName()
         {
             try

@@ -55,6 +55,7 @@ namespace Il2CppDumper
             elf_header.e_shnum = ReadUInt16();
             elf_header.e_shtrndx = ReadUInt16();
             program_table_element = ReadClassArray<Elf32_Phdr>(elf_header.e_phoff, elf_header.e_phnum);
+            //TODO 使用program table获取.dynsym(DT_SYMTAB), .dynstr(DT_STRTAB, DT_STRSZ), .rel.dyn(DT_REL, DT_RELSZ)
             GetSectionWithName();
             RelocationProcessing();
         }
@@ -338,7 +339,6 @@ namespace Il2CppDumper
                     var index = ReadByte() | (ReadByte() << 8) | (ReadByte() << 16);
                     switch (type)
                     {
-                        //ARM
                         case 1 when isx86: //R_386_32
                         case 2 when !isx86: //R_ARM_ABS32
                             {

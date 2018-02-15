@@ -435,10 +435,11 @@ namespace Il2CppDumper
                                 }
                                 scriptwriter.WriteLine("print('Make function done, please wait for IDA to complete the analysis')");
                                 scriptwriter.WriteLine("print('Script finish !')");
-                                //
+                                //writer close
                                 writer.Close();
                                 scriptwriter.Close();
                                 Console.WriteLine("Done !");
+                                //DummyDll
                                 if (config.DummyDll)
                                 {
                                     Console.WriteLine("Create DummyDll...");
@@ -446,6 +447,7 @@ namespace Il2CppDumper
                                         Directory.Delete("DummyDll", true);
                                     Directory.CreateDirectory("DummyDll");
                                     Directory.SetCurrentDirectory("DummyDll");
+                                    File.WriteAllBytes("Il2CppDummyDll.dll", Resource1.Il2CppDummyDll);
                                     var dummy = new DummyAssemblyCreator(metadata, il2cpp);
                                     foreach (var assembly in dummy.Assemblies)
                                     {

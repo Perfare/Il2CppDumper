@@ -88,5 +88,15 @@ namespace Il2CppDumper {
                 return ResourceManager.GetString("ida", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   查找 System.Byte[] 类型的本地化资源。
+        /// </summary>
+        internal static byte[] Il2CppDummyDll {
+            get {
+                object obj = ResourceManager.GetObject("Il2CppDummyDll", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }

@@ -14,7 +14,6 @@ namespace Il2CppDumper
         private static byte[] X86FeatureBytes1 = { 0x8D, 0x83 };//lea eax, X
         private static byte[] X86FeatureBytes2 = { 0x89, 0x44, 0x24, 0x04, 0x8D, 0x83 };//mov [esp+4], eax and lea eax, X
         private Dictionary<string, Elf32_Shdr> sectionWithName = new Dictionary<string, Elf32_Shdr>();
-        private List<Elf32_Shdr> sectionLists = new List<Elf32_Shdr>();
         private uint codeRegistration;
         private uint metadataRegistration;
 
@@ -55,7 +54,6 @@ namespace Il2CppDumper
             elf_header.e_shnum = ReadUInt16();
             elf_header.e_shtrndx = ReadUInt16();
             program_table_element = ReadClassArray<Elf32_Phdr>(elf_header.e_phoff, elf_header.e_phnum);
-            //TODO 使用program table获取.dynsym(DT_SYMTAB), .dynstr(DT_STRTAB, DT_STRSZ), .rel.dyn(DT_REL, DT_RELSZ)
             GetSectionWithName();
             RelocationProcessing();
         }
@@ -71,7 +69,6 @@ namespace Il2CppDumper
                 {
                     var section = ReadClass<Elf32_Shdr>((int)elf_header.e_shoff + (elf_header.e_shentsize * i));
                     sectionWithName.Add(ReadStringToNull(section_name_block_off + section.sh_name), section);
-                    sectionLists.Add(section);
                 }
             }
             catch
@@ -321,11 +318,11 @@ namespace Il2CppDumper
 
         private void RelocationProcessing()
         {
-            if (sectionWithName.ContainsKey(".dynsym") && sectionWithName.ContainsKey(".rel.dyn"))
+            if (sectionWithName.ContainsKey(".dynsym") && sectionWithName.ContainsKey(".dynstr") && sectionWithName.ContainsKey(".rel.dyn"))
             {
                 Console.WriteLine("Applying relocations...");
                 var dynsym = sectionWithName[".dynsym"];
-                var symbol_name_block_off = sectionLists[(int)dynsym.sh_link].sh_offset;
+                var symbol_name_block_off = sectionWithName[".dynstr"].sh_offset;
                 var rel_dyn = sectionWithName[".rel.dyn"];
                 var dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsym.sh_offset, dynsym.sh_size / 16);
                 var rel_dynend = rel_dyn.sh_offset + rel_dyn.sh_size;

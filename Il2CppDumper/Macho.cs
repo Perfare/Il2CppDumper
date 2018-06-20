@@ -347,7 +347,7 @@ namespace Il2CppDumper
                     }
                     catch
                     {
-
+                        // ignored
                     }
                 }
             }
@@ -392,7 +392,7 @@ namespace Il2CppDumper
                     }
                     catch
                     {
-
+                        // ignored
                     }
                 }
             }

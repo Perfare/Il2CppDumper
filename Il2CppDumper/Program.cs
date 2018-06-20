@@ -43,6 +43,10 @@ namespace Il2CppDumper
                                 throw new Exception("ERROR: il2cpp file not supported.");
                             case 0x464c457f://ELF
                                 isElf = true;
+                                if (il2cppfile[4] == 2)
+                                {
+                                    goto case 0xFEEDFACF;//ELF64
+                                }
                                 goto case 0xFEEDFACE;
                             case 0xCAFEBABE://FAT header
                             case 0xBEBAFECA:
@@ -76,11 +80,14 @@ namespace Il2CppDumper
                                 var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.version;
                                 Console.WriteLine("Initializing il2cpp file...");
                                 if (isElf)
-                                    il2cpp = new Elf(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
+                                    if (is64bit)
+                                        il2cpp = new Elf64(new MemoryStream(il2cppfile), version, metadata.maxMetadataUsages);
+                                    else
+                                        il2cpp = new Elf(new MemoryStream(il2cppfile), version, metadata.maxMetadataUsages);
                                 else if (is64bit)
-                                    il2cpp = new Macho64(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
+                                    il2cpp = new Macho64(new MemoryStream(il2cppfile), version, metadata.maxMetadataUsages);
                                 else
-                                    il2cpp = new Macho(new MemoryStream(il2cppfile), version, metadata.maxmetadataUsages);
+                                    il2cpp = new Macho(new MemoryStream(il2cppfile), version, metadata.maxMetadataUsages);
                                 switch (key.KeyChar)
                                 {
                                     case '2':
@@ -91,7 +98,7 @@ namespace Il2CppDumper
                                         {
                                             if (key.KeyChar == '5')
                                             {
-                                                var elf = (Elf)il2cpp;
+                                                dynamic elf = il2cpp;
                                                 if (!elf.DetectedSymbol())
                                                 {
                                                     throw new Exception();
@@ -108,8 +115,9 @@ namespace Il2CppDumper
                                                 throw new Exception();
                                             }
                                         }
-                                        catch
+                                        catch (Exception e)
                                         {
+                                            Console.WriteLine($"{e.Message}\r\n{e.StackTrace}\r\n");
                                             throw new Exception("ERROR: Can't use this mode to process file, try another mode.");
                                         }
                                         break;
@@ -529,7 +537,7 @@ namespace Il2CppDumper
         {
             if (!config.DumpAttribute || il2cpp.version < 21)
                 return "";
-            var attributeTypeRange = metadata.attributesInfos[index];
+            var attributeTypeRange = metadata.attributeTypeRanges[index];
             var sb = new StringBuilder();
             for (var i = 0; i < attributeTypeRange.count; i++)
             {

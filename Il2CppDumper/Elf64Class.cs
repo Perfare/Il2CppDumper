@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 
 namespace Il2CppDumper
 {
-    public class Elf32_Ehdr
+    public class Elf64_Ehdr
     {
         public uint ei_mag;
         public byte ei_class;
@@ -18,9 +17,9 @@ namespace Il2CppDumper
         public ushort e_type;
         public ushort e_machine;
         public uint e_version;
-        public uint e_entry;
-        public uint e_phoff;
-        public uint e_shoff;
+        public ulong e_entry;
+        public ulong e_phoff;
+        public ulong e_shoff;
         public uint e_flags;
         public ushort e_ehsize;
         public ushort e_phentsize;
@@ -30,39 +29,39 @@ namespace Il2CppDumper
         public ushort e_shtrndx;
     }
 
-    public class Elf32_Phdr
+    public class Elf64_Phdr
     {
         public uint p_type;
-        public uint p_offset;
-        public uint p_vaddr;
-        public uint p_paddr;
-        public uint p_filesz;
-        public uint p_memsz;
         public uint p_flags;
-        public uint p_align;
+        public ulong p_offset;
+        public ulong p_vaddr;
+        public ulong p_paddr;
+        public ulong p_filesz;
+        public ulong p_memsz;
+        public ulong p_align;
     }
 
-    public class Elf32_Shdr
+    public class Elf64_Shdr
     {
         public uint sh_name;
         public uint sh_type;
-        public uint sh_flags;
-        public uint sh_addr;
-        public uint sh_offset;
-        public uint sh_size;
+        public ulong sh_flags;
+        public ulong sh_addr;
+        public ulong sh_offset;
+        public ulong sh_size;
         public uint sh_link;
         public uint sh_info;
-        public uint sh_addralign;
-        public uint sh_entsize;
+        public ulong sh_addralign;
+        public ulong sh_entsize;
     }
 
-    public class Elf32_Sym
+    public class Elf64_Sym
     {
         public uint st_name;
-        public uint st_value;
-        public uint st_size;
         public byte st_info;
         public byte st_other;
         public ushort st_shndx;
+        public ulong st_value;
+        public ulong st_size;
     }
 }

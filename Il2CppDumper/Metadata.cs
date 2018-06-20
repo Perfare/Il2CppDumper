@@ -19,14 +19,14 @@ namespace Il2CppDumper
         private Il2CppFieldDefaultValue[] fieldDefaultValues;
         private Il2CppParameterDefaultValue[] parameterDefaultValues;
         public Il2CppPropertyDefinition[] propertyDefs;
-        public Il2CppCustomAttributeTypeRange[] attributesInfos;
+        public Il2CppCustomAttributeTypeRange[] attributeTypeRanges;
         private Il2CppStringLiteral[] stringLiterals;
         private Il2CppMetadataUsageList[] metadataUsageLists;
         private Il2CppMetadataUsagePair[] metadataUsagePairs;
         public int[] attributeTypes;
         public int[] interfaceIndices;
         public SortedDictionary<uint, string> stringLiteralsdic;
-        public long maxmetadataUsages;
+        public long maxMetadataUsages;
         public int[] nestedTypeIndices;
         public Il2CppEventDefinition[] eventDefs;
         public Il2CppGenericContainer[] genericContainers;
@@ -90,7 +90,7 @@ namespace Il2CppDumper
             if (version > 20)
             {
                 //CustomAttributeTypeRange
-                attributesInfos = ReadClassArray<Il2CppCustomAttributeTypeRange>(pMetadataHdr.attributesInfoOffset, pMetadataHdr.attributesInfoCount / MySizeOf(typeof(Il2CppCustomAttributeTypeRange)));
+                attributeTypeRanges = ReadClassArray<Il2CppCustomAttributeTypeRange>(pMetadataHdr.attributesInfoOffset, pMetadataHdr.attributesInfoCount / MySizeOf(typeof(Il2CppCustomAttributeTypeRange)));
                 //AttributeTypes
                 attributeTypes = ReadClassArray<int>(pMetadataHdr.attributeTypesOffset, pMetadataHdr.attributeTypesCount / 4);
             }
@@ -140,7 +140,7 @@ namespace Il2CppDumper
                     }
                 }
             }
-            maxmetadataUsages = stringLiteralsdic.Last().Key + 1;
+            maxMetadataUsages = stringLiteralsdic.Last().Key + 1;
         }
 
 

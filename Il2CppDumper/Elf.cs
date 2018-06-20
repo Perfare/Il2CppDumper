@@ -27,17 +27,17 @@ namespace Il2CppDumper
             else
                 Search = Searchv21;
             elf_header = new Elf32_Ehdr();
-            elf_header.m_dwFormat = ReadUInt32();
-            elf_header.m_arch = ReadByte();
-            if (elf_header.m_arch == 2)//64
+            elf_header.ei_mag = ReadUInt32();
+            elf_header.ei_class = ReadByte();
+            if (elf_header.ei_class == 2)//64
             {
                 throw new Exception("ERROR: 64 bit not supported.");
             }
-            elf_header.m_endian = ReadByte();
-            elf_header.m_version = ReadByte();
-            elf_header.m_osabi = ReadByte();
-            elf_header.m_osabi_ver = ReadByte();
-            elf_header.e_pad = ReadBytes(7);
+            elf_header.ei_data = ReadByte();
+            elf_header.ei_version = ReadByte();
+            elf_header.ei_osabi = ReadByte();
+            elf_header.ei_abiversion = ReadByte();
+            elf_header.ei_pad = ReadBytes(7);
             elf_header.e_type = ReadUInt16();
             elf_header.e_machine = ReadUInt16();
             if (elf_header.e_machine != 0x28 && elf_header.e_machine != 0x3)
@@ -342,7 +342,7 @@ namespace Il2CppDumper
                                 var position = Position;
                                 var dynamic_symbol = dynamic_symbol_table[index];
                                 writer.BaseStream.Position = offset;
-                                writer.Write(dynamic_symbol.sym_value);
+                                writer.Write(dynamic_symbol.st_value);
                                 Position = position;
                                 break;
                             }
@@ -351,14 +351,14 @@ namespace Il2CppDumper
                             {
                                 var position = Position;
                                 var dynamic_symbol = dynamic_symbol_table[index];
-                                var name = ReadStringToNull(symbol_name_block_off + dynamic_symbol.sym_name);
+                                var name = ReadStringToNull(symbol_name_block_off + dynamic_symbol.st_name);
                                 switch (name)
                                 {
                                     case "g_CodeRegistration":
-                                        codeRegistration = dynamic_symbol.sym_value;
+                                        codeRegistration = dynamic_symbol.st_value;
                                         break;
                                     case "g_MetadataRegistration":
-                                        metadataRegistration = dynamic_symbol.sym_value;
+                                        metadataRegistration = dynamic_symbol.st_value;
                                         break;
                                 }
                                 Position = position;
@@ -443,7 +443,7 @@ namespace Il2CppDumper
                     }
                     catch
                     {
-
+                        // ignored
                     }
                 }
             }
@@ -488,7 +488,7 @@ namespace Il2CppDumper
                     }
                     catch
                     {
-
+                        // ignored
                     }
                 }
             }

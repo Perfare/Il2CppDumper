@@ -51,6 +51,8 @@
     <Compile Include="Config.cs" />
     <Compile Include="DummyAssemblyCreator.cs" />
     <Compile Include="Elf.cs" />
+    <Compile Include="Elf64.cs" />
+    <Compile Include="Elf64Class.cs" />
     <Compile Include="Il2CppClass.cs" />
     <Compile Include="Il2Cpp.cs" />
     <Compile Include="Macho.cs" />

@@ -33,7 +33,7 @@ namespace Il2CppDumper
                 if (loadCommandType == 0x19) //SEGMENT_64
                 {
                     var segment_name = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
-                    if (segment_name == "__TEXT" || segment_name == "__DATA")
+                    if (segment_name == "__TEXT" || segment_name == "__DATA" || segment_name == "__RODATA")
                     {
                         Position += 40;//skip
                         var number_of_sections = ReadUInt32();
@@ -154,8 +154,9 @@ namespace Il2CppDumper
 
         public override bool AdvancedSearch(int methodCount)
         {
-            var __const = sections.First(x => x.section_name == "__const");
-            var __const2 = sections.Last(x => x.section_name == "__const");
+            var __consts = sections.Where(x => x.section_name == "__const").ToArray();
+            var __const = __consts[0];
+            var __const2 = __consts[1];
             var __text = sections.First(x => x.section_name == "__text");
             var __common = sections.First(x => x.section_name == "__common");
             ulong codeRegistration = 0;
@@ -279,8 +280,9 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
-            var __const = sections.First(x => x.section_name == "__const");
-            var __const2 = sections.Last(x => x.section_name == "__const");
+            var __consts = sections.Where(x => x.section_name == "__const").ToArray();
+            var __const = __consts[0];
+            var __const2 = __consts[1];
             var __text = sections.First(x => x.section_name == "__text");
             var __common = sections.First(x => x.section_name == "__common");
             var codeRegistration = FindCodeRegistration(methodCount, __const, __const2, __text);

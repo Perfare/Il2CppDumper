@@ -2,11 +2,11 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/anhqw33vcpmp8ofa?svg=true)](https://ci.appveyor.com/project/Perfare/il2cppdumper/branch/master/artifacts)
 
+中文说明请戳[这里](README.zh-CN.md)
+
 Extract .NET metadata from il2cpp binaries. (types, methods, fields, etc.)
 
 Extraction code is based on [Il2CppDumper](https://github.com/Jumboperson/Il2CppDumper)  
-
-中文说明请戳[这里](README.zh-CN.md)
 
 ## Features
 
@@ -16,6 +16,7 @@ Extraction code is based on [Il2CppDumper](https://github.com/Jumboperson/Il2Cpp
 * Supports automated IDA script generation
   * name and tag methods
   * store dynamic string literals in comments
+  * makefunction to improve ida analysis
 * Generates dummy DLLs that can be viewed in .NET decompilers
 
 ## Usage

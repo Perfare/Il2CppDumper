@@ -11,19 +11,19 @@
 * 生成DummyDll
 
 ## 使用说明
-运行Il2CppDumper.exe并依次选择il2cpp的可执行文件（ELF或者Mach-O文件）和global-metadata.dat文件，然后选择运行的模式，将生成dump.cs文件和script.py脚本
+运行Il2CppDumper.exe并依次选择il2cpp的可执行文件（ELF，Mach-O或者PE文件）和global-metadata.dat文件，然后选择运行的模式，将在程序运行目录下生成dump.cs文件和script.py脚本
 
 ### 关于模式
 #### Manual
 你需要手动输入`CodeRegistration`和`MetadataRegistration`的指针地址，一般需要依靠反汇编工具来获取地址
 #### Auto
-原理是通过函数的特征字节找到`il2cpp_codegen_register`函数并获取传入`il2cpp::vm::MetadataCache::Register`中的参数1（`CodeRegistration`）和参数2（`MetadataRegistration`）。不过由于不同编译器编译出来的结果有差异，很多情况下无法正常工作。
+原理是通过函数的特征字节找到`il2cpp_codegen_register`函数并获取传入`il2cpp::vm::MetadataCache::Register`中的参数1（`CodeRegistration`）和参数2（`MetadataRegistration`）。不过由于不同编译器优化差异，很多情况下无法正常工作。
 #### Auto(Advanced)
 支持Metadata 20及以后的版本，在16版本下只能获取到`CodeRegistration`地址，利用指针特征进行搜索，通用性比Auto强。
-#### Auto(Plus) - **Recommend**
+#### Auto(Plus) - **优先使用此模式**
 支持Metadata 20及以后的版本，在16版本下只能获取到`CodeRegistration`地址，以metadata的数据作为依据，指针特征作为判读条件进行搜索，对于某些文件处理的比Auto(Advanced)好。
 #### Auto(Symbol)
-只支持安卓，使用自带的符号进行处理。
+目前只支持ELF，使用自带的符号进行处理。
 
 ### 关于dump.cs
 文本文件，推荐使用有c#语法高亮的编辑器打开
@@ -42,11 +42,11 @@
 控制程序是否生成DummyDll  
 
 `ForceIl2CppVersion`，`ForceVersion`  
-当ForceIl2CppVersion为true时，程序将根据ForceVersion指定的版本读取il2cpp的可执行文件（Metadata仍然使用header里的版本），这在部分低版本的il2cpp中将会有用（比如安卓20版本下，你可能需要设置ForceVersion为16程序才能正常工作）  
+当ForceIl2CppVersion为true时，程序将根据ForceVersion指定的版本读取il2cpp的可执行文件（Metadata仍然使用header里的版本），在部分低版本的il2cpp中可能会用到（比如安卓20版本下，你可能需要设置ForceVersion为16程序才能正常工作）  
 
 ## 常见问题
 #### `ERROR: Metadata file supplied is not valid metadata file.`  
-正如它所显示的，你选择的global-metadata.dat不是一个有效的metadata文件，通常是因为游戏加密了global-metadata.dat文件。关于解密的问题最好去破解论坛寻求帮助，请不要在issues提问！  
+你所选择的global-metadata.dat不是一个有效的metadata文件，通常是因为游戏加密了global-metadata.dat文件。关于解密的问题最好去相关破解论坛寻求帮助，请不要在issues提问！  
 
 #### `ERROR: Can't use this mode to process file, try another mode.`  
 当所有自动模式都无法工作时，你可以打开一个新的issue，并上传文件，我会尝试解决

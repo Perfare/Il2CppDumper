@@ -25,8 +25,6 @@ namespace Il2CppDumper
             optionalHeader = ReadClass<OptionalHeader>();
             optionalHeader.DataDirectory = ReadClassArray<DataDirectory>(optionalHeader.NumberOfRvaAndSizes);
             imageBase = optionalHeader.ImageBase;
-            var IATVirtualAddress = optionalHeader.DataDirectory[12].VirtualAddress;
-            var IATSize = optionalHeader.DataDirectory[12].Size;
             sections = new SectionHeader[fileHeader.NumberOfSections];
             for (int i = 0; i < fileHeader.NumberOfSections; i++)
             {

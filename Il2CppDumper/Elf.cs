@@ -22,10 +22,6 @@ namespace Il2CppDumper
             elf_header = new Elf32_Ehdr();
             elf_header.ei_mag = ReadUInt32();
             elf_header.ei_class = ReadByte();
-            if (elf_header.ei_class == 2)//64
-            {
-                throw new Exception("ERROR: 64 bit not supported.");
-            }
             elf_header.ei_data = ReadByte();
             elf_header.ei_version = ReadByte();
             elf_header.ei_osabi = ReadByte();

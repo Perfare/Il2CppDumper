@@ -6,11 +6,11 @@ Extract .NET metadata from il2cpp binaries. (types, methods, fields, etc.)
 
 Extraction code is based on [Il2CppDumper](https://github.com/Jumboperson/Il2CppDumper)  
 
-(For Chinese version of this document please click [here](README_zh.md))
+中文说明请戳[这里](README.zh-CN.md)
 
 ## Features
 
-* Supports il2cpp binaries in ELF(arm, x86) and Mach-O(32bit, 64bit) format
+* Supports il2cpp binaries in ELF(arm, x86), ELF64(aarch64), Mach-O(32bit, 64bit) and PE format
 * Supports global-metadata version 16 and 20-24
 * Extracts .NET metadata including types, fields, properties, methods and attributes
 * Supports automated IDA script generation

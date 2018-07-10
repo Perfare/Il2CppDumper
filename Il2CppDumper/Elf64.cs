@@ -14,11 +14,8 @@ namespace Il2CppDumper
         private ulong codeRegistration;
         private ulong metadataRegistration;
 
-        public Elf64(Stream stream, int version, long maxmetadataUsages) : base(stream)
+        public Elf64(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
-            this.version = version;
-            this.maxmetadataUsages = maxmetadataUsages;
-            Search = SearchObsolete;
             elf_header = new Elf64_Ehdr();
             elf_header.ei_mag = ReadUInt32();
             elf_header.ei_class = ReadByte();
@@ -63,6 +60,140 @@ namespace Il2CppDumper
                 Console.WriteLine("ERROR: Unable to get section.");
             }
         }
+
+        public override dynamic MapVATR(dynamic uiAddr)
+        {
+            var program_header_table = program_table_element.First(x => uiAddr >= x.p_vaddr && uiAddr <= x.p_vaddr + x.p_memsz);
+            return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
+        }
+
+        public override bool Search()
+        {
+            Console.WriteLine("ERROR: This mode not supported.");
+            return false;
+        }
+
+        public override bool AdvancedSearch(int methodCount)
+        {
+            Console.WriteLine("ERROR: This mode not supported.");
+            return false;
+        }
+
+        public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
+        {
+            if (sectionWithName.ContainsKey(".data") && sectionWithName.ContainsKey(".text") && sectionWithName.ContainsKey(".bss"))
+            {
+                var datarelro = sectionWithName[".data"];
+                var text = sectionWithName[".text"];
+                var bss = sectionWithName[".bss"];
+                codeRegistration = FindCodeRegistration(methodCount, datarelro, null, text);
+                metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, datarelro, null, bss);
+                if (codeRegistration != 0 && metadataRegistration != 0)
+                {
+                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                    Init64(codeRegistration, metadataRegistration);
+                    return true;
+                }
+            }
+            else
+            {
+                Console.WriteLine("ERROR: The necessary section is missing.");
+            }
+            return false;
+        }
+
+        private ulong FindCodeRegistration(int count, Elf64_Shdr search, Elf64_Shdr search2, Elf64_Shdr range)
+        {
+            var searchend = search.sh_offset + search.sh_size;
+            var rangeend = range.sh_addr + range.sh_size;
+            var search2end = search2 == null ? 0 : search2.sh_offset + search2.sh_size;
+            Position = search.sh_offset;
+            while ((ulong)Position < searchend)
+            {
+                var add = Position;
+                if (ReadUInt64() == (ulong)count)
+                {
+                    try
+                    {
+                        ulong pointers = MapVATR(ReadUInt64());
+                        if (pointers >= search.sh_offset && pointers <= searchend)
+                        {
+                            var np = Position;
+                            var temp = ReadClassArray<ulong>(pointers, count);
+                            var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
+                            if (r == -1)
+                            {
+                                return (ulong)add - search.sh_offset + search.sh_addr; //VirtualAddress
+                            }
+                            Position = np;
+                        }
+                        else if (search2 != null && pointers >= search2.sh_offset && pointers <= search2end)
+                        {
+                            var np = Position;
+                            var temp = ReadClassArray<ulong>(pointers, count);
+                            var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
+                            if (r == -1)
+                            {
+                                return (ulong)add - search.sh_offset + search.sh_addr; //VirtualAddress
+                            }
+                            Position = np;
+                        }
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+                }
+            }
+            return 0;
+        }
+
+        private ulong FindMetadataRegistration(int typeDefinitionsCount, Elf64_Shdr search, Elf64_Shdr search2, Elf64_Shdr range)
+        {
+            var searchend = search.sh_offset + search.sh_size;
+            var rangeend = range.sh_addr + range.sh_size;
+            var search2end = search2 == null ? 0 : search2.sh_offset + search2.sh_size;
+            Position = search.sh_offset;
+            while ((ulong)Position < searchend)
+            {
+                var add = Position;
+                if (ReadUInt64() == (ulong)typeDefinitionsCount)
+                {
+                    try
+                    {
+                        var np = Position;
+                        Position += 16;
+                        ulong pointers = MapVATR(ReadUInt64());
+                        if (pointers >= search.sh_offset && pointers <= searchend)
+                        {
+                            var temp = ReadClassArray<ulong>(pointers, maxMetadataUsages);
+                            var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
+                            if (r == -1)
+                            {
+                                return (ulong)add - 96ul - search.sh_offset + search.sh_addr; //VirtualAddress
+                            }
+                        }
+                        else if (search2 != null && pointers >= search2.sh_offset && pointers <= search2end)
+                        {
+                            var temp = ReadClassArray<ulong>(pointers, maxMetadataUsages);
+                            var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
+                            if (r == -1)
+                            {
+                                return (ulong)add - 96ul - search.sh_offset + search.sh_addr; //VirtualAddress
+                            }
+                        }
+                        Position = np;
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+                }
+            }
+            return 0;
+        }
+
 
         private void RelocationProcessing()
         {
@@ -119,12 +250,6 @@ namespace Il2CppDumper
             }*/
         }
 
-        public override dynamic MapVATR(dynamic uiAddr)
-        {
-            var program_header_table = program_table_element.First(x => uiAddr >= x.p_vaddr && uiAddr <= x.p_vaddr + x.p_memsz);
-            return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
-        }
-
         public override long GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex)
         {
             if (isNew21)
@@ -146,136 +271,9 @@ namespace Il2CppDumper
             return pointers;
         }
 
-        private bool SearchObsolete()
+        public override bool SymbolSearch()
         {
-            Console.WriteLine("ERROR: This mode not supported Elf64.");
-            return false;
-        }
-
-        public override bool AdvancedSearch(int methodCount)
-        {
-            Console.WriteLine("ERROR: This mode not supported Elf64.");
-            return false;
-        }
-
-        public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
-        {
-            if (sectionWithName.ContainsKey(".data") && sectionWithName.ContainsKey(".text") && sectionWithName.ContainsKey(".bss"))
-            {
-                var datarelro = sectionWithName[".data"];
-                var text = sectionWithName[".text"];
-                var bss = sectionWithName[".bss"];
-                codeRegistration = FindCodeRegistration(methodCount, datarelro, null, text);
-                metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, datarelro, null, bss);
-                if (codeRegistration != 0 && metadataRegistration != 0)
-                {
-                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                    Init64(codeRegistration, metadataRegistration);
-                    return true;
-                }
-            }
-            else
-            {
-                Console.WriteLine("ERROR: The necessary section is missing.");
-            }
-            return false;
-        }
-
-        private ulong FindCodeRegistration(int count, Elf64_Shdr search, Elf64_Shdr search2, Elf64_Shdr range)
-        {
-            var searchend = search.sh_offset + search.sh_size;
-            var rangeend = range.sh_addr + range.sh_size;
-            var search2end = search2 == null ? 0 : search2.sh_offset + search2.sh_size;
-            Position = search.sh_offset;
-            while ((ulong)Position < searchend)
-            {
-                var add = Position;
-                if (ReadUInt64() == (ulong)count)
-                {
-                    try
-                    {
-                        ulong pointers = MapVATR(ReadUInt64());
-                        if (pointers >= search.sh_offset && pointers <= searchend)
-                        {
-                            var np = Position;
-                            var temp = ReadClassArray<ulong>(pointers, count);
-                            var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (ulong)add - search.sh_offset + search.sh_addr;//MapRATV
-                            }
-                            Position = np;
-                        }
-                        else if (search2 != null && pointers >= search2.sh_offset && pointers <= search2end)
-                        {
-                            var np = Position;
-                            var temp = ReadClassArray<ulong>(pointers, count);
-                            var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (ulong)add - search.sh_offset + search.sh_addr;//MapRATV
-                            }
-                            Position = np;
-                        }
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                }
-            }
-            return 0;
-        }
-
-        private ulong FindMetadataRegistration(int typeDefinitionsCount, Elf64_Shdr search, Elf64_Shdr search2, Elf64_Shdr range)
-        {
-            var searchend = search.sh_offset + search.sh_size;
-            var rangeend = range.sh_addr + range.sh_size;
-            var search2end = search2 == null ? 0 : search2.sh_offset + search2.sh_size;
-            Position = search.sh_offset;
-            while ((ulong)Position < searchend)
-            {
-                var add = Position;
-                if (ReadUInt64() == (ulong)typeDefinitionsCount)
-                {
-                    try
-                    {
-                        var np = Position;
-                        Position += 16;
-                        ulong pointers = MapVATR(ReadUInt64());
-                        if (pointers >= search.sh_offset && pointers <= searchend)
-                        {
-                            var temp = ReadClassArray<ulong>(pointers, maxmetadataUsages);
-                            var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (ulong)add - 96ul - search.sh_offset + search.sh_addr;//MapRATV
-                            }
-                        }
-                        else if (search2 != null && pointers >= search2.sh_offset && pointers <= search2end)
-                        {
-                            var temp = ReadClassArray<ulong>(pointers, maxmetadataUsages);
-                            var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (ulong)add - 96ul - search.sh_offset + search.sh_addr;//MapRATV
-                            }
-                        }
-                        Position = np;
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                }
-            }
-            return 0;
-        }
-
-        public bool DetectedSymbol()
-        {
-            Console.WriteLine("ERROR: This mode not supported Elf64.");
+            Console.WriteLine("ERROR: This mode not supported.");
             return false;
         }
     }

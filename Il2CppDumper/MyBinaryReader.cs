@@ -92,15 +92,20 @@ namespace Il2CppDumper
             }
         }
 
-        public T[] ReadClassArray<T>(dynamic addr, long count) where T : new()
+        public T[] ReadClassArray<T>(long count) where T : new()
         {
-            Position = addr;
             var t = new T[count];
             for (var i = 0; i < count; i++)
             {
                 t[i] = ReadClass<T>();
             }
             return t;
+        }
+
+        public T[] ReadClassArray<T>(dynamic addr, long count) where T : new()
+        {
+            Position = addr;
+            return ReadClassArray<T>(count);
         }
 
         public string ReadStringToNull(dynamic addr)

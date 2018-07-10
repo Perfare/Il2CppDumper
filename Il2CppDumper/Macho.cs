@@ -14,15 +14,8 @@ namespace Il2CppDumper
         private static byte[] FeatureBytes2 = { 0x78, 0x44, 0x79, 0x44 };//ADD R0, PC and ADD R1, PC
 
 
-        public Macho(Stream stream, int version, long maxmetadataUsages) : base(stream)
+        public Macho(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
-            this.version = version;
-            this.maxmetadataUsages = maxmetadataUsages;
-            readAs32Bit = true;
-            if (version < 21)
-                Search = Searchv16;
-            else
-                Search = Searchv21;
             Position += 16;//skip
             var ncmds = ReadUInt32();
             Position += 8;//skip
@@ -56,12 +49,6 @@ namespace Il2CppDumper
             }
         }
 
-        public override dynamic MapVATR(dynamic uiAddr)
-        {
-            var section = sections.First(x => uiAddr >= x.address && uiAddr <= x.end);
-            return uiAddr - (section.address - section.offset);
-        }
-
         public override void Init(ulong codeRegistration, ulong metadataRegistration)
         {
             base.Init(codeRegistration, metadataRegistration);
@@ -69,86 +56,94 @@ namespace Il2CppDumper
             customAttributeGenerators = customAttributeGenerators.Select(x => x - 1).ToArray();
         }
 
-        private bool Searchv21()
+        public override dynamic MapVATR(dynamic uiAddr)
         {
-            var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
-            var addrs = ReadClassArray<uint>(__mod_init_func.offset, __mod_init_func.size / 4u);
-            foreach (var a in addrs)
-            {
-                if (a > 0)
-                {
-                    var i = a - 1;
-                    Position = MapVATR(i);
-                    Position += 4;
-                    var buff = ReadBytes(2);
-                    if (FeatureBytes1.SequenceEqual(buff))
-                    {
-                        Position += 12;
-                        buff = ReadBytes(4);
-                        if (FeatureBytes2.SequenceEqual(buff))
-                        {
-                            Position = MapVATR(i) + 10;
-                            var subaddr = DecodeMov(ReadBytes(8)) + i + 24u - 1u;
-                            var rsubaddr = MapVATR(subaddr);
-                            Position = rsubaddr;
-                            var ptr = DecodeMov(ReadBytes(8)) + subaddr + 16u;
-                            Position = MapVATR(ptr);
-                            var metadataRegistration = ReadUInt32();
-                            Position = rsubaddr + 8;
-                            buff = ReadBytes(4);
-                            Position = rsubaddr + 14;
-                            buff = buff.Concat(ReadBytes(4)).ToArray();
-                            var codeRegistration = DecodeMov(buff) + subaddr + 26u;
-                            Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                            Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                            Init(codeRegistration, metadataRegistration);
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
+            var section = sections.First(x => uiAddr >= x.address && uiAddr <= x.end);
+            return uiAddr - (section.address - section.offset);
         }
 
-        private bool Searchv16()
+        public override bool Search()
         {
-            var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
-            var addrs = ReadClassArray<uint>(__mod_init_func.offset, __mod_init_func.size / 4u);
-            foreach (var a in addrs)
+            if (version < 21)
             {
-                if (a > 0)
+                var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
+                var addrs = ReadClassArray<uint>(__mod_init_func.offset, __mod_init_func.size / 4u);
+                foreach (var a in addrs)
                 {
-                    var i = a - 1;
-                    Position = MapVATR(i);
-                    Position += 4;
-                    var buff = ReadBytes(2);
-                    if (FeatureBytes1.SequenceEqual(buff))
+                    if (a > 0)
                     {
-                        Position += 12;
-                        buff = ReadBytes(4);
-                        if (FeatureBytes2.SequenceEqual(buff))
+                        var i = a - 1;
+                        Position = MapVATR(i);
+                        Position += 4;
+                        var buff = ReadBytes(2);
+                        if (FeatureBytes1.SequenceEqual(buff))
                         {
-                            Position = MapVATR(i) + 10;
-                            var subaddr = DecodeMov(ReadBytes(8)) + i + 24u - 1u;
-                            var rsubaddr = MapVATR(subaddr);
-                            Position = rsubaddr;
-                            var ptr = DecodeMov(ReadBytes(8)) + subaddr + 16u;
-                            Position = MapVATR(ptr);
-                            var metadataRegistration = ReadUInt32();
-                            Position = rsubaddr + 8;
+                            Position += 12;
                             buff = ReadBytes(4);
-                            Position = rsubaddr + 14;
-                            buff = buff.Concat(ReadBytes(4)).ToArray();
-                            var codeRegistration = DecodeMov(buff) + subaddr + 22u;
-                            Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                            Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                            Init(codeRegistration, metadataRegistration);
-                            return true;
+                            if (FeatureBytes2.SequenceEqual(buff))
+                            {
+                                Position = MapVATR(i) + 10;
+                                var subaddr = DecodeMov(ReadBytes(8)) + i + 24u - 1u;
+                                var rsubaddr = MapVATR(subaddr);
+                                Position = rsubaddr;
+                                var ptr = DecodeMov(ReadBytes(8)) + subaddr + 16u;
+                                Position = MapVATR(ptr);
+                                var metadataRegistration = ReadUInt32();
+                                Position = rsubaddr + 8;
+                                buff = ReadBytes(4);
+                                Position = rsubaddr + 14;
+                                buff = buff.Concat(ReadBytes(4)).ToArray();
+                                var codeRegistration = DecodeMov(buff) + subaddr + 22u;
+                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                                Init(codeRegistration, metadataRegistration);
+                                return true;
+                            }
                         }
                     }
                 }
+                return false;
             }
-            return false;
+            else
+            {
+                var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
+                var addrs = ReadClassArray<uint>(__mod_init_func.offset, __mod_init_func.size / 4u);
+                foreach (var a in addrs)
+                {
+                    if (a > 0)
+                    {
+                        var i = a - 1;
+                        Position = MapVATR(i);
+                        Position += 4;
+                        var buff = ReadBytes(2);
+                        if (FeatureBytes1.SequenceEqual(buff))
+                        {
+                            Position += 12;
+                            buff = ReadBytes(4);
+                            if (FeatureBytes2.SequenceEqual(buff))
+                            {
+                                Position = MapVATR(i) + 10;
+                                var subaddr = DecodeMov(ReadBytes(8)) + i + 24u - 1u;
+                                var rsubaddr = MapVATR(subaddr);
+                                Position = rsubaddr;
+                                var ptr = DecodeMov(ReadBytes(8)) + subaddr + 16u;
+                                Position = MapVATR(ptr);
+                                var metadataRegistration = ReadUInt32();
+                                Position = rsubaddr + 8;
+                                buff = ReadBytes(4);
+                                Position = rsubaddr + 14;
+                                buff = buff.Concat(ReadBytes(4)).ToArray();
+                                var codeRegistration = DecodeMov(buff) + subaddr + 26u;
+                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                                Init(codeRegistration, metadataRegistration);
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
         }
 
         public override bool AdvancedSearch(int methodCount)
@@ -187,9 +182,9 @@ namespace Il2CppDumper
                 Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                 return false;
             }
-            var pmetadataUsages = FindPointersAsc(maxmetadataUsages, __const, __common);
+            var pmetadataUsages = FindPointersAsc(maxMetadataUsages, __const, __common);
             if (pmetadataUsages == 0)
-                pmetadataUsages = FindPointersAsc(maxmetadataUsages, __const2, __common);
+                pmetadataUsages = FindPointersAsc(maxMetadataUsages, __const2, __common);
             if (pmetadataUsages != 0)
             {
                 metadataRegistration = FindReference(pmetadataUsages, __const);
@@ -197,9 +192,9 @@ namespace Il2CppDumper
                     metadataRegistration = FindReference(pmetadataUsages, __const2);
                 if (metadataRegistration == 0)
                 {
-                    pmetadataUsages = FindPointersDesc(maxmetadataUsages, __const, __common);
+                    pmetadataUsages = FindPointersDesc(maxMetadataUsages, __const, __common);
                     if (pmetadataUsages == 0)
-                        pmetadataUsages = FindPointersDesc(maxmetadataUsages, __const2, __common);
+                        pmetadataUsages = FindPointersDesc(maxMetadataUsages, __const2, __common);
                     if (pmetadataUsages != 0)
                     {
                         metadataRegistration = FindReference(pmetadataUsages, __const);
@@ -235,7 +230,7 @@ namespace Il2CppDumper
                 }
                 else
                 {
-                    return search.address + (uint)add;//MapRATV
+                    return search.address + (uint)add; //VirtualAddress
                 }
             }
             return 0;
@@ -256,7 +251,7 @@ namespace Il2CppDumper
                 }
                 else
                 {
-                    return (uint)(search.address + search.size + add - 4 * readCount);//MapRATV
+                    return (uint)(search.address + search.size + add - 4 * readCount); //VirtualAddress
                 }
             }
             return 0;
@@ -270,7 +265,7 @@ namespace Il2CppDumper
             {
                 if (ReadUInt32() == pointer)
                 {
-                    return (uint)Position - search.offset + search.address;//MapRATV
+                    return (uint)Position - search.offset + search.address; //VirtualAddress
                 }
             }
             return 0;
@@ -329,7 +324,7 @@ namespace Il2CppDumper
                             var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
                             if (r == -1)
                             {
-                                return (uint)add - search.offset + search.address;//MapRATV
+                                return (uint)add - search.offset + search.address; //VirtualAddress
                             }
                             Position = np;
                         }
@@ -340,7 +335,7 @@ namespace Il2CppDumper
                             var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
                             if (r == -1)
                             {
-                                return (uint)add - search.offset + search.address;//MapRATV
+                                return (uint)add - search.offset + search.address; //VirtualAddress
                             }
                             Position = np;
                         }
@@ -372,20 +367,20 @@ namespace Il2CppDumper
                         uint pointers = MapVATR(ReadUInt32());
                         if (pointers >= search.offset && pointers <= searchend)
                         {
-                            var temp = ReadClassArray<uint>(pointers, maxmetadataUsages);
+                            var temp = ReadClassArray<uint>(pointers, maxMetadataUsages);
                             var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
                             if (r == -1)
                             {
-                                return (uint)add - 48u - search.offset + search.address;//MapRATV
+                                return (uint)add - 48u - search.offset + search.address; //VirtualAddress
                             }
                         }
                         else if (search2 != null && pointers >= search2.offset && pointers <= search2end)
                         {
-                            var temp = ReadClassArray<uint>(pointers, maxmetadataUsages);
+                            var temp = ReadClassArray<uint>(pointers, maxMetadataUsages);
                             var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
                             if (r == -1)
                             {
-                                return (uint)add - 48u - search.offset + search.address;//MapRATV
+                                return (uint)add - 48u - search.offset + search.address; //VirtualAddress
                             }
                         }
                         Position = np;
@@ -397,6 +392,12 @@ namespace Il2CppDumper
                 }
             }
             return 0;
+        }
+
+        public override bool SymbolSearch()
+        {
+            Console.WriteLine("ERROR: This mode not supported.");
+            return false;
         }
     }
 }

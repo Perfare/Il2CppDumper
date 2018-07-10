@@ -14,14 +14,8 @@ namespace Il2CppDumper
         private static byte[] FeatureBytes2 = { 0x3, 0x0, 0x80, 0x52 };//MOV W3, #0
 
 
-        public Macho64(Stream stream, int version, long maxmetadataUsages) : base(stream)
+        public Macho64(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
-            this.version = version;
-            this.maxmetadataUsages = maxmetadataUsages;
-            if (version < 23)
-                Search = Searchv16_22;
-            else
-                Search = Searchv23;
             Position += 16;//skip
             var ncmds = ReadUInt32();
             Position += 12;//skip
@@ -61,95 +55,76 @@ namespace Il2CppDumper
             return uiAddr - (section.address - section.offset);
         }
 
-        public override long GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex)
+        public override bool Search()
         {
-            if (isNew21)
+            if (version < 23)
             {
-                var ptr = fieldOffsets[typeIndex];
-                if (ptr >= 0)
+                var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
+                var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
+                foreach (var i in addrs)
                 {
-                    Position = MapVATR((ulong)ptr) + 4ul * (ulong)fieldIndexInType;
-                    return ReadInt32();
-                }
-                return 0;
-            }
-            return fieldOffsets[fieldIndex];
-        }
-
-        public override ulong[] GetPointers(ulong pointer, long count)
-        {
-            var pointers = MapVATR<ulong>(pointer, count);
-            return pointers;
-        }
-
-        private bool Searchv16_22()
-        {
-            var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
-            var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
-            foreach (var i in addrs)
-            {
-                if (i > 0)
-                {
-                    Position = MapVATR(i);
-                    var buff = ReadBytes(4);
-                    if (FeatureBytes1.SequenceEqual(buff))
+                    if (i > 0)
                     {
-                        buff = ReadBytes(4);
-                        if (FeatureBytes2.SequenceEqual(buff))
+                        Position = MapVATR(i);
+                        var buff = ReadBytes(4);
+                        if (FeatureBytes1.SequenceEqual(buff))
                         {
-                            Position += 8;
-                            var subaddr = DecodeAdr(i + 16, ReadBytes(4));
-                            var rsubaddr = MapVATR(subaddr);
-                            Position = rsubaddr;
-                            var codeRegistration = DecodeAdrp(subaddr, ReadBytes(4));
-                            codeRegistration += DecodeAdd(ReadBytes(4));
-                            Position = rsubaddr + 8;
-                            var metadataRegistration = DecodeAdrp(subaddr + 8, ReadBytes(4));
-                            metadataRegistration += DecodeAdd(ReadBytes(4));
-                            Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                            Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                            Init64(codeRegistration, metadataRegistration);
-                            return true;
+                            buff = ReadBytes(4);
+                            if (FeatureBytes2.SequenceEqual(buff))
+                            {
+                                Position += 8;
+                                var subaddr = DecodeAdr(i + 16, ReadBytes(4));
+                                var rsubaddr = MapVATR(subaddr);
+                                Position = rsubaddr;
+                                var codeRegistration = DecodeAdrp(subaddr, ReadBytes(4));
+                                codeRegistration += DecodeAdd(ReadBytes(4));
+                                Position = rsubaddr + 8;
+                                var metadataRegistration = DecodeAdrp(subaddr + 8, ReadBytes(4));
+                                metadataRegistration += DecodeAdd(ReadBytes(4));
+                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                                Init64(codeRegistration, metadataRegistration);
+                                return true;
+                            }
                         }
                     }
                 }
+                return false;
             }
-            return false;
-        }
-
-        private bool Searchv23()
-        {
-            var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
-            var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
-            foreach (var i in addrs)
+            else
             {
-                if (i > 0)
+                var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
+                var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
+                foreach (var i in addrs)
                 {
-                    Position = MapVATR(i) + 16;
-                    var buff = ReadBytes(4);
-                    if (FeatureBytes1.SequenceEqual(buff))
+                    if (i > 0)
                     {
-                        buff = ReadBytes(4);
-                        if (FeatureBytes2.SequenceEqual(buff))
+                        Position = MapVATR(i) + 16;
+                        var buff = ReadBytes(4);
+                        if (FeatureBytes1.SequenceEqual(buff))
                         {
-                            Position -= 16;
-                            var subaddr = DecodeAdr(i + 8, ReadBytes(4));
-                            var rsubaddr = MapVATR(subaddr);
-                            Position = rsubaddr;
-                            var codeRegistration = DecodeAdrp(subaddr, ReadBytes(4));
-                            codeRegistration += DecodeAdd(ReadBytes(4));
-                            Position = rsubaddr + 8;
-                            var metadataRegistration = DecodeAdrp(subaddr + 8, ReadBytes(4));
-                            metadataRegistration += DecodeAdd(ReadBytes(4));
-                            Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                            Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                            Init64(codeRegistration, metadataRegistration);
-                            return true;
+                            buff = ReadBytes(4);
+                            if (FeatureBytes2.SequenceEqual(buff))
+                            {
+                                Position -= 16;
+                                var subaddr = DecodeAdr(i + 8, ReadBytes(4));
+                                var rsubaddr = MapVATR(subaddr);
+                                Position = rsubaddr;
+                                var codeRegistration = DecodeAdrp(subaddr, ReadBytes(4));
+                                codeRegistration += DecodeAdd(ReadBytes(4));
+                                Position = rsubaddr + 8;
+                                var metadataRegistration = DecodeAdrp(subaddr + 8, ReadBytes(4));
+                                metadataRegistration += DecodeAdd(ReadBytes(4));
+                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                                Init64(codeRegistration, metadataRegistration);
+                                return true;
+                            }
                         }
                     }
                 }
+                return false;
             }
-            return false;
         }
 
         public override bool AdvancedSearch(int methodCount)
@@ -189,9 +164,9 @@ namespace Il2CppDumper
                 Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                 return false;
             }
-            var pmetadataUsages = FindPointersAsc(maxmetadataUsages, __const, __common);
+            var pmetadataUsages = FindPointersAsc(maxMetadataUsages, __const, __common);
             if (pmetadataUsages == 0)
-                pmetadataUsages = FindPointersAsc(maxmetadataUsages, __const2, __common);
+                pmetadataUsages = FindPointersAsc(maxMetadataUsages, __const2, __common);
             if (pmetadataUsages != 0)
             {
                 metadataRegistration = FindReference(pmetadataUsages, __const);
@@ -199,9 +174,9 @@ namespace Il2CppDumper
                     metadataRegistration = FindReference(pmetadataUsages, __const2);
                 if (metadataRegistration == 0)
                 {
-                    pmetadataUsages = FindPointersDesc(maxmetadataUsages, __const, __common);
+                    pmetadataUsages = FindPointersDesc(maxMetadataUsages, __const, __common);
                     if (pmetadataUsages == 0)
-                        pmetadataUsages = FindPointersDesc(maxmetadataUsages, __const2, __common);
+                        pmetadataUsages = FindPointersDesc(maxMetadataUsages, __const2, __common);
                     if (pmetadataUsages != 0)
                     {
                         metadataRegistration = FindReference(pmetadataUsages, __const);
@@ -237,7 +212,7 @@ namespace Il2CppDumper
                 }
                 else
                 {
-                    return search.address + add;//MapRATV
+                    return search.address + add; //VirtualAddress
                 }
             }
             return 0;
@@ -258,7 +233,7 @@ namespace Il2CppDumper
                 }
                 else
                 {
-                    return search.address + search.size + (ulong)add - 8ul * (ulong)readCount;//MapRATV
+                    return search.address + search.size + (ulong)add - 8ul * (ulong)readCount; //VirtualAddress
                 }
             }
             return 0;
@@ -272,7 +247,7 @@ namespace Il2CppDumper
             {
                 if (ReadUInt64() == pointer)
                 {
-                    return (ulong)Position - search.offset + search.address;//MapRATV
+                    return (ulong)Position - search.offset + search.address; //VirtualAddress
                 }
             }
             return 0;
@@ -332,7 +307,7 @@ namespace Il2CppDumper
                             var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
                             if (r == -1)
                             {
-                                return (ulong)add - search.offset + search.address;//MapRATV
+                                return (ulong)add - search.offset + search.address; //VirtualAddress
                             }
                             Position = np;
                         }
@@ -343,7 +318,7 @@ namespace Il2CppDumper
                             var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
                             if (r == -1)
                             {
-                                return (ulong)add - search.offset + search.address;//MapRATV
+                                return (ulong)add - search.offset + search.address; //VirtualAddress
                             }
                             Position = np;
                         }
@@ -375,20 +350,20 @@ namespace Il2CppDumper
                         ulong pointers = MapVATR(ReadUInt64());
                         if (pointers >= search.offset && pointers <= searchend)
                         {
-                            var temp = ReadClassArray<ulong>(pointers, maxmetadataUsages);
+                            var temp = ReadClassArray<ulong>(pointers, maxMetadataUsages);
                             var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
                             if (r == -1)
                             {
-                                return (ulong)add - 96ul - search.offset + search.address;//MapRATV
+                                return (ulong)add - 96ul - search.offset + search.address; //VirtualAddress
                             }
                         }
                         else if (search2 != null && pointers >= search2.offset && pointers <= search2end)
                         {
-                            var temp = ReadClassArray<ulong>(pointers, maxmetadataUsages);
+                            var temp = ReadClassArray<ulong>(pointers, maxMetadataUsages);
                             var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
                             if (r == -1)
                             {
-                                return (ulong)add - 96ul - search.offset + search.address;//MapRATV
+                                return (ulong)add - 96ul - search.offset + search.address; //VirtualAddress
                             }
                         }
                         Position = np;
@@ -400,6 +375,33 @@ namespace Il2CppDumper
                 }
             }
             return 0;
+        }
+
+        public override bool SymbolSearch()
+        {
+            Console.WriteLine("ERROR: This mode not supported.");
+            return false;
+        }
+
+        public override long GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex)
+        {
+            if (isNew21)
+            {
+                var ptr = fieldOffsets[typeIndex];
+                if (ptr >= 0)
+                {
+                    Position = MapVATR((ulong)ptr) + 4ul * (ulong)fieldIndexInType;
+                    return ReadInt32();
+                }
+                return 0;
+            }
+            return fieldOffsets[fieldIndex];
+        }
+
+        public override ulong[] GetPointers(ulong pointer, long count)
+        {
+            var pointers = MapVATR<ulong>(pointer, count);
+            return pointers;
         }
     }
 }

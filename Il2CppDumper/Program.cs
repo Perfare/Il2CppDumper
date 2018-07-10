@@ -36,11 +36,15 @@ namespace Il2CppDumper
                         //判断il2cpp的magic
                         var il2cppMagic = BitConverter.ToUInt32(il2cppfile, 0);
                         var isElf = false;
+                        var isPE = false;
                         var is64bit = false;
                         switch (il2cppMagic)
                         {
                             default:
                                 throw new Exception("ERROR: il2cpp file not supported.");
+                            case 0x905A4D://PE
+                                isPE = true;
+                                goto case 0xFEEDFACE;
                             case 0x464c457f://ELF
                                 isElf = true;
                                 if (il2cppfile[4] == 2)
@@ -70,20 +74,21 @@ namespace Il2CppDumper
                                 is64bit = true;
                                 goto case 0xFEEDFACE;
                             case 0xFEEDFACE:// 32-bit mach object file
-                                Console.Write("Select Mode: 1.Manual 2.Auto 3.Auto(Advanced) 4.Auto(Plus)");
-                                if (isElf)
-                                {
-                                    Console.Write(" 5.Auto(Symbol)");
-                                }
-                                Console.WriteLine();
+                                Console.WriteLine("Select Mode: 1.Manual 2.Auto 3.Auto(Advanced) 4.Auto(Plus) 5.Auto(Symbol)");
                                 key = Console.ReadKey(true);
                                 var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.version;
                                 Console.WriteLine("Initializing il2cpp file...");
-                                if (isElf)
+                                if (isPE)
+                                {
+                                    il2cpp = new PE(new MemoryStream(il2cppfile), version, metadata.maxMetadataUsages);
+                                }
+                                else if (isElf)
+                                {
                                     if (is64bit)
                                         il2cpp = new Elf64(new MemoryStream(il2cppfile), version, metadata.maxMetadataUsages);
                                     else
                                         il2cpp = new Elf(new MemoryStream(il2cppfile), version, metadata.maxMetadataUsages);
+                                }
                                 else if (is64bit)
                                     il2cpp = new Macho64(new MemoryStream(il2cppfile), version, metadata.maxMetadataUsages);
                                 else
@@ -96,21 +101,11 @@ namespace Il2CppDumper
                                     case '5':
                                         try
                                         {
-                                            if (key.KeyChar == '5')
-                                            {
-                                                dynamic elf = il2cpp;
-                                                if (!elf.DetectedSymbol())
-                                                {
-                                                    throw new Exception();
-                                                }
-                                                break;
-                                            }
                                             Console.WriteLine("Searching...");
-                                            if (key.KeyChar == '2' ?
-                                                !il2cpp.Search() :
-                                                key.KeyChar == '3' ?
-                                                !il2cpp.AdvancedSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0)) :
-                                                !il2cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length))
+                                            if (key.KeyChar == '2' ? !il2cpp.Search() :
+                                                key.KeyChar == '3' ? !il2cpp.AdvancedSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0)) :
+                                                key.KeyChar == '4' ? !il2cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length) :
+                                                !il2cpp.SymbolSearch())
                                             {
                                                 throw new Exception();
                                             }

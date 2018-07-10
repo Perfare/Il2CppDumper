@@ -17,15 +17,8 @@ namespace Il2CppDumper
         private uint codeRegistration;
         private uint metadataRegistration;
 
-        public Elf(Stream stream, int version, long maxmetadataUsages) : base(stream)
+        public Elf(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
-            this.version = version;
-            this.maxmetadataUsages = maxmetadataUsages;
-            readAs32Bit = true;
-            if (version < 21)
-                Search = Searchv20;
-            else
-                Search = Searchv21;
             elf_header = new Elf32_Ehdr();
             elf_header.ei_mag = ReadUInt32();
             elf_header.ei_class = ReadByte();
@@ -83,14 +76,13 @@ namespace Il2CppDumper
             return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
         }
 
-        private bool Searchv20()
+        public override bool Search()
         {
-            Console.WriteLine("ERROR: Auto mode not support this version.");
-            return false;
-        }
-
-        private bool Searchv21()
-        {
+            if (version < 21)
+            {
+                Console.WriteLine("ERROR: Auto mode not support this version.");
+                return false;
+            }
             //取.dynamic
             var dynamic = new Elf32_Shdr();
             var PT_DYNAMIC = program_table_element.First(x => x.p_type == 2u);
@@ -222,9 +214,9 @@ namespace Il2CppDumper
                         }
                     }
                 }
-                var pmetadataUsages = FindPointersAsc(maxmetadataUsages, datarelro, bss);
+                var pmetadataUsages = FindPointersAsc(maxMetadataUsages, datarelro, bss);
                 if (pmetadataUsages == 0 && datarelrolocal != null)
-                    pmetadataUsages = FindPointersAsc(maxmetadataUsages, datarelrolocal, bss);
+                    pmetadataUsages = FindPointersAsc(maxMetadataUsages, datarelrolocal, bss);
                 if (pmetadataUsages != 0)
                 {
                     metadataRegistration = FindReference(pmetadataUsages, datarelro);
@@ -232,9 +224,9 @@ namespace Il2CppDumper
                         metadataRegistration = FindReference(pmetadataUsages, datarelrolocal);
                     if (metadataRegistration == 0)
                     {
-                        pmetadataUsages = FindPointersDesc(maxmetadataUsages, datarelro, bss);
+                        pmetadataUsages = FindPointersDesc(maxMetadataUsages, datarelro, bss);
                         if (pmetadataUsages == 0 && datarelrolocal != null)
-                            pmetadataUsages = FindPointersDesc(maxmetadataUsages, datarelrolocal, bss);
+                            pmetadataUsages = FindPointersDesc(maxMetadataUsages, datarelrolocal, bss);
                         if (pmetadataUsages != 0)
                         {
                             metadataRegistration = FindReference(pmetadataUsages, datarelro);
@@ -275,7 +267,7 @@ namespace Il2CppDumper
                 }
                 else
                 {
-                    return search.sh_addr + (uint)add;//MapRATV
+                    return search.sh_addr + (uint)add; //VirtualAddress
                 }
             }
             return 0;
@@ -296,7 +288,7 @@ namespace Il2CppDumper
                 }
                 else
                 {
-                    return (uint)(search.sh_addr + search.sh_size + add - 4 * readCount);//MapRATV
+                    return (uint)(search.sh_addr + search.sh_size + add - 4 * readCount); //VirtualAddress
                 }
             }
             return 0;
@@ -310,7 +302,7 @@ namespace Il2CppDumper
             {
                 if (ReadUInt32() == pointer)
                 {
-                    return (uint)Position - search.sh_offset + search.sh_addr;//MapRATV
+                    return (uint)Position - search.sh_offset + search.sh_addr; //VirtualAddress
                 }
             }
             return 0;
@@ -425,7 +417,7 @@ namespace Il2CppDumper
                             var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
                             if (r == -1)
                             {
-                                return (uint)add - search.sh_offset + search.sh_addr;//MapRATV
+                                return (uint)add - search.sh_offset + search.sh_addr; //VirtualAddress
                             }
                             Position = np;
                         }
@@ -436,7 +428,7 @@ namespace Il2CppDumper
                             var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
                             if (r == -1)
                             {
-                                return (uint)add - search.sh_offset + search.sh_addr;//MapRATV
+                                return (uint)add - search.sh_offset + search.sh_addr; //VirtualAddress
                             }
                             Position = np;
                         }
@@ -468,20 +460,20 @@ namespace Il2CppDumper
                         uint pointers = MapVATR(ReadUInt32());
                         if (pointers >= search.sh_offset && pointers <= searchend)
                         {
-                            var temp = ReadClassArray<uint>(pointers, maxmetadataUsages);
+                            var temp = ReadClassArray<uint>(pointers, maxMetadataUsages);
                             var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
                             if (r == -1)
                             {
-                                return (uint)add - 48u - search.sh_offset + search.sh_addr;//MapRATV
+                                return (uint)add - 48u - search.sh_offset + search.sh_addr; //VirtualAddress
                             }
                         }
                         else if (search2 != null && pointers >= search2.sh_offset && pointers <= search2end)
                         {
-                            var temp = ReadClassArray<uint>(pointers, maxmetadataUsages);
+                            var temp = ReadClassArray<uint>(pointers, maxMetadataUsages);
                             var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
                             if (r == -1)
                             {
-                                return (uint)add - 48u - search.sh_offset + search.sh_addr;//MapRATV
+                                return (uint)add - 48u - search.sh_offset + search.sh_addr; //VirtualAddress
                             }
                         }
                         Position = np;
@@ -495,7 +487,7 @@ namespace Il2CppDumper
             return 0;
         }
 
-        public bool DetectedSymbol()
+        public override bool SymbolSearch()
         {
             if (codeRegistration > 0 && metadataRegistration > 0)
             {

@@ -20,7 +20,7 @@ Extraction code is based on [Il2CppDumper](https://github.com/Jumboperson/Il2Cpp
 
 ## Usage
 
-Run `Il2CppDumper.exe` and choose the main il2cpp executable (in ELF or Mach-O format) and `global-metadata.dat` file, then select the extraction mode. The program will then generate all the output files in current working directory.
+Run `Il2CppDumper.exe` and choose the main il2cpp executable (in ELF, Mach-O or PE format) and `global-metadata.dat` file, then select the extraction mode. The program will then generate all the output files in current working directory.
 
 ### Extraction Modes
 

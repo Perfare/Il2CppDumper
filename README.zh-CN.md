@@ -4,7 +4,7 @@
 基础逻辑代码来源于[Il2CppDumper](https://github.com/Jumboperson/Il2CppDumper)  
 
 ## 功能
-* 支持ELF(arm, x86), ELF64(aarch64), Mach-O(32bit, 64bit), PE
+* 支持ELF(arm, x86), ELF64(aarch64), Mach-O(32bit, 64bit), PE(x86, x86_64)
 * 支持Metadata版本16, 20, 21, 22, 23, 24
 * 导出包括types, fields, properties, methods, attributes
 * 自动生成IDA脚本(重命名methodName，添加stringLiteral注释和MakeFunction)

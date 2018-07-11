@@ -122,10 +122,7 @@ namespace Il2CppDumper
                                             var codeRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
                                             Console.Write("Input MetadataRegistration: ");
                                             var metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
-                                            if (is64bit)
-                                                il2cpp.Init64(codeRegistration, metadataRegistration);
-                                            else
-                                                il2cpp.Init(codeRegistration, metadataRegistration);
+                                            il2cpp.Init(codeRegistration, metadataRegistration);
                                             break;
                                         }
                                     default:

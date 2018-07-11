@@ -19,6 +19,7 @@ namespace Il2CppDumper
 
         public Elf(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
+            is32Bit = true;
             elf_header = new Elf32_Ehdr();
             elf_header.ei_mag = ReadUInt32();
             elf_header.ei_class = ReadByte();

@@ -9,7 +9,7 @@ namespace Il2CppDumper
     public class MyBinaryReader : BinaryReader
     {
         public int version;
-        protected bool readAs32Bit;
+        protected bool is32Bit;
         private MethodInfo readClass;
 
 
@@ -33,11 +33,11 @@ namespace Il2CppDumper
                     return ReadUInt16();
                 case "Byte":
                     return ReadByte();
-                case "Int64" when readAs32Bit:
+                case "Int64" when is32Bit:
                     return ReadInt32();
                 case "Int64":
                     return ReadInt64();
-                case "UInt64" when readAs32Bit:
+                case "UInt64" when is32Bit:
                     return ReadUInt32();
                 case "UInt64":
                     return ReadUInt64();

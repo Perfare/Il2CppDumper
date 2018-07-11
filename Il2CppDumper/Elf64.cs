@@ -92,7 +92,7 @@ namespace Il2CppDumper
                 {
                     Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                     Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                    Init64(codeRegistration, metadataRegistration);
+                    Init(codeRegistration, metadataRegistration);
                     return true;
                 }
             }
@@ -194,6 +194,11 @@ namespace Il2CppDumper
             return 0;
         }
 
+        public override bool SymbolSearch()
+        {
+            Console.WriteLine("ERROR: This mode not supported.");
+            return false;
+        }
 
         private void RelocationProcessing()
         {
@@ -248,33 +253,6 @@ namespace Il2CppDumper
                     }
                 }
             }*/
-        }
-
-        public override long GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex)
-        {
-            if (isNew21)
-            {
-                var ptr = fieldOffsets[typeIndex];
-                if (ptr >= 0)
-                {
-                    Position = MapVATR((ulong)ptr) + 4ul * (ulong)fieldIndexInType;
-                    return ReadInt32();
-                }
-                return 0;
-            }
-            return fieldOffsets[fieldIndex];
-        }
-
-        public override ulong[] GetPointers(ulong pointer, long count)
-        {
-            var pointers = MapVATR<ulong>(pointer, count);
-            return pointers;
-        }
-
-        public override bool SymbolSearch()
-        {
-            Console.WriteLine("ERROR: This mode not supported.");
-            return false;
         }
     }
 }

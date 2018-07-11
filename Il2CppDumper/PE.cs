@@ -8,10 +8,8 @@ namespace Il2CppDumper
 {
     public sealed class PE : Il2Cpp
     {
-        private FileHeader fileHeader;
-        private OptionalHeader optionalHeader;
         private SectionHeader[] sections;
-        private uint imageBase;
+        private ulong imageBase;
 
         public PE(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
@@ -21,10 +19,24 @@ namespace Il2CppDumper
             Position = ReadUInt32();
             if (ReadUInt32() != 0x00004550)//Signature
                 throw new Exception("ERROR: Invalid PE file");
-            fileHeader = ReadClass<FileHeader>();
-            optionalHeader = ReadClass<OptionalHeader>();
-            optionalHeader.DataDirectory = ReadClassArray<DataDirectory>(optionalHeader.NumberOfRvaAndSizes);
-            imageBase = optionalHeader.ImageBase;
+            var fileHeader = ReadClass<FileHeader>();
+            if (fileHeader.Machine == 0x014c)//Intel 386
+            {
+                is32Bit = true;
+                var optionalHeader = ReadClass<OptionalHeader>();
+                optionalHeader.DataDirectory = ReadClassArray<DataDirectory>(optionalHeader.NumberOfRvaAndSizes);
+                imageBase = optionalHeader.ImageBase;
+            }
+            else if (fileHeader.Machine == 0x8664)//AMD64
+            {
+                var optionalHeader = ReadClass<OptionalHeader64>();
+                optionalHeader.DataDirectory = ReadClassArray<DataDirectory>(optionalHeader.NumberOfRvaAndSizes);
+                imageBase = optionalHeader.ImageBase;
+            }
+            else
+            {
+                throw new Exception("ERROR: Unsupported machine.");
+            }
             sections = new SectionHeader[fileHeader.NumberOfSections];
             for (int i = 0; i < fileHeader.NumberOfSections; i++)
             {
@@ -46,7 +58,7 @@ namespace Il2CppDumper
 
         public override dynamic MapVATR(dynamic uiAddr)
         {
-            uint addr = (uint)uiAddr - imageBase;
+            uint addr = (uint)(uiAddr - imageBase);
             var section = sections.First(x => addr >= x.VirtualAddress && addr <= x.VirtualAddress + x.VirtualSize);
             return addr - (section.VirtualAddress - section.PointerToRawData);
         }
@@ -70,8 +82,18 @@ namespace Il2CppDumper
                 var text = sections.First(x => x.Name == ".text");
                 var data = sections.First(x => x.Name == ".data");
                 var rdata = sections.First(x => x.Name == ".rdata");
-                var codeRegistration = FindCodeRegistration(methodCount, rdata, text);
-                var metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, rdata, data);
+                ulong codeRegistration;
+                ulong metadataRegistration;
+                if (is32Bit)
+                {
+                    codeRegistration = FindCodeRegistration(methodCount, rdata, text);
+                    metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, rdata, data);
+                }
+                else
+                {
+                    codeRegistration = FindCodeRegistration64(methodCount, rdata, text);
+                    metadataRegistration = FindMetadataRegistration64(typeDefinitionsCount, rdata, data);
+                }
                 if (codeRegistration != 0 && metadataRegistration != 0)
                 {
                     Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
@@ -87,7 +109,7 @@ namespace Il2CppDumper
             return false;
         }
 
-        private uint FindCodeRegistration(int count, SectionHeader search, SectionHeader range)
+        private ulong FindCodeRegistration(int count, SectionHeader search, SectionHeader range)
         {
             var searchend = search.PointerToRawData + search.SizeOfRawData;
             var rangeend = range.VirtualAddress + range.VirtualSize;
@@ -107,7 +129,7 @@ namespace Il2CppDumper
                             var r = Array.FindIndex(temp, x => x - imageBase < range.VirtualAddress || x - imageBase > rangeend);
                             if (r == -1)
                             {
-                                return (uint)add - search.PointerToRawData + search.VirtualAddress + imageBase; //VirtualAddress
+                                return (ulong)add - search.PointerToRawData + search.VirtualAddress + imageBase; //VirtualAddress
                             }
                             Position = np;
                         }
@@ -121,7 +143,7 @@ namespace Il2CppDumper
             return 0;
         }
 
-        private uint FindMetadataRegistration(int typeDefinitionsCount, SectionHeader search, SectionHeader range)
+        private ulong FindMetadataRegistration(int typeDefinitionsCount, SectionHeader search, SectionHeader range)
         {
             var searchend = search.PointerToRawData + search.SizeOfRawData;
             var rangeend = range.VirtualAddress + range.VirtualSize;
@@ -142,7 +164,76 @@ namespace Il2CppDumper
                             var r = Array.FindIndex(temp, x => x - imageBase < range.VirtualAddress || x - imageBase > rangeend);
                             if (r == -1)
                             {
-                                return (uint)add - 48u - search.PointerToRawData + search.VirtualAddress + imageBase; //VirtualAddress
+                                return (ulong)add - 48ul - search.PointerToRawData + search.VirtualAddress + imageBase; //VirtualAddress
+                            }
+                        }
+                        Position = np;
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+                }
+            }
+            return 0;
+        }
+
+        private ulong FindCodeRegistration64(int count, SectionHeader search, SectionHeader range)
+        {
+            var searchend = search.PointerToRawData + search.SizeOfRawData;
+            var rangeend = range.VirtualAddress + range.VirtualSize;
+            Position = search.PointerToRawData;
+            while (Position < searchend)
+            {
+                var add = Position;
+                if (ReadUInt64() == (ulong)count)
+                {
+                    try
+                    {
+                        uint pointers = MapVATR(ReadUInt64());
+                        if (pointers >= search.PointerToRawData && pointers <= searchend)
+                        {
+                            var np = Position;
+                            var temp = ReadClassArray<ulong>(pointers, count);
+                            var r = Array.FindIndex(temp, x => x - imageBase < range.VirtualAddress || x - imageBase > rangeend);
+                            if (r == -1)
+                            {
+                                return (ulong)add - search.PointerToRawData + search.VirtualAddress + imageBase; //VirtualAddress
+                            }
+                            Position = np;
+                        }
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+                }
+            }
+            return 0;
+        }
+
+        private ulong FindMetadataRegistration64(int typeDefinitionsCount, SectionHeader search, SectionHeader range)
+        {
+            var searchend = search.PointerToRawData + search.SizeOfRawData;
+            var rangeend = range.VirtualAddress + range.VirtualSize;
+            Position = search.PointerToRawData;
+            while (Position < searchend)
+            {
+                var add = Position;
+                if (ReadUInt64() == (ulong)typeDefinitionsCount)
+                {
+                    try
+                    {
+                        var np = Position;
+                        Position += 16;
+                        uint pointers = MapVATR(ReadUInt64());
+                        if (pointers >= search.PointerToRawData && pointers <= searchend)
+                        {
+                            var temp = ReadClassArray<ulong>(pointers, maxMetadataUsages);
+                            var r = Array.FindIndex(temp, x => x - imageBase < range.VirtualAddress || x - imageBase > rangeend);
+                            if (r == -1)
+                            {
+                                return (ulong)add - 96ul - search.PointerToRawData + search.VirtualAddress + imageBase; //VirtualAddress
                             }
                         }
                         Position = np;

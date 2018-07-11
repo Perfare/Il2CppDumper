@@ -16,6 +16,7 @@ namespace Il2CppDumper
 
         public Macho(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
+            is32Bit = true;
             Position += 16;//skip
             var ncmds = ReadUInt32();
             Position += 8;//skip

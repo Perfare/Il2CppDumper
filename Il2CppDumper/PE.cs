@@ -86,13 +86,25 @@ namespace Il2CppDumper
                 ulong metadataRegistration;
                 if (is32Bit)
                 {
-                    codeRegistration = FindCodeRegistration(methodCount, rdata, text);
-                    metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, rdata, data);
+                    codeRegistration = FindCodeRegistration(methodCount, rdata, data, text);
+                    if (codeRegistration == 0)
+                        codeRegistration = FindCodeRegistration(methodCount, data, rdata, text);
+                    metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, rdata, data, data);
+                    if (metadataRegistration == 0)
+                        metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, data, rdata, data);
                 }
                 else
                 {
-                    codeRegistration = FindCodeRegistration64(methodCount, rdata, text);
-                    metadataRegistration = FindMetadataRegistration64(typeDefinitionsCount, rdata, data);
+                    codeRegistration = FindCodeRegistration64(methodCount, rdata, data, text);
+                    if (codeRegistration == 0)
+                        codeRegistration = FindCodeRegistration64(methodCount, data, rdata, text);
+                    metadataRegistration = FindMetadataRegistration64(typeDefinitionsCount, rdata, data, data);
+                    if (metadataRegistration == 0)
+                        metadataRegistration = FindMetadataRegistration64(typeDefinitionsCount, data, rdata, data);
+                    /*if (metadataRegistration == 0)
+                        metadataRegistration = FindMetadataRegistration64(typeDefinitionsCount, rdata, data, rdata);
+                    if (metadataRegistration == 0)
+                        metadataRegistration = FindMetadataRegistration64(typeDefinitionsCount, data, rdata, rdata);*/
                 }
                 if (codeRegistration != 0 && metadataRegistration != 0)
                 {
@@ -109,9 +121,10 @@ namespace Il2CppDumper
             return false;
         }
 
-        private ulong FindCodeRegistration(int count, SectionHeader search, SectionHeader range)
+        private ulong FindCodeRegistration(int count, SectionHeader search, SectionHeader search2, SectionHeader range)
         {
             var searchend = search.PointerToRawData + search.SizeOfRawData;
+            var search2end = search2.PointerToRawData + search2.SizeOfRawData;
             var rangeend = range.VirtualAddress + range.VirtualSize;
             Position = search.PointerToRawData;
             while (Position < searchend)
@@ -133,6 +146,17 @@ namespace Il2CppDumper
                             }
                             Position = np;
                         }
+                        else if (pointers >= search2.PointerToRawData && pointers <= search2end)
+                        {
+                            var np = Position;
+                            var temp = ReadClassArray<uint>(pointers, count);
+                            var r = Array.FindIndex(temp, x => x - imageBase < range.VirtualAddress || x - imageBase > rangeend);
+                            if (r == -1)
+                            {
+                                return (ulong)add - search.PointerToRawData + search.VirtualAddress + imageBase; //VirtualAddress
+                            }
+                            Position = np;
+                        }
                     }
                     catch
                     {
@@ -143,9 +167,10 @@ namespace Il2CppDumper
             return 0;
         }
 
-        private ulong FindMetadataRegistration(int typeDefinitionsCount, SectionHeader search, SectionHeader range)
+        private ulong FindMetadataRegistration(int typeDefinitionsCount, SectionHeader search, SectionHeader search2, SectionHeader range)
         {
             var searchend = search.PointerToRawData + search.SizeOfRawData;
+            var search2end = search2.PointerToRawData + search2.SizeOfRawData;
             var rangeend = range.VirtualAddress + range.VirtualSize;
             Position = search.PointerToRawData;
             while (Position < searchend)
@@ -167,6 +192,15 @@ namespace Il2CppDumper
                                 return (ulong)add - 48ul - search.PointerToRawData + search.VirtualAddress + imageBase; //VirtualAddress
                             }
                         }
+                        else if (pointers >= search2.PointerToRawData && pointers <= search2end)
+                        {
+                            var temp = ReadClassArray<uint>(pointers, maxMetadataUsages);
+                            var r = Array.FindIndex(temp, x => x - imageBase < range.VirtualAddress || x - imageBase > rangeend);
+                            if (r == -1)
+                            {
+                                return (ulong)add - 48ul - search.PointerToRawData + search.VirtualAddress + imageBase; //VirtualAddress
+                            }
+                        }
                         Position = np;
                     }
                     catch
@@ -178,9 +212,10 @@ namespace Il2CppDumper
             return 0;
         }
 
-        private ulong FindCodeRegistration64(int count, SectionHeader search, SectionHeader range)
+        private ulong FindCodeRegistration64(int count, SectionHeader search, SectionHeader search2, SectionHeader range)
         {
             var searchend = search.PointerToRawData + search.SizeOfRawData;
+            var search2end = search2.PointerToRawData + search2.SizeOfRawData;
             var rangeend = range.VirtualAddress + range.VirtualSize;
             Position = search.PointerToRawData;
             while (Position < searchend)
@@ -202,6 +237,17 @@ namespace Il2CppDumper
                             }
                             Position = np;
                         }
+                        else if (pointers >= search2.PointerToRawData && pointers <= search2end)
+                        {
+                            var np = Position;
+                            var temp = ReadClassArray<ulong>(pointers, count);
+                            var r = Array.FindIndex(temp, x => x - imageBase < range.VirtualAddress || x - imageBase > rangeend);
+                            if (r == -1)
+                            {
+                                return (ulong)add - search.PointerToRawData + search.VirtualAddress + imageBase; //VirtualAddress
+                            }
+                            Position = np;
+                        }
                     }
                     catch
                     {
@@ -212,9 +258,10 @@ namespace Il2CppDumper
             return 0;
         }
 
-        private ulong FindMetadataRegistration64(int typeDefinitionsCount, SectionHeader search, SectionHeader range)
+        private ulong FindMetadataRegistration64(int typeDefinitionsCount, SectionHeader search, SectionHeader search2, SectionHeader range)
         {
             var searchend = search.PointerToRawData + search.SizeOfRawData;
+            var search2end = search2.PointerToRawData + search2.SizeOfRawData;
             var rangeend = range.VirtualAddress + range.VirtualSize;
             Position = search.PointerToRawData;
             while (Position < searchend)
@@ -228,6 +275,15 @@ namespace Il2CppDumper
                         Position += 16;
                         uint pointers = MapVATR(ReadUInt64());
                         if (pointers >= search.PointerToRawData && pointers <= searchend)
+                        {
+                            var temp = ReadClassArray<ulong>(pointers, maxMetadataUsages);
+                            var r = Array.FindIndex(temp, x => x - imageBase < range.VirtualAddress || x - imageBase > rangeend);
+                            if (r == -1)
+                            {
+                                return (ulong)add - 96ul - search.PointerToRawData + search.VirtualAddress + imageBase; //VirtualAddress
+                            }
+                        }
+                        else if (pointers >= search2.PointerToRawData && pointers <= search2end)
                         {
                             var temp = ReadClassArray<ulong>(pointers, maxMetadataUsages);
                             var r = Array.FindIndex(temp, x => x - imageBase < range.VirtualAddress || x - imageBase > rangeend);

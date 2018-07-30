@@ -50,3 +50,6 @@
 
 #### `ERROR: Can't use this mode to process file, try another mode.`  
 当所有自动模式都无法工作时，你可以打开一个新的issue，并上传文件，我会尝试解决
+
+#### `WARNING: Version 16 can only get CodeRegistration` 
+使用显示的CodeRegistration位置去得到MetadataRegistration的位置，然后使用Manual模式处理文件

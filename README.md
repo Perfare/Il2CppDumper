@@ -90,3 +90,7 @@ The specified `global-metadata.dat` is invalid and the program cannot recognize 
 Try other extraction modes.
 
 If all automated extraction modes failed with this error and you are sure that the files you supplied are not corrupted/obfuscated, please file an issue with the logs and sample files.
+
+#### `WARNING: Version 16 can only get CodeRegistration`
+
+Use the CodeRegistration information to get the MetadataRegistration, then use the manual mode to process the file.

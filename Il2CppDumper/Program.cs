@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Web.Script.Serialization;
 using static Il2CppDumper.DefineConstants;
@@ -404,7 +405,7 @@ namespace Il2CppDumper
                                                 {
                                                     writer.Write("); // 0x{0:X}\n", methodPointer);
                                                     //Script - method
-                                                    var name = ToEscapedString(typeName + "$$" + methodName);
+                                                    var name = ToEscapedString(Regex.Replace(typeName, @"`\d", "") + "$$" + methodName);
                                                     scriptwriter.WriteLine($"SetMethod(0x{methodPointer:X}, '{name}')");
                                                 }
                                                 else

@@ -17,6 +17,9 @@ namespace Il2CppDumper
         public Il2CppType[] types;
         private Dictionary<ulong, Il2CppType> typesdic = new Dictionary<ulong, Il2CppType>();
         public ulong[] metadataUsages;
+        private Il2CppGenericMethodFunctionsDefinitions[] genericMethodTable;
+        private Il2CppMethodSpec[] methodSpecs;
+        public Dictionary<int, ulong> genericMethoddDictionary;
         private bool isNew21;
         protected long maxMetadataUsages;
 
@@ -56,6 +59,16 @@ namespace Il2CppDumper
                 }
                 if (version > 16)
                     metadataUsages = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.metadataUsages, maxMetadataUsages), x => (ulong)x);
+                //处理泛型
+                genericMethodTable = MapVATR<Il2CppGenericMethodFunctionsDefinitions>(pMetadataRegistration.genericMethodTable, pMetadataRegistration.genericMethodTableCount);
+                methodSpecs = MapVATR<Il2CppMethodSpec>(pMetadataRegistration.methodSpecs, pMetadataRegistration.methodSpecsCount);
+                genericMethoddDictionary = new Dictionary<int, ulong>(genericMethodTable.Length);
+                foreach (var table in genericMethodTable)
+                {
+                    var index = methodSpecs[table.genericMethodIndex].methodDefinitionIndex;
+                    if (!genericMethoddDictionary.ContainsKey(index))
+                        genericMethoddDictionary.Add(index, genericMethodPointers[table.indices.methodIndex]);
+                }
             }
             else
             {
@@ -80,6 +93,16 @@ namespace Il2CppDumper
                 }
                 if (version > 16)
                     metadataUsages = MapVATR<ulong>(pMetadataRegistration.metadataUsages, maxMetadataUsages);
+                //处理泛型
+                genericMethodTable = MapVATR<Il2CppGenericMethodFunctionsDefinitions>(pMetadataRegistration.genericMethodTable, pMetadataRegistration.genericMethodTableCount);
+                methodSpecs = MapVATR<Il2CppMethodSpec>(pMetadataRegistration.methodSpecs, pMetadataRegistration.methodSpecsCount);
+                genericMethoddDictionary = new Dictionary<int, ulong>(genericMethodTable.Length);
+                foreach (var table in genericMethodTable)
+                {
+                    var index = methodSpecs[table.genericMethodIndex].methodDefinitionIndex;
+                    if (!genericMethoddDictionary.ContainsKey(index))
+                        genericMethoddDictionary.Add(index, genericMethodPointers[table.indices.methodIndex]);
+                }
             }
         }
 

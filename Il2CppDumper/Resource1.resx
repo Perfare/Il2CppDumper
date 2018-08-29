@@ -132,10 +132,8 @@ def SetString(addr, comm):
 def SetMethod(addr, name):
 	i = 0
 	ret = idc.MakeNameEx(addr, name, SN_NOWARN)
-	while ret == 0 and i &lt; 5: # failed
-		new_name = name + '_' + str(random.randint(0, 99999))
-		ret = idc.MakeNameEx(addr, str(new_name), SN_NOWARN)
-		i = i + 1
+	new_name = name + '_' + str(addr)
+	ret = idc.MakeNameEx(addr, str(new_name), SN_NOWARN)
 
 def MakeFunction(start, end):
 	if GetFunctionAttr(start, FUNCATTR_START) == 0xFFFFFFFF:

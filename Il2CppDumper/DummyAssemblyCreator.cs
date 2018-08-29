@@ -23,10 +23,10 @@ namespace Il2CppDumper
             this.metadata = metadata;
             this.il2cpp = il2cpp;
             //Il2CppDummyDll
-            var Il2CppDummyDll = AssemblyDefinition.ReadAssembly(new MemoryStream(Resource1.Il2CppDummyDll));
-            var AddressAttribute = Il2CppDummyDll.MainModule.Types.First(x => x.Name == "AddressAttribute").Methods.First();
-            var FieldOffsetAttribute = Il2CppDummyDll.MainModule.Types.First(x => x.Name == "FieldOffsetAttribute").Methods.First();
-            var StringAttribute = Il2CppDummyDll.MainModule.TypeSystem.String;
+            var il2CppDummyDll = AssemblyDefinition.ReadAssembly(new MemoryStream(Resource1.Il2CppDummyDll));
+            var addressAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "AddressAttribute").Methods.First();
+            var fieldOffsetAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "FieldOffsetAttribute").Methods.First();
+            var stringType = il2CppDummyDll.MainModule.TypeSystem.String;
             //创建程序集，同时创建所有类
             foreach (var imageDef in metadata.imageDefs)
             {
@@ -111,8 +111,8 @@ namespace Il2CppDumper
                     var fieldOffset = il2cpp.GetFieldOffsetFromIndex(index, i - typeDef.fieldStart, i);
                     if (fieldOffset > 0)
                     {
-                        var customAttribute = new CustomAttribute(typeDefinition.Module.Import(FieldOffsetAttribute));
-                        var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(StringAttribute, $"0x{fieldOffset:X}"));
+                        var customAttribute = new CustomAttribute(typeDefinition.Module.Import(fieldOffsetAttribute));
+                        var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{fieldOffset:X}"));
                         customAttribute.Fields.Add(offset);
                         fieldDefinition.CustomAttributes.Add(customAttribute);
                     }
@@ -166,11 +166,20 @@ namespace Il2CppDumper
                         }
                     }
                     //address
+                    ulong methodPointer;
                     if (methodDef.methodIndex >= 0)
                     {
-                        var customAttribute = new CustomAttribute(typeDefinition.Module.Import(AddressAttribute));
-                        var rva = new CustomAttributeNamedArgument("RVA", new CustomAttributeArgument(StringAttribute, $"0x{il2cpp.methodPointers[methodDef.methodIndex]:X}"));
-                        var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(StringAttribute, $"0x{il2cpp.MapVATR(il2cpp.methodPointers[methodDef.methodIndex]):X}"));
+                        methodPointer = il2cpp.methodPointers[methodDef.methodIndex];
+                    }
+                    else
+                    {
+                        il2cpp.genericMethoddDictionary.TryGetValue(i, out methodPointer);
+                    }
+                    if (methodPointer > 0)
+                    {
+                        var customAttribute = new CustomAttribute(typeDefinition.Module.Import(addressAttribute));
+                        var rva = new CustomAttributeNamedArgument("RVA", new CustomAttributeArgument(stringType, $"0x{methodPointer:X}"));
+                        var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{il2cpp.MapVATR(methodPointer):X}"));
                         customAttribute.Fields.Add(rva);
                         customAttribute.Fields.Add(offset);
                         methodDefinition.CustomAttributes.Add(customAttribute);

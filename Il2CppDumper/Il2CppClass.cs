@@ -53,7 +53,7 @@ namespace Il2CppDumper
         public long genericInstsCount;
         public ulong genericInsts;
         public long genericMethodTableCount;
-        public ulong genericMethodTable; // Il2CppGenericMethodFunctionsDefinitions
+        public ulong genericMethodTable;
         public long typesCount;
         public ulong types;
         public long methodSpecsCount;
@@ -178,4 +178,23 @@ namespace Il2CppDumper
         public ulong sizes;
         public ulong lobounds;
     }
+
+    public class Il2CppGenericMethodFunctionsDefinitions
+    {
+        public int genericMethodIndex;
+        public Il2CppGenericMethodIndices indices;
+    }
+
+    public class Il2CppGenericMethodIndices
+    {
+        public int methodIndex;
+        public int invokerIndex;
+    };
+
+    public class Il2CppMethodSpec
+    {
+        public int methodDefinitionIndex;
+        public int classIndexIndex;
+        public int methodIndexIndex;
+    };
 }

@@ -45,7 +45,7 @@ namespace Il2CppDumper {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   使用此强类型资源类，为所有资源查找
         ///   重写当前线程的 CurrentUICulture 属性。
@@ -75,13 +75,12 @@ namespace Il2CppDumper {
         ///def SetMethod(addr, name):
         ///	i = 0
         ///	ret = idc.MakeNameEx(addr, name, SN_NOWARN)
-        ///	while ret == 0 and i &lt; 5: # failed
-        ///		new_name = name + &apos;_&apos; + str(random.randint(0, 99999))
-        ///		ret = idc.MakeNameEx(addr, str(new_name), SN_NOWARN)
-        ///		i = i + 1
+        ///	new_name = name + &apos;_&apos; + str(addr)
+        ///	ret = idc.MakeNameEx(addr, str(new_name), SN_NOWARN)
         ///
         ///def MakeFunction(start, end):
-        ///	if GetFuncti [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        ///	if GetFunctionAttr(start, FUNCATTR_START) == 0xFFFFFFFF:
+        ///		idc.MakeFunction(start,  [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         internal static string ida {
             get {

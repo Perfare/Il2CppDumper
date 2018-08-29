@@ -208,7 +208,8 @@ namespace Il2CppDumper
                                             writer.Write("enum ");
                                         else
                                             writer.Write("class ");
-                                        writer.Write($"{metadata.GetStringFromIndex(typeDef.nameIndex)}");
+                                        var typeName = metadata.GetStringFromIndex(typeDef.nameIndex);
+                                        writer.Write($"{typeName}");
                                         if (extends.Count > 0)
                                             writer.Write($" : {string.Join(", ", extends)}");
                                         writer.Write($" // TypeDefIndex: {idx}\n{{\n");
@@ -372,7 +373,8 @@ namespace Il2CppDumper
                                                 writer.Write("\t");
                                                 writer.Write(GetModifiers(methodDef));
                                                 var methodReturnType = il2cpp.types[methodDef.returnType];
-                                                writer.Write($"{GetTypeName(methodReturnType)} {metadata.GetStringFromIndex(methodDef.nameIndex)}(");
+                                                var methodName = metadata.GetStringFromIndex(methodDef.nameIndex);
+                                                writer.Write($"{GetTypeName(methodReturnType)} {methodName}(");
                                                 var parameterStrs = new List<string>();
                                                 for (var j = 0; j < methodDef.parameterCount; ++j)
                                                 {
@@ -389,16 +391,26 @@ namespace Il2CppDumper
                                                     parameterStrs.Add(parameterStr);
                                                 }
                                                 writer.Write(string.Join(", ", parameterStrs));
+                                                ulong methodPointer;
                                                 if (methodDef.methodIndex >= 0)
                                                 {
-                                                    writer.Write("); // 0x{0:X}\n", il2cpp.methodPointers[methodDef.methodIndex]);
-                                                    //Script - method
-                                                    var name = ToEscapedString(metadata.GetStringFromIndex(typeDef.nameIndex) + "$$" + metadata.GetStringFromIndex(methodDef.nameIndex));
-                                                    scriptwriter.WriteLine($"SetMethod(0x{il2cpp.methodPointers[methodDef.methodIndex]:X}, '{name}')");
-                                                    //
+                                                    methodPointer = il2cpp.methodPointers[methodDef.methodIndex];
                                                 }
                                                 else
-                                                    writer.Write("); // 0\n");
+                                                {
+                                                    il2cpp.genericMethoddDictionary.TryGetValue(i, out methodPointer);
+                                                }
+                                                if (methodPointer > 0)
+                                                {
+                                                    writer.Write("); // 0x{0:X}\n", methodPointer);
+                                                    //Script - method
+                                                    var name = ToEscapedString(typeName + "$$" + methodName);
+                                                    scriptwriter.WriteLine($"SetMethod(0x{methodPointer:X}, '{name}')");
+                                                }
+                                                else
+                                                {
+                                                    writer.Write("); // -1\n");
+                                                }
                                             }
                                         }
                                         writer.Write("}\n");
@@ -423,17 +435,20 @@ namespace Il2CppDumper
                                 }
                                 scriptwriter.WriteLine("print('Set string done')");
                                 //Script - MakeFunction
-                                var orderedPointers = il2cpp.methodPointers.ToList();
-                                orderedPointers.AddRange(il2cpp.genericMethodPointers.Where(x => x > 0));
-                                orderedPointers.AddRange(il2cpp.invokerPointers);
-                                orderedPointers.AddRange(il2cpp.customAttributeGenerators);
-                                orderedPointers = orderedPointers.OrderBy(x => x).ToList();
-                                scriptwriter.WriteLine("print('Making function...')");
-                                for (int i = 0; i < orderedPointers.Count - 1; i++)
+                                if (config.MakeFunction)
                                 {
-                                    scriptwriter.WriteLine($"MakeFunction(0x{orderedPointers[i]:X}, 0x{orderedPointers[i + 1]:X})");
+                                    var orderedPointers = il2cpp.methodPointers.ToList();
+                                    orderedPointers.AddRange(il2cpp.genericMethodPointers.Where(x => x > 0));
+                                    orderedPointers.AddRange(il2cpp.invokerPointers);
+                                    orderedPointers.AddRange(il2cpp.customAttributeGenerators);
+                                    orderedPointers = orderedPointers.OrderBy(x => x).ToList();
+                                    scriptwriter.WriteLine("print('Making function...')");
+                                    for (int i = 0; i < orderedPointers.Count - 1; i++)
+                                    {
+                                        scriptwriter.WriteLine($"MakeFunction(0x{orderedPointers[i]:X}, 0x{orderedPointers[i + 1]:X})");
+                                    }
+                                    scriptwriter.WriteLine("print('Make function done, please wait for IDA to complete the analysis')");
                                 }
-                                scriptwriter.WriteLine("print('Make function done, please wait for IDA to complete the analysis')");
                                 scriptwriter.WriteLine("print('Script finish !')");
                                 //writer close
                                 writer.Close();

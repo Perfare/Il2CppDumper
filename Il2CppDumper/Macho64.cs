@@ -9,7 +9,7 @@ namespace Il2CppDumper
 {
     public sealed class Macho64 : Il2Cpp
     {
-        private List<MachoSection64bit> sections = new List<MachoSection64bit>();
+        private List<MachoSection64Bit> sections = new List<MachoSection64Bit>();
         private static byte[] FeatureBytes1 = { 0x2, 0x0, 0x80, 0xD2 };//MOV X2, #0
         private static byte[] FeatureBytes2 = { 0x3, 0x0, 0x80, 0x52 };//MOV W3, #0
 
@@ -40,7 +40,7 @@ namespace Il2CppDumper
                             var size = ReadUInt64();
                             var offset2 = (uint)ReadUInt64();
                             var end = address + size;
-                            sections.Add(new MachoSection64bit { section_name = section_name, address = address, size = size, offset = offset2, end = end });
+                            sections.Add(new MachoSection64Bit { section_name = section_name, address = address, size = size, offset = offset2, end = end });
                             Position += 24;
                         }
                     }
@@ -89,10 +89,17 @@ namespace Il2CppDumper
                         }
                     }
                 }
-                return false;
             }
-            else
+            if (version == 23)
             {
+                /* ADRP X0, unk
+                 * ADD X0, X0, unk
+                 * ADR X1, sub
+                 * NOP
+                 * MOV X2, #0
+                 * MOV W3, #0
+                 * B sub
+                 */
                 var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
                 var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
                 foreach (var i in addrs)
@@ -123,8 +130,49 @@ namespace Il2CppDumper
                         }
                     }
                 }
-                return false;
             }
+            if (version == 24)
+            {
+                /* ADRP X0, unk
+                 * ADD X0, X0, unk
+                 * ADR X1, sub
+                 * NOP
+                 * MOV W3, #0
+                 * MOV X2, #0
+                 * B sub
+                 */
+                var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
+                var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
+                foreach (var i in addrs)
+                {
+                    if (i > 0)
+                    {
+                        Position = MapVATR(i) + 16;
+                        var buff = ReadBytes(4);
+                        if (FeatureBytes2.SequenceEqual(buff))
+                        {
+                            buff = ReadBytes(4);
+                            if (FeatureBytes1.SequenceEqual(buff))
+                            {
+                                Position -= 16;
+                                var subaddr = DecodeAdr(i + 8, ReadBytes(4));
+                                var rsubaddr = MapVATR(subaddr);
+                                Position = rsubaddr;
+                                var codeRegistration = DecodeAdrp(subaddr, ReadBytes(4));
+                                codeRegistration += DecodeAdd(ReadBytes(4));
+                                Position = rsubaddr + 8;
+                                var metadataRegistration = DecodeAdrp(subaddr + 8, ReadBytes(4));
+                                metadataRegistration += DecodeAdd(ReadBytes(4));
+                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                                Init(codeRegistration, metadataRegistration);
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
         }
 
         public override bool AdvancedSearch(int methodCount)
@@ -197,7 +245,7 @@ namespace Il2CppDumper
             return false;
         }
 
-        private ulong FindPointersAsc(long readCount, MachoSection64bit search, MachoSection64bit range)
+        private ulong FindPointersAsc(long readCount, MachoSection64Bit search, MachoSection64Bit range)
         {
             var add = 0ul;
             var searchend = search.offset + search.size;
@@ -218,7 +266,7 @@ namespace Il2CppDumper
             return 0;
         }
 
-        private ulong FindPointersDesc(long readCount, MachoSection64bit search, MachoSection64bit range)
+        private ulong FindPointersDesc(long readCount, MachoSection64Bit search, MachoSection64Bit range)
         {
             var add = 0L;
             var searchend = search.offset + search.size;
@@ -239,7 +287,7 @@ namespace Il2CppDumper
             return 0;
         }
 
-        private ulong FindReference(ulong pointer, MachoSection64bit search)
+        private ulong FindReference(ulong pointer, MachoSection64Bit search)
         {
             var searchend = search.offset + search.size;
             Position = search.offset;
@@ -260,22 +308,22 @@ namespace Il2CppDumper
             var __const2 = __consts[1];
             var __text = sections.First(x => x.section_name == "__text");
             var __common = sections.First(x => x.section_name == "__common");
-            var codeRegistration = FindCodeRegistration(methodCount, __const, __const2, __text);
-            if (codeRegistration == 0)
-            {
-                codeRegistration = FindCodeRegistration(methodCount, __const2, __const2, __text);
-            }
+            var __il2cpp = sections.FirstOrDefault(x => x.section_name == ".il2cpp");
+
+            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+            plusSearch.SetSearch(__const, __const2);
+            plusSearch.SetPointerRangeFirst(__const2, __const2);
+            plusSearch.SetPointerRangeSecond(__text, __il2cpp);
+            var codeRegistration = plusSearch.FindCodeRegistration64Bit();
             if (version == 16)
             {
                 Console.WriteLine("WARNING: Version 16 can only get CodeRegistration");
                 Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                 return false;
             }
-            var metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, __const, __const2, __common);
-            if (metadataRegistration == 0)
-            {
-                metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, __const2, __const2, __common);
-            }
+
+            plusSearch.SetPointerRangeSecond(__common);
+            var metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
             if (codeRegistration != 0 && metadataRegistration != 0)
             {
                 Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
@@ -283,98 +331,8 @@ namespace Il2CppDumper
                 Init(codeRegistration, metadataRegistration);
                 return true;
             }
+
             return false;
-        }
-
-        private ulong FindCodeRegistration(int count, MachoSection64bit search, MachoSection64bit search2, MachoSection64bit range)
-        {
-            var searchend = search.offset + search.size;
-            var rangeend = range.address + range.size;
-            var search2end = search2 == null ? 0 : search2.offset + search2.size;
-            Position = search.offset;
-            while ((ulong)Position < searchend)
-            {
-                var add = Position;
-                if (ReadUInt64() == (ulong)count)
-                {
-                    try
-                    {
-                        ulong pointers = MapVATR(ReadUInt64());
-                        if (pointers >= search.offset && pointers <= searchend)
-                        {
-                            var np = Position;
-                            var temp = ReadClassArray<ulong>(pointers, count);
-                            var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (ulong)add - search.offset + search.address; //VirtualAddress
-                            }
-                            Position = np;
-                        }
-                        else if (search2 != null && pointers >= search2.offset && pointers <= search2end)
-                        {
-                            var np = Position;
-                            var temp = ReadClassArray<ulong>(pointers, count);
-                            var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (ulong)add - search.offset + search.address; //VirtualAddress
-                            }
-                            Position = np;
-                        }
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                }
-            }
-            return 0;
-        }
-
-        private ulong FindMetadataRegistration(int typeDefinitionsCount, MachoSection64bit search, MachoSection64bit search2, MachoSection64bit range)
-        {
-            var searchend = search.offset + search.size;
-            var rangeend = range.address + range.size;
-            var search2end = search2 == null ? 0 : search2.offset + search2.size;
-            Position = search.offset;
-            while ((ulong)Position < searchend)
-            {
-                var add = Position;
-                if (ReadUInt64() == (ulong)typeDefinitionsCount)
-                {
-                    try
-                    {
-                        var np = Position;
-                        Position += 16;
-                        ulong pointers = MapVATR(ReadUInt64());
-                        if (pointers >= search.offset && pointers <= searchend)
-                        {
-                            var temp = ReadClassArray<ulong>(pointers, maxMetadataUsages);
-                            var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (ulong)add - 96ul - search.offset + search.address; //VirtualAddress
-                            }
-                        }
-                        else if (search2 != null && pointers >= search2.offset && pointers <= search2end)
-                        {
-                            var temp = ReadClassArray<ulong>(pointers, maxMetadataUsages);
-                            var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (ulong)add - 96ul - search.offset + search.address; //VirtualAddress
-                            }
-                        }
-                        Position = np;
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                }
-            }
-            return 0;
         }
 
         public override bool SymbolSearch()

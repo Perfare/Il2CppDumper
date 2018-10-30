@@ -14,7 +14,7 @@ namespace Il2CppDumper
         public uint end;
     }
 
-    public class MachoSection64bit
+    public class MachoSection64Bit
     {
         public string section_name;
         public ulong address;

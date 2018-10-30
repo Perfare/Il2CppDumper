@@ -278,22 +278,21 @@ namespace Il2CppDumper
             var __const2 = sections.Last(x => x.section_name == "__const");
             var __text = sections.First(x => x.section_name == "__text");
             var __common = sections.First(x => x.section_name == "__common");
-            var codeRegistration = FindCodeRegistration(methodCount, __const, __const2, __text);
-            if (codeRegistration == 0)
-            {
-                codeRegistration = FindCodeRegistration(methodCount, __const2, __const2, __text);
-            }
+
+            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+            plusSearch.SetSearch(__const, __const2);
+            plusSearch.SetPointerRangeFirst(__const2, __const2);
+            plusSearch.SetPointerRangeSecond(__text);
+            var codeRegistration = plusSearch.FindCodeRegistration();
             if (version == 16)
             {
                 Console.WriteLine("WARNING: Version 16 can only get CodeRegistration");
                 Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                 return false;
             }
-            var metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, __const, __const2, __common);
-            if (metadataRegistration == 0)
-            {
-                metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, __const2, __const2, __common);
-            }
+
+            plusSearch.SetPointerRangeSecond(__common);
+            var metadataRegistration = plusSearch.FindMetadataRegistration();
             if (codeRegistration != 0 && metadataRegistration != 0)
             {
                 Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
@@ -301,98 +300,8 @@ namespace Il2CppDumper
                 Init(codeRegistration, metadataRegistration);
                 return true;
             }
+
             return false;
-        }
-
-        private uint FindCodeRegistration(int count, MachoSection search, MachoSection search2, MachoSection range)
-        {
-            var searchend = search.offset + search.size;
-            var rangeend = range.address + range.size;
-            var search2end = search2 == null ? 0 : search2.offset + search2.size;
-            Position = search.offset;
-            while (Position < searchend)
-            {
-                var add = Position;
-                if (ReadUInt32() == count)
-                {
-                    try
-                    {
-                        uint pointers = MapVATR(ReadUInt32());
-                        if (pointers >= search.offset && pointers <= searchend)
-                        {
-                            var np = Position;
-                            var temp = ReadClassArray<uint>(pointers, count);
-                            var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (uint)add - search.offset + search.address; //VirtualAddress
-                            }
-                            Position = np;
-                        }
-                        else if (search2 != null && pointers >= search2.offset && pointers <= search2end)
-                        {
-                            var np = Position;
-                            var temp = ReadClassArray<uint>(pointers, count);
-                            var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (uint)add - search.offset + search.address; //VirtualAddress
-                            }
-                            Position = np;
-                        }
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                }
-            }
-            return 0;
-        }
-
-        private uint FindMetadataRegistration(int typeDefinitionsCount, MachoSection search, MachoSection search2, MachoSection range)
-        {
-            var searchend = search.offset + search.size;
-            var rangeend = range.address + range.size;
-            var search2end = search2 == null ? 0 : search2.offset + search2.size;
-            Position = search.offset;
-            while (Position < searchend)
-            {
-                var add = Position;
-                if (ReadUInt32() == typeDefinitionsCount)
-                {
-                    try
-                    {
-                        var np = Position;
-                        Position += 8;
-                        uint pointers = MapVATR(ReadUInt32());
-                        if (pointers >= search.offset && pointers <= searchend)
-                        {
-                            var temp = ReadClassArray<uint>(pointers, maxMetadataUsages);
-                            var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (uint)add - 48u - search.offset + search.address; //VirtualAddress
-                            }
-                        }
-                        else if (search2 != null && pointers >= search2.offset && pointers <= search2end)
-                        {
-                            var temp = ReadClassArray<uint>(pointers, maxMetadataUsages);
-                            var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (uint)add - 48u - search.offset + search.address; //VirtualAddress
-                            }
-                        }
-                        Position = np;
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                }
-            }
-            return 0;
         }
 
         public override bool SymbolSearch()

@@ -60,6 +60,7 @@
     <Compile Include="MetadataClass.cs" />
     <Compile Include="PE.cs" />
     <Compile Include="PEClass.cs" />
+    <Compile Include="PlusSearch.cs" />
     <Compile Include="Resource1.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

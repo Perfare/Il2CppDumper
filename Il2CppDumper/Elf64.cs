@@ -11,8 +11,6 @@ namespace Il2CppDumper
         private Elf64_Ehdr elf_header;
         private Elf64_Phdr[] program_table_element;
         private Dictionary<string, Elf64_Shdr> sectionWithName = new Dictionary<string, Elf64_Shdr>();
-        private ulong codeRegistration;
-        private ulong metadataRegistration;
 
         public Elf64(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
@@ -83,11 +81,17 @@ namespace Il2CppDumper
         {
             if (sectionWithName.ContainsKey(".data") && sectionWithName.ContainsKey(".text") && sectionWithName.ContainsKey(".bss"))
             {
-                var datarelro = sectionWithName[".data"];
+                var data = sectionWithName[".data"];
                 var text = sectionWithName[".text"];
                 var bss = sectionWithName[".bss"];
-                codeRegistration = FindCodeRegistration(methodCount, datarelro, null, text);
-                metadataRegistration = FindMetadataRegistration(typeDefinitionsCount, datarelro, null, bss);
+
+                var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+                plusSearch.SetSearch(data);
+                plusSearch.SetPointerRangeFirst(data);
+                plusSearch.SetPointerRangeSecond(text);
+                var codeRegistration = plusSearch.FindCodeRegistration64Bit();
+                plusSearch.SetPointerRangeSecond(bss);
+                var metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
                 if (codeRegistration != 0 && metadataRegistration != 0)
                 {
                     Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
@@ -101,97 +105,6 @@ namespace Il2CppDumper
                 Console.WriteLine("ERROR: The necessary section is missing.");
             }
             return false;
-        }
-
-        private ulong FindCodeRegistration(int count, Elf64_Shdr search, Elf64_Shdr search2, Elf64_Shdr range)
-        {
-            var searchend = search.sh_offset + search.sh_size;
-            var rangeend = range.sh_addr + range.sh_size;
-            var search2end = search2 == null ? 0 : search2.sh_offset + search2.sh_size;
-            Position = search.sh_offset;
-            while ((ulong)Position < searchend)
-            {
-                var add = Position;
-                if (ReadUInt64() == (ulong)count)
-                {
-                    try
-                    {
-                        ulong pointers = MapVATR(ReadUInt64());
-                        if (pointers >= search.sh_offset && pointers <= searchend)
-                        {
-                            var np = Position;
-                            var temp = ReadClassArray<ulong>(pointers, count);
-                            var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (ulong)add - search.sh_offset + search.sh_addr; //VirtualAddress
-                            }
-                            Position = np;
-                        }
-                        else if (search2 != null && pointers >= search2.sh_offset && pointers <= search2end)
-                        {
-                            var np = Position;
-                            var temp = ReadClassArray<ulong>(pointers, count);
-                            var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (ulong)add - search.sh_offset + search.sh_addr; //VirtualAddress
-                            }
-                            Position = np;
-                        }
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                }
-            }
-            return 0;
-        }
-
-        private ulong FindMetadataRegistration(int typeDefinitionsCount, Elf64_Shdr search, Elf64_Shdr search2, Elf64_Shdr range)
-        {
-            var searchend = search.sh_offset + search.sh_size;
-            var rangeend = range.sh_addr + range.sh_size;
-            var search2end = search2 == null ? 0 : search2.sh_offset + search2.sh_size;
-            Position = search.sh_offset;
-            while ((ulong)Position < searchend)
-            {
-                var add = Position;
-                if (ReadUInt64() == (ulong)typeDefinitionsCount)
-                {
-                    try
-                    {
-                        var np = Position;
-                        Position += 16;
-                        ulong pointers = MapVATR(ReadUInt64());
-                        if (pointers >= search.sh_offset && pointers <= searchend)
-                        {
-                            var temp = ReadClassArray<ulong>(pointers, maxMetadataUsages);
-                            var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (ulong)add - 96ul - search.sh_offset + search.sh_addr; //VirtualAddress
-                            }
-                        }
-                        else if (search2 != null && pointers >= search2.sh_offset && pointers <= search2end)
-                        {
-                            var temp = ReadClassArray<ulong>(pointers, maxMetadataUsages);
-                            var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
-                            if (r == -1)
-                            {
-                                return (ulong)add - 96ul - search.sh_offset + search.sh_addr; //VirtualAddress
-                            }
-                        }
-                        Position = np;
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                }
-            }
-            return 0;
         }
 
         public override bool SymbolSearch()

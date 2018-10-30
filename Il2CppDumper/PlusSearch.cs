@@ -126,6 +126,22 @@ namespace Il2CppDumper
             }
         }
 
+        public void SetSearch(ulong imageBase, params SectionHeader[] sections)
+        {
+            foreach (var section in sections)
+            {
+                if (section != null)
+                {
+                    search.Add(new Section
+                    {
+                        start = section.PointerToRawData,
+                        end = section.PointerToRawData + section.SizeOfRawData,
+                        address = section.VirtualAddress + imageBase
+                    });
+                }
+            }
+        }
+
         public void SetPointerRangeFirst(params MachoSection64Bit[] sections)
         {
             foreach (var section in sections)
@@ -217,6 +233,22 @@ namespace Il2CppDumper
                         start = section.p_offset,
                         end = section.p_offset + section.p_filesz,
                         address = section.p_vaddr
+                    });
+                }
+            }
+        }
+
+        public void SetPointerRangeFirst(ulong imageBase, params SectionHeader[] sections)
+        {
+            foreach (var section in sections)
+            {
+                if (section != null)
+                {
+                    pointerRange1.Add(new Section
+                    {
+                        start = section.PointerToRawData,
+                        end = section.PointerToRawData + section.SizeOfRawData,
+                        address = section.VirtualAddress + imageBase
                     });
                 }
             }
@@ -319,6 +351,23 @@ namespace Il2CppDumper
                         start = section.p_vaddr,
                         end = section.p_vaddr + section.p_memsz,
                         address = section.p_vaddr
+                    });
+                }
+            }
+        }
+
+        public void SetPointerRangeSecond(ulong imageBase, params SectionHeader[] sections)
+        {
+            pointerRange2.Clear();
+            foreach (var section in sections)
+            {
+                if (section != null)
+                {
+                    pointerRange2.Add(new Section
+                    {
+                        start = section.VirtualAddress,
+                        end = section.VirtualAddress + section.VirtualSize + imageBase,
+                        address = section.VirtualAddress + imageBase
                     });
                 }
             }

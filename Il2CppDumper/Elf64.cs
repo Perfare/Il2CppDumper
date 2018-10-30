@@ -113,7 +113,7 @@ namespace Il2CppDumper
                     {
                         switch (phdr.p_flags)
                         {
-                            case 1u: //PF_W && PF_R
+                            case 1u: //PF_X
                             case 3u:
                             case 5u:
                             case 7u:

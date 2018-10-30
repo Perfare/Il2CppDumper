@@ -365,7 +365,7 @@ namespace Il2CppDumper
                 var datarelro = sectionWithName[".data.rel.ro"];
                 var text = sectionWithName[".text"];
                 var bss = sectionWithName[".bss"];
-                sectionWithName.TryGetValue(".data.rel.ro.local",out var datarelrolocal);
+                sectionWithName.TryGetValue(".data.rel.ro.local", out var datarelrolocal);
 
                 var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
                 plusSearch.SetSearch(datarelro, datarelrolocal);
@@ -395,7 +395,7 @@ namespace Il2CppDumper
                     {
                         switch (phdr.p_flags)
                         {
-                            case 1u: //PF_W && PF_R
+                            case 1u: //PF_X
                             case 3u:
                             case 5u:
                             case 7u:

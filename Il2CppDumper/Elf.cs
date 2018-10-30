@@ -10,9 +10,9 @@ namespace Il2CppDumper
     {
         private Elf32_Ehdr elf_header;
         private Elf32_Phdr[] program_table_element;
-        private static byte[] ARMFeatureBytes = { 0x1c, 0x0, 0x9f, 0xe5, 0x1c, 0x10, 0x9f, 0xe5, 0x1c, 0x20, 0x9f, 0xe5 };
-        private static byte[] X86FeatureBytes1 = { 0x8D, 0x83 };//lea eax, X
-        private static byte[] X86FeatureBytes2 = { 0x89, 0x44, 0x24, 0x04, 0x8D, 0x83 };//mov [esp+4], eax and lea eax, X
+        private static readonly byte[] ARMFeatureBytes = { 0x1c, 0x0, 0x9f, 0xe5, 0x1c, 0x10, 0x9f, 0xe5, 0x1c, 0x20, 0x9f, 0xe5 };
+        private static readonly byte[] X86FeatureBytes1 = { 0x8D, 0x83 };//lea eax, X
+        private static readonly byte[] X86FeatureBytes2 = { 0x89, 0x44, 0x24, 0x04, 0x8D, 0x83 };//mov [esp+4], eax and lea eax, X
         private Dictionary<string, Elf32_Shdr> sectionWithName = new Dictionary<string, Elf32_Shdr>();
         private ulong codeRegistration;
         private ulong metadataRegistration;
@@ -63,7 +63,7 @@ namespace Il2CppDumper
             }
             catch
             {
-                Console.WriteLine("ERROR: Unable to get section.");
+                Console.WriteLine("WARNING: Unable to get section.");
             }
         }
 
@@ -384,7 +384,46 @@ namespace Il2CppDumper
             }
             else
             {
-                Console.WriteLine("ERROR: The necessary section is missing.");
+                Console.WriteLine("WARNING: The necessary section is missing.");
+
+                var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+                var dataList = new List<Elf32_Phdr>();
+                var execList = new List<Elf32_Phdr>();
+                foreach (var phdr in program_table_element)
+                {
+                    if (phdr.p_memsz != 0ul)
+                    {
+                        switch (phdr.p_flags)
+                        {
+                            case 1u: //PF_W && PF_R
+                            case 3u:
+                            case 5u:
+                            case 7u:
+                                execList.Add(phdr);
+                                break;
+                            case 2u: //PF_W && PF_R
+                            case 4u:
+                            case 6u:
+                                dataList.Add(phdr);
+                                break;
+                        }
+                    }
+                }
+                var data = dataList.ToArray();
+                var exec = execList.ToArray();
+                plusSearch.SetSearch(data);
+                plusSearch.SetPointerRangeFirst(data);
+                plusSearch.SetPointerRangeSecond(exec);
+                codeRegistration = plusSearch.FindCodeRegistration();
+                plusSearch.SetPointerRangeSecond(data);
+                metadataRegistration = plusSearch.FindMetadataRegistration();
+                if (codeRegistration != 0 && metadataRegistration != 0)
+                {
+                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                    Init(codeRegistration, metadataRegistration);
+                    return true;
+                }
             }
             return false;
         }

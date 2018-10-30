@@ -55,7 +55,7 @@ namespace Il2CppDumper
             }
             catch
             {
-                Console.WriteLine("ERROR: Unable to get section.");
+                Console.WriteLine("WARNING: Unable to get section.");
             }
         }
 
@@ -102,8 +102,48 @@ namespace Il2CppDumper
             }
             else
             {
-                Console.WriteLine("ERROR: The necessary section is missing.");
+                Console.WriteLine("WARNING: The necessary section is missing.");
+
+                var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+                var dataList = new List<Elf64_Phdr>();
+                var execList = new List<Elf64_Phdr>();
+                foreach (var phdr in program_table_element)
+                {
+                    if (phdr.p_memsz != 0ul)
+                    {
+                        switch (phdr.p_flags)
+                        {
+                            case 1u: //PF_W && PF_R
+                            case 3u:
+                            case 5u:
+                            case 7u:
+                                execList.Add(phdr);
+                                break;
+                            case 2u: //PF_W && PF_R
+                            case 4u:
+                            case 6u:
+                                dataList.Add(phdr);
+                                break;
+                        }
+                    }
+                }
+                var data = dataList.ToArray();
+                var exec = execList.ToArray();
+                plusSearch.SetSearch(data);
+                plusSearch.SetPointerRangeFirst(data);
+                plusSearch.SetPointerRangeSecond(exec);
+                var codeRegistration = plusSearch.FindCodeRegistration64Bit();
+                plusSearch.SetPointerRangeSecond(data);
+                var metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
+                if (codeRegistration != 0 && metadataRegistration != 0)
+                {
+                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                    Init(codeRegistration, metadataRegistration);
+                    return true;
+                }
             }
+
             return false;
         }
 

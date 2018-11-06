@@ -55,21 +55,21 @@ namespace Il2CppDumper
         public int imagesCount;
         public int assembliesOffset; // Il2CppAssemblyDefinition
         public int assembliesCount;
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public int metadataUsageListsOffset; // Il2CppMetadataUsageList
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public int metadataUsageListsCount;
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public int metadataUsagePairsOffset; // Il2CppMetadataUsagePair
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public int metadataUsagePairsCount;
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public int fieldRefsOffset; // Il2CppFieldRef
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public int fieldRefsCount;
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public int referencedAssembliesOffset; // int32_t
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public int referencedAssembliesCount;
         [Version(Min = 21)]
         public int attributesInfoOffset; // Il2CppCustomAttributeTypeRange
@@ -111,7 +111,7 @@ namespace Il2CppDumper
         public uint exportedTypeCount;
 
         public int entryPointIndex;
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public uint token;
     }
 
@@ -170,7 +170,7 @@ namespace Il2CppDumper
         // 06 - is_import_or_windows_runtime;
         // 07-10 - One of nine possible PackingSize values (0, 1, 2, 4, 8, 16, 32, 64, or 128)
         public uint bitfield;
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public uint token;
     }
 
@@ -207,7 +207,7 @@ namespace Il2CppDumper
         public int nameIndex;
         public int typeIndex;
         public int customAttributeIndex;
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public uint token;
     }
 
@@ -225,7 +225,7 @@ namespace Il2CppDumper
         public int set;
         public uint attrs;
         public int customAttributeIndex;
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public uint token;
     }
 
@@ -268,7 +268,7 @@ namespace Il2CppDumper
         public int remove;
         public int raise;
         public int customAttributeIndex;
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public uint token;
     }
 

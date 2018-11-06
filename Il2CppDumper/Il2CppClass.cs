@@ -68,9 +68,9 @@ namespace Il2CppDumper
 
         public long typeDefinitionsSizesCount;
         public ulong typeDefinitionsSizes;
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public ulong metadataUsagesCount;
-        [Version(Min = 20)]
+        [Version(Min = 19)]
         public ulong metadataUsages;
     }
 

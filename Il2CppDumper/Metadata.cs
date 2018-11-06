@@ -40,6 +40,7 @@ namespace Il2CppDumper
             switch (version)
             {
                 case 16:
+                case 19:
                 case 20:
                 case 21:
                 case 22:

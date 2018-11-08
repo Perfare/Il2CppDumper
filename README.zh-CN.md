@@ -35,7 +35,7 @@
 利用Mono.Cecil生成的仿制Dll，使用反编译工具进行查看  
 
 ### 关于config.json
-`DumpMethod`，`DumpField`，`DumpProperty`，`DumpAttribute`，`DumpFieldOffset`  
+`DumpMethod`，`DumpField`，`DumpProperty`，`DumpAttribute`，`DumpFieldOffset`, `DumpMethodOffset`
 控制程序是否在dump.cs输出相应的内容  
 
 `DummyDll`  

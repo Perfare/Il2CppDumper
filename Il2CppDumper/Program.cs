@@ -405,16 +405,23 @@ namespace Il2CppDumper
                                         {
                                             il2cpp.genericMethoddDictionary.TryGetValue(i, out methodPointer);
                                         }
-                                        if (methodPointer > 0)
+                                        if (config.DumpMethodOffset) 
                                         {
-                                            writer.Write("); // 0x{0:X}\n", methodPointer);
-                                            //Script - method
-                                            var name = ToEscapedString(Regex.Replace(typeName, @"`\d", "") + "$$" + methodName);
-                                            scriptwriter.WriteLine($"SetMethod(0x{methodPointer:X}, '{name}')");
+                                            if (methodPointer > 0)
+                                            {
+                                                writer.Write("); // 0x{0:X}\n", methodPointer);
+                                                //Script - method
+                                                var name = ToEscapedString(Regex.Replace(typeName, @"`\d", "") + "$$" + methodName);
+                                                scriptwriter.WriteLine($"SetMethod(0x{methodPointer:X}, '{name}')");
+                                            }
+                                            else
+                                            {
+                                                writer.Write("); // -1\n");
+                                            }
                                         }
                                         else
                                         {
-                                            writer.Write("); // -1\n");
+                                            writer.Write("); \n");
                                         }
                                     }
                                 }

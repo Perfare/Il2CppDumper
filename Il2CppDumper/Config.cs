@@ -12,6 +12,7 @@ namespace Il2CppDumper
         public bool DumpProperty = false;
         public bool DumpAttribute = false;
         public bool DumpFieldOffset = true;
+        public bool DumpMethodOffset = true;
         public bool DummyDll = true;
         public bool MakeFunction = false;
         public bool ForceIl2CppVersion = false;

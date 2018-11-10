@@ -58,6 +58,7 @@
     <Compile Include="Macho.cs" />
     <Compile Include="Metadata.cs" />
     <Compile Include="MetadataClass.cs" />
+    <Compile Include="MyAssemblyResolver.cs" />
     <Compile Include="PE.cs" />
     <Compile Include="PEClass.cs" />
     <Compile Include="PlusSearch.cs" />

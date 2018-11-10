@@ -396,17 +396,17 @@ namespace Il2CppDumper
                                             parameterStrs.Add(parameterStr);
                                         }
                                         writer.Write(string.Join(", ", parameterStrs));
-                                        ulong methodPointer;
-                                        if (methodDef.methodIndex >= 0)
+                                        if (config.DumpMethodOffset)
                                         {
-                                            methodPointer = il2cpp.methodPointers[methodDef.methodIndex];
-                                        }
-                                        else
-                                        {
-                                            il2cpp.genericMethoddDictionary.TryGetValue(i, out methodPointer);
-                                        }
-                                        if (config.DumpMethodOffset) 
-                                        {
+                                            ulong methodPointer;
+                                            if (methodDef.methodIndex >= 0)
+                                            {
+                                                methodPointer = il2cpp.methodPointers[methodDef.methodIndex];
+                                            }
+                                            else
+                                            {
+                                                il2cpp.genericMethoddDictionary.TryGetValue(i, out methodPointer);
+                                            }
                                             if (methodPointer > 0)
                                             {
                                                 writer.Write("); // 0x{0:X}\n", methodPointer);

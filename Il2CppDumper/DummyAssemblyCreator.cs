@@ -27,11 +27,18 @@ namespace Il2CppDumper
             var addressAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "AddressAttribute").Methods.First();
             var fieldOffsetAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "FieldOffsetAttribute").Methods.First();
             var stringType = il2CppDummyDll.MainModule.TypeSystem.String;
+            var resolver = new MyAssemblyResolver();
+            var moduleParameters = new ModuleParameters
+            {
+                Kind = ModuleKind.Dll,
+                AssemblyResolver = resolver
+            };
             //创建程序集，同时创建所有类
             foreach (var imageDef in metadata.imageDefs)
             {
                 var assemblyName = new AssemblyNameDefinition(metadata.GetStringFromIndex(imageDef.nameIndex).Replace(".dll", ""), new Version("3.7.1.6"));
-                var assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, metadata.GetStringFromIndex(imageDef.nameIndex), ModuleKind.Dll);
+                var assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, metadata.GetStringFromIndex(imageDef.nameIndex), moduleParameters);
+                resolver.Register(assemblyDefinition);
                 Assemblies.Add(assemblyDefinition);
                 var moduleDefinition = assemblyDefinition.MainModule;
                 moduleDefinition.Types.Clear();//清除自动创建的<Module>类

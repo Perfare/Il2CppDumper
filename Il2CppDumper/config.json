@@ -5,6 +5,7 @@
   "DumpAttribute": false,
   "DumpFieldOffset": true,
   "DumpMethodOffset": true,
+  "DumpTypeDefIndex": true,
   "DummyDll": true,
   "MakeFunction": false,
   "ForceIl2CppVersion": false,

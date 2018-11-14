@@ -217,7 +217,10 @@ namespace Il2CppDumper
                                 writer.Write($"{typeName}");
                                 if (extends.Count > 0)
                                     writer.Write($" : {string.Join(", ", extends)}");
-                                writer.Write($" // TypeDefIndex: {idx}\n{{\n");
+                                if (config.DumpTypeDefIndex)
+                                    writer.Write($" // TypeDefIndex: {idx}\n{{\n");
+                                else
+                                    writer.Write("\n{\n");
                                 //dump field
                                 if (config.DumpField && typeDef.field_count > 0)
                                 {

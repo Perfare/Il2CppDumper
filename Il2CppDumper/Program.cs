@@ -414,7 +414,7 @@ namespace Il2CppDumper
                                             {
                                                 writer.Write("); // 0x{0:X}\n", methodPointer);
                                                 //Script - method
-                                                var name = ToEscapedString(Regex.Replace(typeName, @"`\d", "") + "$$" + methodName);
+                                                var name = ToEscapedString(HandleSpecialCharacters(typeName + "$$" + methodName));
                                                 scriptwriter.WriteLine($"SetMethod(0x{methodPointer:X}, '{name}')");
                                             }
                                             else
@@ -614,6 +614,15 @@ namespace Il2CppDumper
             if ((methodDef.flags & METHOD_ATTRIBUTE_PINVOKE_IMPL) != 0)
                 str += "extern ";
             methodModifiers.Add(methodDef, str);
+            return str;
+        }
+
+        private static string HandleSpecialCharacters(string str)
+        {
+            str = Regex.Replace(str, @"`\d", "");
+            str = str.Replace("<", "_");
+            str = str.Replace(">", "_");
+            str = str.Replace(",", "_");
             return str;
         }
 

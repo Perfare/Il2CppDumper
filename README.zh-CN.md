@@ -4,8 +4,8 @@
 基础逻辑代码来源于[Il2CppDumper](https://github.com/Jumboperson/Il2CppDumper)  
 
 ## 功能
-* 支持ELF(arm, x86), ELF64(aarch64), Mach-O(32bit, 64bit), PE(x86, x86_64)
-* 支持Metadata版本16, 20, 21, 22, 23, 24
+* 支持ELF, ELF64, Mach-O和PE格式
+* 支持Metadata版本16, 19~24
 * 导出包括types, fields, properties, methods, attributes
 * 自动生成IDA脚本(重命名methodName，添加stringLiteral注释和MakeFunction)
 * 生成DummyDll
@@ -52,4 +52,4 @@
 当所有自动模式都无法工作时，你可以打开一个新的issue，并上传文件，我会尝试解决
 
 #### `WARNING: Version 16 can only get CodeRegistration` 
-使用显示的CodeRegistration位置去得到MetadataRegistration的位置，然后使用Manual模式处理文件
+利用得到的CodeRegistration指针地址去得到MetadataRegistration的指针地址，然后使用Manual模式处理文件

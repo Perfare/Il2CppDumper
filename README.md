@@ -10,8 +10,8 @@ Extraction code is based on [Il2CppDumper](https://github.com/Jumboperson/Il2Cpp
 
 ## Features
 
-* Supports il2cpp binaries in ELF(arm, x86), ELF64(aarch64), Mach-O(32bit, 64bit) and PE(x86, x86_64) format
-* Supports global-metadata version 16 and 20-24
+* Supports il2cpp binaries in ELF, ELF64, Mach-O and PE format
+* Supports global-metadata version 16 and 19-24
 * Extracts .NET metadata including types, fields, properties, methods and attributes
 * Supports automated IDA script generation
   * name and tag methods

@@ -412,7 +412,7 @@ namespace Il2CppDumper
                                             }
                                             if (methodPointer > 0)
                                             {
-                                                writer.Write("); // 0x{0:X}\n", methodPointer);
+                                                writer.Write("); // RVA: 0x{0:X} Offset: 0x{1:X}\n", methodPointer, il2cpp.MapVATR(methodPointer));
                                                 //Script - method
                                                 var name = ToEscapedString(HandleSpecialCharacters(typeName + "$$" + methodName));
                                                 scriptwriter.WriteLine($"SetMethod(0x{methodPointer:X}, '{name}')");

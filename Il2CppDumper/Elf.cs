@@ -384,7 +384,7 @@ namespace Il2CppDumper
             }
             else
             {
-                Console.WriteLine("WARNING: The necessary section is missing.");
+                Console.WriteLine("ERROR: This file has been protected.");
 
                 var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
                 var dataList = new List<Elf32_Phdr>();

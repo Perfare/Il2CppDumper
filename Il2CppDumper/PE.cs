@@ -111,7 +111,7 @@ namespace Il2CppDumper
             }
             else
             {
-                Console.WriteLine("ERROR: The necessary section is missing.");
+                Console.WriteLine("ERROR: This file has been protected.");
             }
             return false;
         }

@@ -5,7 +5,7 @@ namespace Il2CppDumper
     [AttributeUsage(AttributeTargets.Field)]
     class VersionAttribute : Attribute
     {
-        public int Min { get; set; } = 0;
-        public int Max { get; set; } = 99;
+        public float Min { get; set; } = 0;
+        public float Max { get; set; } = 99;
     }
 }

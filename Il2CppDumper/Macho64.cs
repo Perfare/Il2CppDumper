@@ -14,7 +14,7 @@ namespace Il2CppDumper
         private static readonly byte[] FeatureBytes2 = { 0x3, 0x0, 0x80, 0x52 };//MOV W3, #0
 
 
-        public Macho64(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
+        public Macho64(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
             Position += 16;//skip
             var ncmds = ReadUInt32();

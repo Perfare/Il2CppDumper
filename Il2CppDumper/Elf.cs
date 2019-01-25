@@ -17,7 +17,7 @@ namespace Il2CppDumper
         private ulong codeRegistration;
         private ulong metadataRegistration;
 
-        public Elf(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
+        public Elf(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
             is32Bit = true;
             elf_header = new Elf32_Ehdr();
@@ -330,7 +330,7 @@ namespace Il2CppDumper
                             {
                                 var position = Position;
                                 var dynamic_symbol = dynamic_symbol_table[index];
-                                writer.BaseStream.Position = offset;
+                                writer.BaseStream.Position = MapVATR(offset);
                                 writer.Write(dynamic_symbol.st_value);
                                 Position = position;
                                 break;
@@ -355,6 +355,7 @@ namespace Il2CppDumper
                             }
                     }
                 }
+                writer.Flush();
             }
         }
 

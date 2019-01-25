@@ -11,7 +11,7 @@ namespace Il2CppDumper
         private SectionHeader[] sections;
         private ulong imageBase;
 
-        public PE(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
+        public PE(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
             if (ReadUInt16() != 0x5A4D)//e_magic
                 throw new Exception("ERROR: Invalid PE file");

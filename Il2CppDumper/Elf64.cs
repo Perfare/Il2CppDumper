@@ -12,7 +12,7 @@ namespace Il2CppDumper
         private Elf64_Phdr[] program_table_element;
         private Dictionary<string, Elf64_Shdr> sectionWithName = new Dictionary<string, Elf64_Shdr>();
 
-        public Elf64(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
+        public Elf64(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
             elf_header = new Elf64_Ehdr();
             elf_header.ei_mag = ReadUInt32();

@@ -47,7 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Attributes.cs" />
+    <Compile Include="VersionAttribute.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="DummyAssemblyCreator.cs" />
     <Compile Include="Elf.cs" />

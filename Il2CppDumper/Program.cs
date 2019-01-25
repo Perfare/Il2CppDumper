@@ -31,8 +31,25 @@ namespace Il2CppDumper
                 {
                     try
                     {
+                        var metadataBytes = File.ReadAllBytes(ofd.FileName);
+                        var sanity = BitConverter.ToUInt32(metadataBytes, 0);
+                        if (sanity != 0xFAB11BAF)
+                        {
+                            throw new Exception("ERROR: Metadata file supplied is not valid metadata file.");
+                        }
+                        var metadataVersion = (float)BitConverter.ToInt32(metadataBytes, 4);
+                        if (metadataVersion == 24)
+                        {
+                            Console.WriteLine("Is the Unity version greater than or equal to 2018.3?");
+                            Console.WriteLine("1.Yes 2.No");
+                            var key = Console.ReadKey(true);
+                            if (key.KeyChar == '1')
+                            {
+                                metadataVersion = 24.1f;
+                            }
+                        }
                         Console.WriteLine("Initializing metadata...");
-                        metadata = new Metadata(new MemoryStream(File.ReadAllBytes(ofd.FileName)));
+                        metadata = new Metadata(new MemoryStream(metadataBytes), metadataVersion);
                         Console.Clear();
                         //判断il2cpp的magic
                         var il2cppMagic = BitConverter.ToUInt32(il2cppfile, 0);
@@ -555,7 +572,7 @@ namespace Il2CppDumper
 
         private static string GetCustomAttribute(int index, string padding = "")
         {
-            if (!config.DumpAttribute || il2cpp.version < 21)
+            if (!config.DumpAttribute || il2cpp.version < 21 || il2cpp.version > 24)
                 return "";
             var attributeTypeRange = metadata.attributeTypeRanges[index];
             var sb = new StringBuilder();

@@ -14,7 +14,7 @@ namespace Il2CppDumper
         private static readonly byte[] FeatureBytes2 = { 0x78, 0x44, 0x79, 0x44 };//ADD R0, PC and ADD R1, PC
 
 
-        public Macho(Stream stream, int version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
+        public Macho(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
             is32Bit = true;
             Position += 16;//skip

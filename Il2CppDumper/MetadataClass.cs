@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Il2CppDumper
 {
@@ -113,12 +110,18 @@ namespace Il2CppDumper
         public int entryPointIndex;
         [Version(Min = 19)]
         public uint token;
+
+        [Version(Min = 24.1f)]
+        public int customAttributeStart;
+        [Version(Min = 24.1f)]
+        public uint customAttributeCount;
     }
 
     public class Il2CppTypeDefinition
     {
         public int nameIndex;
         public int namespaceIndex;
+        [Version(Max = 24)]
         public int customAttributeIndex;
         public int byvalTypeIndex;
         public int byrefTypeIndex;
@@ -180,6 +183,7 @@ namespace Il2CppDumper
         public int declaringType;
         public int returnType;
         public int parameterStart;
+        [Version(Max = 24)]
         public int customAttributeIndex;
         public int genericContainerIndex;
         public int methodIndex;
@@ -198,6 +202,7 @@ namespace Il2CppDumper
     {
         public int nameIndex;
         public uint token;
+        [Version(Max = 24)]
         public int customAttributeIndex;
         public int typeIndex;
     }
@@ -206,6 +211,7 @@ namespace Il2CppDumper
     {
         public int nameIndex;
         public int typeIndex;
+        [Version(Max = 24)]
         public int customAttributeIndex;
         [Version(Min = 19)]
         public uint token;
@@ -224,6 +230,7 @@ namespace Il2CppDumper
         public int get;
         public int set;
         public uint attrs;
+        [Version(Max = 24)]
         public int customAttributeIndex;
         [Version(Min = 19)]
         public uint token;
@@ -267,6 +274,7 @@ namespace Il2CppDumper
         public int add;
         public int remove;
         public int raise;
+        [Version(Max = 24)]
         public int customAttributeIndex;
         [Version(Min = 19)]
         public uint token;

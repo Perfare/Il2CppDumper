@@ -2,14 +2,15 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using static Il2CppDumper.ElfConstants;
 
 namespace Il2CppDumper
 {
     public sealed class Elf : Il2Cpp
     {
         private Elf32_Ehdr elf_header;
-        private Elf32_Phdr[] program_table_element;
+        private Elf32_Phdr[] program_table;
+        private Elf32_Dyn[] dynamic_table;
         private static readonly byte[] ARMFeatureBytes = { 0x1c, 0x0, 0x9f, 0xe5, 0x1c, 0x10, 0x9f, 0xe5, 0x1c, 0x20, 0x9f, 0xe5 };
         private static readonly byte[] X86FeatureBytes1 = { 0x8D, 0x83 };//lea eax, X
         private static readonly byte[] X86FeatureBytes2 = { 0x89, 0x44, 0x24, 0x04, 0x8D, 0x83 };//mov [esp+4], eax and lea eax, X
@@ -43,7 +44,9 @@ namespace Il2CppDumper
             elf_header.e_shentsize = ReadUInt16();
             elf_header.e_shnum = ReadUInt16();
             elf_header.e_shtrndx = ReadUInt16();
-            program_table_element = ReadClassArray<Elf32_Phdr>(elf_header.e_phoff, elf_header.e_phnum);
+            program_table = ReadClassArray<Elf32_Phdr>(elf_header.e_phoff, elf_header.e_phnum);
+            var pt_dynamic = program_table.First(x => x.p_type == 2u);
+            dynamic_table = ReadClassArray<Elf32_Dyn>(pt_dynamic.p_offset, pt_dynamic.p_filesz / 8u);
             GetSectionWithName();
             RelocationProcessing();
         }
@@ -69,113 +72,70 @@ namespace Il2CppDumper
 
         public override dynamic MapVATR(dynamic uiAddr)
         {
-            var program_header_table = program_table_element.First(x => uiAddr >= x.p_vaddr && uiAddr <= (x.p_vaddr + x.p_memsz));
+            var program_header_table = program_table.First(x => uiAddr >= x.p_vaddr && uiAddr <= (x.p_vaddr + x.p_memsz));
             return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
         }
 
         public override bool Search()
         {
-            if (version < 21)
+            var _GLOBAL_OFFSET_TABLE_ = dynamic_table.First(x => x.d_tag == DT_PLTGOT).d_un;
+            uint initOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_INIT_ARRAY).d_un);
+            var initSize = dynamic_table.First(x => x.d_tag == DT_INIT_ARRAYSZ).d_un;
+            var addrs = ReadClassArray<uint>(initOffset, initSize / 4u);
+            foreach (var i in addrs)
             {
-                Console.WriteLine("ERROR: Auto mode not support this version.");
-                return false;
-            }
-            //取.dynamic
-            var dynamic = new Elf32_Shdr();
-            var PT_DYNAMIC = program_table_element.First(x => x.p_type == 2u);
-            dynamic.sh_offset = PT_DYNAMIC.p_offset;
-            dynamic.sh_size = PT_DYNAMIC.p_filesz;
-            //从.dynamic获取_GLOBAL_OFFSET_TABLE_和.init_array
-            uint _GLOBAL_OFFSET_TABLE_ = 0;
-            var init_array = new Elf32_Shdr();
-            Position = dynamic.sh_offset;
-            var dynamicend = dynamic.sh_offset + dynamic.sh_size;
-            while (Position < dynamicend)
-            {
-                var tag = ReadInt32();
-                switch (tag)
+                if (i > 0)
                 {
-                    case 3:
-                        _GLOBAL_OFFSET_TABLE_ = ReadUInt32();
-                        break;
-                    case 25:
-                        init_array.sh_offset = MapVATR(ReadUInt32());
-                        break;
-                    case 27:
-                        init_array.sh_size = ReadUInt32();
-                        break;
-                    default:
-                        Position += 4;
-                        break;
-                }
-            }
-            if (_GLOBAL_OFFSET_TABLE_ != 0)
-            {
-                //从.init_array获取函数
-                var addrs = ReadClassArray<uint>(init_array.sh_offset, init_array.sh_size / 4u);
-                foreach (var i in addrs)
-                {
-                    if (i > 0)
+                    Position = i;
+                    if (elf_header.e_machine == 0x28) //ARM
                     {
-                        Position = i;
-                        if (elf_header.e_machine == 0x28) //ARM
+                        var buff = ReadBytes(12);
+                        if (ARMFeatureBytes.SequenceEqual(buff))
                         {
-                            var buff = ReadBytes(12);
-                            if (ARMFeatureBytes.SequenceEqual(buff))
+                            Position = i + 0x2c;
+                            var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                            Position = subaddr + 0x28;
+                            codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                            Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                            Position = subaddr + 0x2C;
+                            var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                            Position = MapVATR(ptr);
+                            metadataRegistration = ReadUInt32();
+                            Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                            Init(codeRegistration, metadataRegistration);
+                            return true;
+                        }
+                    }
+                    else if (elf_header.e_machine == 0x3) //x86
+                    {
+                        Position = i + 22;
+                        var buff = ReadBytes(2);
+                        if (X86FeatureBytes1.SequenceEqual(buff))
+                        {
+                            Position = i + 28;
+                            buff = ReadBytes(6);
+                            if (X86FeatureBytes2.SequenceEqual(buff))
                             {
-                                Position = i + 0x2c;
+                                Position = i + 0x18;
                                 var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                Position = subaddr + 0x28;
+                                Position = subaddr + 0x2C;
                                 codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
                                 Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                                Position = subaddr + 0x2C;
-                                var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                Position = MapVATR(ptr);
-                                metadataRegistration = ReadUInt32();
+                                Position = subaddr + 0x20;
+                                var temp = ReadUInt16();
+                                metadataRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                if (temp == 0x838B)//mov
+                                {
+                                    Position = MapVATR(metadataRegistration);
+                                    metadataRegistration = ReadUInt32();
+                                }
                                 Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
                                 Init(codeRegistration, metadataRegistration);
                                 return true;
                             }
                         }
-                        else if (elf_header.e_machine == 0x3) //x86
-                        {
-                            Position = i + 22;
-                            var buff = ReadBytes(2);
-                            if (X86FeatureBytes1.SequenceEqual(buff))
-                            {
-                                Position = i + 28;
-                                buff = ReadBytes(6);
-                                if (X86FeatureBytes2.SequenceEqual(buff))
-                                {
-                                    Position = i + 0x18;
-                                    var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                    Position = subaddr + 0x2C;
-                                    codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                                    Position = subaddr + 0x20;
-                                    var temp = ReadUInt16();
-                                    metadataRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                    if (temp == 0x838B)//mov
-                                    {
-                                        Position = MapVATR(metadataRegistration);
-                                        metadataRegistration = ReadUInt32();
-                                    }
-                                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                                    Init(codeRegistration, metadataRegistration);
-                                    return true;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("ERROR: Automatic processing does not support this ELF file.");
-                        }
                     }
                 }
-            }
-            else
-            {
-                Console.WriteLine("ERROR: Unable to get GOT form PT_DYNAMIC.");
             }
             return false;
         }
@@ -307,56 +267,55 @@ namespace Il2CppDumper
 
         private void RelocationProcessing()
         {
-            if (sectionWithName.ContainsKey(".dynsym") && sectionWithName.ContainsKey(".dynstr") && sectionWithName.ContainsKey(".rel.dyn"))
+            Console.WriteLine("Applying relocations...");
+
+            uint dynsymOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_SYMTAB).d_un);
+            uint dynstrOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_STRTAB).d_un);
+            var dynsymSize = dynstrOffset - dynsymOffset;
+            //var dynstrSize = dynamic_table.First(x => x.d_tag == DT_STRSZ).d_un;
+            uint reldynOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_REL).d_un);
+            var reldynSize = dynamic_table.First(x => x.d_tag == DT_RELSZ).d_un;
+            var dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsymOffset, dynsymSize / 16);
+            var rel_table = ReadClassArray<Elf32_Rel>(reldynOffset, reldynSize / 8);
+            var writer = new BinaryWriter(BaseStream);
+            var isx86 = elf_header.e_machine == 0x3;
+            foreach (var rel in rel_table)
             {
-                Console.WriteLine("Applying relocations...");
-                var dynsym = sectionWithName[".dynsym"];
-                var symbol_name_block_off = sectionWithName[".dynstr"].sh_offset;
-                var rel_dyn = sectionWithName[".rel.dyn"];
-                var dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsym.sh_offset, dynsym.sh_size / 16);
-                var rel_dynend = rel_dyn.sh_offset + rel_dyn.sh_size;
-                Position = rel_dyn.sh_offset;
-                var writer = new BinaryWriter(BaseStream);
-                var isx86 = elf_header.e_machine == 0x3;
-                while (Position < rel_dynend)
+                var type = rel.r_info & 0xff;
+                var sym = rel.r_info >> 8;
+                switch (type)
                 {
-                    var offset = ReadUInt32();
-                    var type = ReadByte();
-                    var index = ReadByte() | (ReadByte() << 8) | (ReadByte() << 16);
-                    switch (type)
-                    {
-                        case 1 when isx86: //R_386_32
-                        case 2 when !isx86: //R_ARM_ABS32
+                    case R_386_32 when isx86:
+                    case R_ARM_ABS32 when !isx86:
+                        {
+                            var position = Position;
+                            var dynamic_symbol = dynamic_symbol_table[sym];
+                            writer.BaseStream.Position = MapVATR(rel.r_offset);
+                            writer.Write(dynamic_symbol.st_value);
+                            Position = position;
+                            break;
+                        }
+                    case R_386_GLOB_DAT when isx86:
+                    case R_ARM_GLOB_DAT when !isx86:
+                        {
+                            var position = Position;
+                            var dynamic_symbol = dynamic_symbol_table[sym];
+                            var name = ReadStringToNull(dynstrOffset + dynamic_symbol.st_name);
+                            switch (name)
                             {
-                                var position = Position;
-                                var dynamic_symbol = dynamic_symbol_table[index];
-                                writer.BaseStream.Position = MapVATR(offset);
-                                writer.Write(dynamic_symbol.st_value);
-                                Position = position;
-                                break;
+                                case "g_CodeRegistration":
+                                    codeRegistration = dynamic_symbol.st_value;
+                                    break;
+                                case "g_MetadataRegistration":
+                                    metadataRegistration = dynamic_symbol.st_value;
+                                    break;
                             }
-                        case 6 when isx86: //R_386_GLOB_DAT
-                        case 21 when !isx86: //R_ARM_GLOB_DAT
-                            {
-                                var position = Position;
-                                var dynamic_symbol = dynamic_symbol_table[index];
-                                var name = ReadStringToNull(symbol_name_block_off + dynamic_symbol.st_name);
-                                switch (name)
-                                {
-                                    case "g_CodeRegistration":
-                                        codeRegistration = dynamic_symbol.st_value;
-                                        break;
-                                    case "g_MetadataRegistration":
-                                        metadataRegistration = dynamic_symbol.st_value;
-                                        break;
-                                }
-                                Position = position;
-                                break;
-                            }
-                    }
+                            Position = position;
+                            break;
+                        }
                 }
-                writer.Flush();
             }
+            writer.Flush();
         }
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
@@ -385,12 +344,10 @@ namespace Il2CppDumper
             }
             else
             {
-                Console.WriteLine("ERROR: This file has been protected.");
-
                 var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
                 var dataList = new List<Elf32_Phdr>();
                 var execList = new List<Elf32_Phdr>();
-                foreach (var phdr in program_table_element)
+                foreach (var phdr in program_table)
                 {
                     if (phdr.p_memsz != 0ul)
                     {

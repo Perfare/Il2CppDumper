@@ -1,13 +1,13 @@
 {
   "DumpMethod": true,
   "DumpField": true,
-  "DumpProperty": false,
-  "DumpAttribute": false,
+  "DumpProperty": true,
+  "DumpAttribute": true,
   "DumpFieldOffset": true,
   "DumpMethodOffset": true,
   "DumpTypeDefIndex": true,
   "DummyDll": true,
-  "MakeFunction": false,
+  "MakeFunction": true,
   "ForceIl2CppVersion": false,
   "ForceVersion": 16
 }

@@ -118,6 +118,26 @@ namespace Il2CppDumper
             return ReadStringToNull(pMetadataHdr.stringOffset + index);
         }
 
+        public int GetCustomAttributeIndex(Il2CppImageDefinition imageDef, int customAttributeIndex, uint token)
+        {
+            if (version > 24)
+            {
+                var end = imageDef.customAttributeStart + imageDef.customAttributeCount;
+                for (int i = imageDef.customAttributeStart; i < end; i++)
+                {
+                    if (attributeTypeRanges[i].token == token)
+                    {
+                        return i;
+                    }
+                }
+                return -1;
+            }
+            else
+            {
+                return customAttributeIndex;
+            }
+        }
+
         private string GetStringLiteralFromIndex(uint index)
         {
             var stringLiteral = stringLiterals[index];

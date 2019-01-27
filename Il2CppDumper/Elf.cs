@@ -11,12 +11,14 @@ namespace Il2CppDumper
         private Elf32_Ehdr elf_header;
         private Elf32_Phdr[] program_table;
         private Elf32_Dyn[] dynamic_table;
+        private Elf32_Sym[] dynamic_symbol_table;
+        private Dictionary<string, Elf32_Shdr> sectionWithName = new Dictionary<string, Elf32_Shdr>();
+        private bool isDump;
+        private uint dumpAddr;
+
         private static readonly byte[] ARMFeatureBytes = { 0x1c, 0x0, 0x9f, 0xe5, 0x1c, 0x10, 0x9f, 0xe5, 0x1c, 0x20, 0x9f, 0xe5 };
         private static readonly byte[] X86FeatureBytes1 = { 0x8D, 0x83 };//lea eax, X
         private static readonly byte[] X86FeatureBytes2 = { 0x89, 0x44, 0x24, 0x04, 0x8D, 0x83 };//mov [esp+4], eax and lea eax, X
-        private Dictionary<string, Elf32_Shdr> sectionWithName = new Dictionary<string, Elf32_Shdr>();
-        private ulong codeRegistration;
-        private ulong metadataRegistration;
 
         public Elf(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
@@ -45,13 +47,25 @@ namespace Il2CppDumper
             elf_header.e_shnum = ReadUInt16();
             elf_header.e_shtrndx = ReadUInt16();
             program_table = ReadClassArray<Elf32_Phdr>(elf_header.e_phoff, elf_header.e_phnum);
+            if (!GetSectionWithName())
+            {
+                Console.WriteLine("Detected this may be a dump file. If not, it must be protected.");
+                isDump = true;
+                Console.WriteLine("Input dump address:");
+                dumpAddr = Convert.ToUInt32(Console.ReadLine(), 16);
+                foreach (var phdr in program_table)
+                {
+                    phdr.p_offset = phdr.p_vaddr;
+                    phdr.p_filesz = phdr.p_memsz;
+                }
+                Console.WriteLine("Note that in this state, the Offset of the output is actually RVA.");
+            }
             var pt_dynamic = program_table.First(x => x.p_type == 2u);
             dynamic_table = ReadClassArray<Elf32_Dyn>(pt_dynamic.p_offset, pt_dynamic.p_filesz / 8u);
-            GetSectionWithName();
             RelocationProcessing();
         }
 
-        private void GetSectionWithName()
+        private bool GetSectionWithName()
         {
             try
             {
@@ -66,12 +80,17 @@ namespace Il2CppDumper
             }
             catch
             {
-                Console.WriteLine("WARNING: Unable to get section.");
+                return false;
             }
+            return true;
         }
 
         public override dynamic MapVATR(dynamic uiAddr)
         {
+            if (isDump && uiAddr > dumpAddr)
+            {
+                uiAddr -= dumpAddr;
+            }
             var program_header_table = program_table.First(x => uiAddr >= x.p_vaddr && uiAddr <= (x.p_vaddr + x.p_memsz));
             return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
         }
@@ -95,12 +114,12 @@ namespace Il2CppDumper
                             Position = i + 0x2c;
                             var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
                             Position = subaddr + 0x28;
-                            codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                            var codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
                             Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                             Position = subaddr + 0x2C;
                             var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
                             Position = MapVATR(ptr);
-                            metadataRegistration = ReadUInt32();
+                            var metadataRegistration = ReadUInt32();
                             Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
                             Init(codeRegistration, metadataRegistration);
                             return true;
@@ -119,11 +138,11 @@ namespace Il2CppDumper
                                 Position = i + 0x18;
                                 var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
                                 Position = subaddr + 0x2C;
-                                codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                var codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
                                 Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                                 Position = subaddr + 0x20;
                                 var temp = ReadUInt16();
-                                metadataRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                                var metadataRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
                                 if (temp == 0x838B)//mov
                                 {
                                     Position = MapVATR(metadataRegistration);
@@ -147,6 +166,8 @@ namespace Il2CppDumper
                 var datarelro = sectionWithName[".data.rel.ro"];
                 var text = sectionWithName[".text"];
                 var bss = sectionWithName[".bss"];
+                uint codeRegistration = 0;
+                uint metadataRegistration = 0;
                 Elf32_Shdr datarelrolocal = null;
                 if (sectionWithName.ContainsKey(".data.rel.ro.local"))
                     datarelrolocal = sectionWithName[".data.rel.ro.local"];
@@ -275,7 +296,7 @@ namespace Il2CppDumper
             //var dynstrSize = dynamic_table.First(x => x.d_tag == DT_STRSZ).d_un;
             uint reldynOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_REL).d_un);
             var reldynSize = dynamic_table.First(x => x.d_tag == DT_RELSZ).d_un;
-            var dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsymOffset, dynsymSize / 16);
+            dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsymOffset, dynsymSize / 16);
             var rel_table = ReadClassArray<Elf32_Rel>(reldynOffset, reldynSize / 8);
             var writer = new BinaryWriter(BaseStream);
             var isx86 = elf_header.e_machine == 0x3;
@@ -288,29 +309,21 @@ namespace Il2CppDumper
                     case R_386_32 when isx86:
                     case R_ARM_ABS32 when !isx86:
                         {
-                            var position = Position;
                             var dynamic_symbol = dynamic_symbol_table[sym];
-                            writer.BaseStream.Position = MapVATR(rel.r_offset);
+                            Position = MapVATR(rel.r_offset);
                             writer.Write(dynamic_symbol.st_value);
-                            Position = position;
                             break;
                         }
-                    case R_386_GLOB_DAT when isx86:
-                    case R_ARM_GLOB_DAT when !isx86:
+                    case R_386_RELATIVE when isDump && isx86:
+                    case R_ARM_RELATIVE when isDump && !isx86:
                         {
-                            var position = Position;
-                            var dynamic_symbol = dynamic_symbol_table[sym];
-                            var name = ReadStringToNull(dynstrOffset + dynamic_symbol.st_name);
-                            switch (name)
-                            {
-                                case "g_CodeRegistration":
-                                    codeRegistration = dynamic_symbol.st_value;
-                                    break;
-                                case "g_MetadataRegistration":
-                                    metadataRegistration = dynamic_symbol.st_value;
-                                    break;
-                            }
-                            Position = position;
+                            Position = MapVATR(rel.r_offset);
+                            var val = ReadUInt32();
+                            if (val == 0)
+                                break;
+                            val -= dumpAddr;
+                            Position = MapVATR(rel.r_offset);
+                            writer.Write(val);
                             break;
                         }
                 }
@@ -331,9 +344,9 @@ namespace Il2CppDumper
                 plusSearch.SetSearch(datarelro, datarelrolocal);
                 plusSearch.SetPointerRangeFirst(datarelro, datarelrolocal);
                 plusSearch.SetPointerRangeSecond(text);
-                codeRegistration = plusSearch.FindCodeRegistration();
+                var codeRegistration = plusSearch.FindCodeRegistration();
                 plusSearch.SetPointerRangeSecond(bss);
-                metadataRegistration = plusSearch.FindMetadataRegistration();
+                var metadataRegistration = plusSearch.FindMetadataRegistration();
                 if (codeRegistration != 0 && metadataRegistration != 0)
                 {
                     Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
@@ -372,9 +385,9 @@ namespace Il2CppDumper
                 plusSearch.SetSearch(data);
                 plusSearch.SetPointerRangeFirst(data);
                 plusSearch.SetPointerRangeSecond(exec);
-                codeRegistration = plusSearch.FindCodeRegistration();
+                var codeRegistration = plusSearch.FindCodeRegistration();
                 plusSearch.SetPointerRangeSecond(data);
-                metadataRegistration = plusSearch.FindMetadataRegistration();
+                var metadataRegistration = plusSearch.FindMetadataRegistration();
                 if (codeRegistration != 0 && metadataRegistration != 0)
                 {
                     Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
@@ -388,6 +401,22 @@ namespace Il2CppDumper
 
         public override bool SymbolSearch()
         {
+            uint codeRegistration = 0;
+            uint metadataRegistration = 0;
+            uint dynstrOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_STRTAB).d_un);
+            foreach (var dynamic_symbol in dynamic_symbol_table)
+            {
+                var name = ReadStringToNull(dynstrOffset + dynamic_symbol.st_name);
+                switch (name)
+                {
+                    case "g_CodeRegistration":
+                        codeRegistration = dynamic_symbol.st_value;
+                        break;
+                    case "g_MetadataRegistration":
+                        metadataRegistration = dynamic_symbol.st_value;
+                        break;
+                }
+            }
             if (codeRegistration > 0 && metadataRegistration > 0)
             {
                 Console.WriteLine("Detected Symbol !");

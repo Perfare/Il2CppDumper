@@ -65,13 +65,11 @@ namespace Il2CppDumper
 
         public override bool Search()
         {
-            Console.WriteLine("ERROR: This mode not supported.");
             return false;
         }
 
         public override bool AdvancedSearch(int methodCount)
         {
-            Console.WriteLine("ERROR: This mode not supported.");
             return false;
         }
 
@@ -118,7 +116,6 @@ namespace Il2CppDumper
 
         public override bool SymbolSearch()
         {
-            Console.WriteLine("ERROR: This mode not supported.");
             return false;
         }
     }

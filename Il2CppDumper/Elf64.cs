@@ -67,13 +67,11 @@ namespace Il2CppDumper
 
         public override bool Search()
         {
-            Console.WriteLine("ERROR: This mode not supported.");
             return false;
         }
 
         public override bool AdvancedSearch(int methodCount)
         {
-            Console.WriteLine("ERROR: This mode not supported.");
             return false;
         }
 
@@ -102,8 +100,6 @@ namespace Il2CppDumper
             }
             else
             {
-                Console.WriteLine("ERROR: This file has been protected.");
-
                 var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
                 var dataList = new List<Elf64_Phdr>();
                 var execList = new List<Elf64_Phdr>();
@@ -149,7 +145,6 @@ namespace Il2CppDumper
 
         public override bool SymbolSearch()
         {
-            Console.WriteLine("ERROR: This mode not supported.");
             return false;
         }
 

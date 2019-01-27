@@ -90,9 +90,9 @@ namespace Il2CppDumper
         public const int DT_INIT_ARRAYSZ = 27;
 
         public const int R_ARM_ABS32 = 2;
-        public const int R_ARM_GLOB_DAT = 21;
+        public const int R_ARM_RELATIVE = 23;
 
         public const int R_386_32 = 1;
-        public const int R_386_GLOB_DAT = 6;
+        public const int R_386_RELATIVE = 8;
     }
 }

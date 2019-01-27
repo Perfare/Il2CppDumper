@@ -114,7 +114,10 @@ namespace Il2CppDumper
                             il2cpp = new Macho64(new MemoryStream(il2cppfile), version, metadata.maxMetadataUsages);
                         else
                             il2cpp = new Macho(new MemoryStream(il2cppfile), version, metadata.maxMetadataUsages);
-
+                        if (modeKey.KeyChar != '1')
+                        {
+                            Console.WriteLine("Searching...");
+                        }
                         try
                         {
                             bool flag;
@@ -586,7 +589,8 @@ namespace Il2CppDumper
                 for (var i = 0; i < attributeTypeRange.count; i++)
                 {
                     var typeIndex = metadata.attributeTypes[attributeTypeRange.start + i];
-                    sb.AppendFormat("{0}[{1}] // 0x{2:X}\n", padding, GetTypeName(il2cpp.types[typeIndex]), il2cpp.customAttributeGenerators[index]);
+                    var methodPointer = il2cpp.customAttributeGenerators[index];
+                    sb.AppendFormat("{0}[{1}] // RVA: 0x{2:X} Offset: 0x{3:X}\n", padding, GetTypeName(il2cpp.types[typeIndex]), methodPointer, il2cpp.MapVATR(methodPointer));
                 }
                 return sb.ToString();
             }

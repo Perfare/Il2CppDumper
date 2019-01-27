@@ -306,7 +306,6 @@ namespace Il2CppDumper
 
         public override bool SymbolSearch()
         {
-            Console.WriteLine("ERROR: This mode not supported.");
             return false;
         }
     }

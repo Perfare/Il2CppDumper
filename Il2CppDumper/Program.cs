@@ -241,13 +241,13 @@ namespace Il2CppDumper
                                     if (extends.Count > 0)
                                         writer.Write($" : {string.Join(", ", extends)}");
                                     if (config.DumpTypeDefIndex)
-                                        writer.Write($" // TypeDefIndex: {idx}\n{{\n");
+                                        writer.Write($" // TypeDefIndex: {idx}\n{{");
                                     else
-                                        writer.Write("\n{\n");
+                                        writer.Write("\n{");
                                     //dump field
                                     if (config.DumpField && typeDef.field_count > 0)
                                     {
-                                        writer.Write("\t// Fields\n");
+                                        writer.Write("\n\t// Fields\n");
                                         var fieldEnd = typeDef.fieldStart + typeDef.field_count;
                                         for (var i = typeDef.fieldStart; i < fieldEnd; ++i)
                                         {
@@ -356,12 +356,11 @@ namespace Il2CppDumper
                                             else
                                                 writer.Write(";\n");
                                         }
-                                        writer.Write("\n");
                                     }
                                     //dump property
                                     if (config.DumpProperty && typeDef.property_count > 0)
                                     {
-                                        writer.Write("\t// Properties\n");
+                                        writer.Write("\n\t// Properties\n");
                                         var propertyEnd = typeDef.propertyStart + typeDef.property_count;
                                         for (var i = typeDef.propertyStart; i < propertyEnd; ++i)
                                         {
@@ -390,12 +389,11 @@ namespace Il2CppDumper
                                             writer.Write("}");
                                             writer.Write("\n");
                                         }
-                                        writer.Write("\n");
                                     }
                                     //dump method
                                     if (config.DumpMethod && typeDef.method_count > 0)
                                     {
-                                        writer.Write("\t// Methods\n");
+                                        writer.Write("\n\t// Methods\n");
                                         var methodEnd = typeDef.methodStart + typeDef.method_count;
                                         for (var i = typeDef.methodStart; i < methodEnd; ++i)
                                         {

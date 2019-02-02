@@ -90,6 +90,7 @@ namespace Il2CppDumper
             if (isDump && uiAddr > dumpAddr)
             {
                 uiAddr -= dumpAddr;
+                return uiAddr;
             }
             var program_header_table = program_table.First(x => uiAddr >= x.p_vaddr && uiAddr <= (x.p_vaddr + x.p_memsz));
             return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
@@ -314,18 +315,18 @@ namespace Il2CppDumper
                             writer.Write(dynamic_symbol.st_value);
                             break;
                         }
-                    case R_386_RELATIVE when isDump && isx86:
-                    case R_ARM_RELATIVE when isDump && !isx86:
-                        {
-                            Position = MapVATR(rel.r_offset);
-                            var val = ReadUInt32();
-                            if (val == 0)
+                        /*case R_386_RELATIVE when isDump && isx86:
+                        case R_ARM_RELATIVE when isDump && !isx86:
+                            {
+                                Position = MapVATR(rel.r_offset);
+                                var val = ReadUInt32();
+                                if (val == 0)
+                                    break;
+                                val -= dumpAddr;
+                                Position = MapVATR(rel.r_offset);
+                                writer.Write(val);
                                 break;
-                            val -= dumpAddr;
-                            Position = MapVATR(rel.r_offset);
-                            writer.Write(val);
-                            break;
-                        }
+                            }*/
                 }
             }
             writer.Flush();
@@ -384,9 +385,24 @@ namespace Il2CppDumper
                 var exec = execList.ToArray();
                 plusSearch.SetSearch(data);
                 plusSearch.SetPointerRangeFirst(data);
-                plusSearch.SetPointerRangeSecond(exec);
+                if (isDump)
+                {
+                    plusSearch.SetPointerRangeSecond(dumpAddr, exec);
+                }
+                else
+                {
+                    plusSearch.SetPointerRangeSecond(exec);
+                }
                 var codeRegistration = plusSearch.FindCodeRegistration();
-                plusSearch.SetPointerRangeSecond(data);
+                if (isDump)
+                {
+                    plusSearch.SetPointerRangeSecond(dumpAddr, data);
+                }
+                else
+                {
+                    plusSearch.SetPointerRangeSecond(data);
+                }
+
                 var metadataRegistration = plusSearch.FindMetadataRegistration();
                 if (codeRegistration != 0 && metadataRegistration != 0)
                 {

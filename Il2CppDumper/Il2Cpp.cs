@@ -111,13 +111,19 @@ namespace Il2CppDumper
             if (isNew21)
             {
                 var ptr = fieldOffsets[typeIndex];
+                dynamic pos;
                 if (ptr >= 0)
                 {
                     if (is32Bit)
-                        Position = MapVATR((uint)ptr) + 4 * fieldIndexInType;
+                        pos = MapVATR((uint)ptr) + 4 * fieldIndexInType;
                     else
-                        Position = MapVATR((ulong)ptr) + 4ul * (ulong)fieldIndexInType;
-                    return ReadInt32();
+                        pos = MapVATR((ulong)ptr) + 4ul * (ulong)fieldIndexInType;
+                    if (pos <= BaseStream.Length - 4)
+                    {
+                        Position = pos;
+                        return ReadInt32();
+                    }
+                    return -1;
                 }
                 return 0;
             }

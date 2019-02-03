@@ -224,7 +224,7 @@ namespace Il2CppDumper
                     return true;
                 }
             }
-            else
+            else if (!isDump)
             {
                 Console.WriteLine("ERROR: This file has been protected.");
             }
@@ -358,6 +358,10 @@ namespace Il2CppDumper
             }
             else
             {
+                if (!isDump)
+                {
+                    Console.WriteLine("ERROR: This file has been protected.");
+                }
                 var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
                 var dataList = new List<Elf32_Phdr>();
                 var execList = new List<Elf32_Phdr>();

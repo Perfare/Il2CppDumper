@@ -118,7 +118,7 @@ namespace Il2CppDumper
                         pos = MapVATR((uint)ptr) + 4 * fieldIndexInType;
                     else
                         pos = MapVATR((ulong)ptr) + 4ul * (ulong)fieldIndexInType;
-                    if (pos <= BaseStream.Length - 4)
+                    if ((long)pos <= BaseStream.Length - 4)
                     {
                         Position = pos;
                         return ReadInt32();

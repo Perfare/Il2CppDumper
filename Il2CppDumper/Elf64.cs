@@ -2,14 +2,16 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using static Il2CppDumper.ElfConstants;
 
 namespace Il2CppDumper
 {
     public sealed class Elf64 : Il2Cpp
     {
         private Elf64_Ehdr elf_header;
-        private Elf64_Phdr[] program_table_element;
+        private Elf64_Phdr[] program_table;
+        private Elf64_Dyn[] dynamic_table;
+        private Elf64_Sym[] dynamic_symbol_table;
         private Dictionary<string, Elf64_Shdr> sectionWithName = new Dictionary<string, Elf64_Shdr>();
 
         public Elf64(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
@@ -35,8 +37,10 @@ namespace Il2CppDumper
             elf_header.e_shentsize = ReadUInt16();
             elf_header.e_shnum = ReadUInt16();
             elf_header.e_shtrndx = ReadUInt16();
-            program_table_element = ReadClassArray<Elf64_Phdr>(elf_header.e_phoff, elf_header.e_phnum);
+            program_table = ReadClassArray<Elf64_Phdr>(elf_header.e_phoff, elf_header.e_phnum);
             GetSectionWithName();
+            var pt_dynamic = program_table.First(x => x.p_type == 2u);
+            dynamic_table = ReadClassArray<Elf64_Dyn>(pt_dynamic.p_offset, (long)pt_dynamic.p_filesz / 16L);
             RelocationProcessing();
         }
 
@@ -61,7 +65,7 @@ namespace Il2CppDumper
 
         public override dynamic MapVATR(dynamic uiAddr)
         {
-            var program_header_table = program_table_element.First(x => uiAddr >= x.p_vaddr && uiAddr <= x.p_vaddr + x.p_memsz);
+            var program_header_table = program_table.First(x => uiAddr >= x.p_vaddr && uiAddr <= x.p_vaddr + x.p_memsz);
             return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
         }
 
@@ -77,7 +81,7 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
-            if (sectionWithName.ContainsKey(".data") && sectionWithName.ContainsKey(".text") && sectionWithName.ContainsKey(".bss"))
+            /*if (sectionWithName.ContainsKey(".data") && sectionWithName.ContainsKey(".text") && sectionWithName.ContainsKey(".bss"))
             {
                 var data = sectionWithName[".data"];
                 var text = sectionWithName[".text"];
@@ -97,110 +101,113 @@ namespace Il2CppDumper
                     Init(codeRegistration, metadataRegistration);
                     return true;
                 }
-            }
-            else
+            }*/
+            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+            var dataList = new List<Elf64_Phdr>();
+            var execList = new List<Elf64_Phdr>();
+            foreach (var phdr in program_table)
             {
-                var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
-                var dataList = new List<Elf64_Phdr>();
-                var execList = new List<Elf64_Phdr>();
-                foreach (var phdr in program_table_element)
+                if (phdr.p_memsz != 0ul)
                 {
-                    if (phdr.p_memsz != 0ul)
+                    switch (phdr.p_flags)
                     {
-                        switch (phdr.p_flags)
-                        {
-                            case 1u: //PF_X
-                            case 3u:
-                            case 5u:
-                            case 7u:
-                                execList.Add(phdr);
-                                break;
-                            case 2u: //PF_W && PF_R
-                            case 4u:
-                            case 6u:
-                                dataList.Add(phdr);
-                                break;
-                        }
+                        case 1u: //PF_X
+                        case 3u:
+                        case 5u:
+                        case 7u:
+                            execList.Add(phdr);
+                            break;
+                        case 2u: //PF_W && PF_R
+                        case 4u:
+                        case 6u:
+                            dataList.Add(phdr);
+                            break;
                     }
                 }
-                var data = dataList.ToArray();
-                var exec = execList.ToArray();
-                plusSearch.SetSearch(data);
-                plusSearch.SetPointerRangeFirst(data);
-                plusSearch.SetPointerRangeSecond(exec);
-                var codeRegistration = plusSearch.FindCodeRegistration64Bit();
-                plusSearch.SetPointerRangeSecond(data);
-                var metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
-                if (codeRegistration != 0 && metadataRegistration != 0)
-                {
-                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                    Init(codeRegistration, metadataRegistration);
-                    return true;
-                }
             }
-
+            var data = dataList.ToArray();
+            var exec = execList.ToArray();
+            plusSearch.SetSearch(data);
+            plusSearch.SetPointerRangeFirst(data);
+            plusSearch.SetPointerRangeSecond(exec);
+            var codeRegistration = plusSearch.FindCodeRegistration64Bit();
+            plusSearch.SetPointerRangeSecond(data);
+            var metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
+            if (codeRegistration != 0 && metadataRegistration != 0)
+            {
+                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                Init(codeRegistration, metadataRegistration);
+                return true;
+            }
             return false;
         }
 
         public override bool SymbolSearch()
         {
+            ulong codeRegistration = 0ul;
+            ulong metadataRegistration = 0ul;
+            ulong dynstrOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_STRTAB).d_un);
+            foreach (var dynamic_symbol in dynamic_symbol_table)
+            {
+                var name = ReadStringToNull(dynstrOffset + dynamic_symbol.st_name);
+                switch (name)
+                {
+                    case "g_CodeRegistration":
+                        codeRegistration = dynamic_symbol.st_value;
+                        break;
+                    case "g_MetadataRegistration":
+                        metadataRegistration = dynamic_symbol.st_value;
+                        break;
+                }
+            }
+            if (codeRegistration > 0 && metadataRegistration > 0)
+            {
+                Console.WriteLine("Detected Symbol !");
+                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                Init(codeRegistration, metadataRegistration);
+                return true;
+            }
+            Console.WriteLine("ERROR: No symbol is detected");
             return false;
         }
 
         private void RelocationProcessing()
         {
-            //TODO
-            /*if (sectionWithName.ContainsKey(".dynsym") && sectionWithName.ContainsKey(".dynstr") && sectionWithName.ContainsKey(".rela.dyn"))
+            Console.WriteLine("Applying relocations...");
+
+            try
             {
-                Console.WriteLine("Applying relocations...");
-                var dynsym = sectionWithName[".dynsym"];
-                var symbol_name_block_off = sectionWithName[".dynstr"].sh_offset;
-                var rela_dyn = sectionWithName[".rela.dyn"];
-                var dynamic_symbol_table = ReadClassArray<Elf64_Sym>(dynsym.sh_offset, (long)dynsym.sh_size / 24);
-                var rel_dynend = rela_dyn.sh_offset + rela_dyn.sh_size;
-                Position = rela_dyn.sh_offset;
+                ulong dynsymOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_SYMTAB).d_un);
+                ulong dynstrOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_STRTAB).d_un);
+                var dynsymSize = dynstrOffset - dynsymOffset;
+                ulong relaOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_RELA).d_un);
+                var relaSize = dynamic_table.First(x => x.d_tag == DT_RELASZ).d_un;
+                dynamic_symbol_table = ReadClassArray<Elf64_Sym>(dynsymOffset, (long)dynsymSize / 24L);
+                var rela_table = ReadClassArray<Elf64_Rela>(relaOffset, (long)relaSize / 24L);
                 var writer = new BinaryWriter(BaseStream);
-                while ((ulong)Position < rel_dynend)
+                foreach (var rel in rela_table)
                 {
-                    //Elf64_Rela
-                    var r_offset = ReadUInt64();
-                    //r_info
-                    var type = ReadUInt32();
-                    var index = ReadUInt32();
-                    var r_addend = ReadUInt64();
+                    var type = rel.r_info & 0xffffffff;
+                    var sym = rel.r_info >> 32;
                     switch (type)
                     {
-                        case 257: //R_AARCH64_ABS64
-                        //case 1027: //R_AARCH64_RELATIVE
+                        case R_AARCH64_ABS64:
                             {
-                                var position = Position;
-                                var dynamic_symbol = dynamic_symbol_table[index];
-                                writer.BaseStream.Position = (long)r_offset;
+                                var dynamic_symbol = dynamic_symbol_table[sym];
+                                Position = MapVATR(rel.r_offset);
                                 writer.Write(dynamic_symbol.st_value);
-                                Position = position;
-                                break;
-                            }
-                        case 1025: //R_AARCH64_GLOB_DAT
-                            {
-                                var position = Position;
-                                var dynamic_symbol = dynamic_symbol_table[index];
-                                var name = ReadStringToNull(symbol_name_block_off + dynamic_symbol.st_name);
-                                switch (name)
-                                {
-                                    case "g_CodeRegistration":
-                                        codeRegistration = dynamic_symbol.st_value;
-                                        break;
-                                    case "g_MetadataRegistration":
-                                        metadataRegistration = dynamic_symbol.st_value;
-                                        break;
-                                }
-                                Position = position;
                                 break;
                             }
                     }
                 }
-            }*/
+                writer.Flush();
+            }
+            catch
+            {
+                // ignored
+            }
         }
     }
 }

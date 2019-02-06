@@ -291,45 +291,40 @@ namespace Il2CppDumper
         {
             Console.WriteLine("Applying relocations...");
 
-            uint dynsymOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_SYMTAB).d_un);
-            uint dynstrOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_STRTAB).d_un);
-            var dynsymSize = dynstrOffset - dynsymOffset;
-            //var dynstrSize = dynamic_table.First(x => x.d_tag == DT_STRSZ).d_un;
-            uint reldynOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_REL).d_un);
-            var reldynSize = dynamic_table.First(x => x.d_tag == DT_RELSZ).d_un;
-            dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsymOffset, dynsymSize / 16);
-            var rel_table = ReadClassArray<Elf32_Rel>(reldynOffset, reldynSize / 8);
-            var writer = new BinaryWriter(BaseStream);
-            var isx86 = elf_header.e_machine == 0x3;
-            foreach (var rel in rel_table)
+            try
             {
-                var type = rel.r_info & 0xff;
-                var sym = rel.r_info >> 8;
-                switch (type)
+                uint dynsymOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_SYMTAB).d_un);
+                uint dynstrOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_STRTAB).d_un);
+                var dynsymSize = dynstrOffset - dynsymOffset;
+                //var dynstrSize = dynamic_table.First(x => x.d_tag == DT_STRSZ).d_un;
+                uint reldynOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_REL).d_un);
+                var reldynSize = dynamic_table.First(x => x.d_tag == DT_RELSZ).d_un;
+                dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsymOffset, dynsymSize / 16);
+                var rel_table = ReadClassArray<Elf32_Rel>(reldynOffset, reldynSize / 8);
+                var writer = new BinaryWriter(BaseStream);
+                var isx86 = elf_header.e_machine == 0x3;
+                foreach (var rel in rel_table)
                 {
-                    case R_386_32 when isx86:
-                    case R_ARM_ABS32 when !isx86:
-                        {
-                            var dynamic_symbol = dynamic_symbol_table[sym];
-                            Position = MapVATR(rel.r_offset);
-                            writer.Write(dynamic_symbol.st_value);
-                            break;
-                        }
-                        /*case R_386_RELATIVE when isDump && isx86:
-                        case R_ARM_RELATIVE when isDump && !isx86:
+                    var type = rel.r_info & 0xff;
+                    var sym = rel.r_info >> 8;
+                    switch (type)
+                    {
+                        case R_386_32 when isx86:
+                        case R_ARM_ABS32 when !isx86:
                             {
+                                var dynamic_symbol = dynamic_symbol_table[sym];
                                 Position = MapVATR(rel.r_offset);
-                                var val = ReadUInt32();
-                                if (val == 0)
-                                    break;
-                                val -= dumpAddr;
-                                Position = MapVATR(rel.r_offset);
-                                writer.Write(val);
+                                writer.Write(dynamic_symbol.st_value);
                                 break;
-                            }*/
+                            }
+                    }
                 }
+                writer.Flush();
             }
-            writer.Flush();
+            catch
+            {
+                // ignored
+            }
         }
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)

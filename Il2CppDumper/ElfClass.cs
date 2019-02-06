@@ -77,22 +77,4 @@ namespace Il2CppDumper
         public uint r_offset;
         public uint r_info;
     }
-
-    static class ElfConstants
-    {
-        public const int DT_PLTGOT = 3;
-        public const int DT_STRTAB = 5;
-        public const int DT_SYMTAB = 6;
-        public const int DT_STRSZ = 10;
-        public const int DT_REL = 17;
-        public const int DT_RELSZ = 18;
-        public const int DT_INIT_ARRAY = 25;
-        public const int DT_INIT_ARRAYSZ = 27;
-
-        public const int R_ARM_ABS32 = 2;
-        public const int R_ARM_RELATIVE = 23;
-
-        public const int R_386_32 = 1;
-        public const int R_386_RELATIVE = 8;
-    }
 }

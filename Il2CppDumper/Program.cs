@@ -92,7 +92,6 @@ namespace Il2CppDumper
             }
             Console.WriteLine("Initializing metadata...");
             metadata = new Metadata(new MemoryStream(metadataBytes), metadataVersion);
-            Console.Clear();
             //判断il2cpp的magic
             var il2cppMagic = BitConverter.ToUInt32(il2cppBytes, 0);
             var isElf = false;

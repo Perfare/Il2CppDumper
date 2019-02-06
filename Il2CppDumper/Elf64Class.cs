@@ -64,4 +64,17 @@ namespace Il2CppDumper
         public ulong st_value;
         public ulong st_size;
     }
+
+    public class Elf64_Dyn
+    {
+        public long d_tag;
+        public ulong d_un;
+    }
+
+    public class Elf64_Rela
+    {
+        public ulong r_offset;
+        public ulong r_info;
+        public long r_addend;
+    }
 }

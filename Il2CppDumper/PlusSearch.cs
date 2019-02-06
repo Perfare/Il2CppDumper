@@ -405,13 +405,11 @@ namespace Il2CppDumper
                             uint pointer = il2Cpp.MapVATR(il2Cpp.ReadUInt32());
                             if (CheckPointerRangeFirst(pointer))
                             {
-                                var sign = il2Cpp.Position;
                                 var pointers = il2Cpp.ReadClassArray<uint>(pointer, methodCount);
                                 if (CheckPointerRangeSecond(pointers))
                                 {
                                     return (ulong)addr - section.start + section.address; //VirtualAddress
                                 }
-                                il2Cpp.Position = sign;
                             }
                         }
                         catch
@@ -419,6 +417,7 @@ namespace Il2CppDumper
                             // ignored
                         }
                     }
+                    il2Cpp.Position = addr + 4;
                 }
             }
 
@@ -440,13 +439,11 @@ namespace Il2CppDumper
                             ulong pointer = il2Cpp.MapVATR(il2Cpp.ReadUInt64());
                             if (CheckPointerRangeFirst(pointer))
                             {
-                                var sign = il2Cpp.Position;
                                 var pointers = il2Cpp.ReadClassArray<ulong>(pointer, methodCount);
                                 if (CheckPointerRangeSecond(pointers))
                                 {
                                     return (ulong)addr - section.start + section.address; //VirtualAddress
                                 }
-                                il2Cpp.Position = sign;
                             }
                         }
                         catch
@@ -454,6 +451,7 @@ namespace Il2CppDumper
                             // ignored
                         }
                     }
+                    il2Cpp.Position = addr + 8;
                 }
             }
 
@@ -472,7 +470,6 @@ namespace Il2CppDumper
                     {
                         try
                         {
-                            var sign = il2Cpp.Position;
                             il2Cpp.Position += 8;
                             uint pointer = il2Cpp.MapVATR(il2Cpp.ReadUInt32());
                             if (CheckPointerRangeFirst(pointer))
@@ -483,13 +480,13 @@ namespace Il2CppDumper
                                     return (ulong)addr - 48ul - section.start + section.address; //VirtualAddress
                                 }
                             }
-                            il2Cpp.Position = sign;
                         }
                         catch
                         {
                             // ignored
                         }
                     }
+                    il2Cpp.Position = addr + 4;
                 }
             }
 
@@ -508,7 +505,6 @@ namespace Il2CppDumper
                     {
                         try
                         {
-                            var sign = il2Cpp.Position;
                             il2Cpp.Position += 16;
                             ulong pointer = il2Cpp.MapVATR(il2Cpp.ReadUInt64());
                             if (CheckPointerRangeFirst(pointer))
@@ -519,13 +515,13 @@ namespace Il2CppDumper
                                     return (ulong)addr - 96ul - section.start + section.address; //VirtualAddress
                                 }
                             }
-                            il2Cpp.Position = sign;
                         }
                         catch
                         {
                             // ignored
                         }
                     }
+                    il2Cpp.Position = addr + 8;
                 }
             }
 

@@ -115,5 +115,6 @@ namespace Il2CppDumper
         public const int R_386_32 = 1;
 
         public const int R_AARCH64_ABS64 = 257;
+        public const int R_AARCH64_RELATIVE = 1027;
     }
 }

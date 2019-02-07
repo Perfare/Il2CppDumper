@@ -197,7 +197,13 @@ namespace Il2CppDumper
                             {
                                 var dynamic_symbol = dynamic_symbol_table[sym];
                                 Position = MapVATR(rel.r_offset);
-                                writer.Write(dynamic_symbol.st_value);
+                                writer.Write(dynamic_symbol.st_value + (ulong)rel.r_addend);
+                                break;
+                            }
+                        case R_AARCH64_RELATIVE:
+                            {
+                                Position = MapVATR(rel.r_offset);
+                                writer.Write(rel.r_addend);
                                 break;
                             }
                     }

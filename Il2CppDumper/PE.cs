@@ -75,41 +75,47 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
-            if (sections.Any(x => x.Name == ".text") && sections.Any(x => x.Name == ".data") && sections.Any(x => x.Name == ".rdata"))
+            var execList = new List<SectionHeader>();
+            var dataList = new List<SectionHeader>();
+            foreach (var section in sections)
             {
-                var text = sections.First(x => x.Name == ".text");
-                var data = sections.First(x => x.Name == ".data");
-                var rdata = sections.First(x => x.Name == ".rdata");
-
-                ulong codeRegistration;
-                ulong metadataRegistration;
-                var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
-                plusSearch.SetSearch(imageBase, data, rdata);
-                plusSearch.SetPointerRangeFirst(imageBase, data, rdata);
-                plusSearch.SetPointerRangeSecond(imageBase, text);
-                if (is32Bit)
+                switch (section.Characteristics)
                 {
-                    codeRegistration = plusSearch.FindCodeRegistration();
-                    plusSearch.SetPointerRangeSecond(imageBase, data, rdata);
-                    metadataRegistration = plusSearch.FindMetadataRegistration();
+                    case 0x60000020:
+                        execList.Add(section);
+                        break;
+                    case 0x40000040:
+                    case 0xC0000040:
+                        dataList.Add(section);
+                        break;
                 }
-                else
-                {
-                    codeRegistration = plusSearch.FindCodeRegistration64Bit();
-                    plusSearch.SetPointerRangeSecond(imageBase, data, rdata);
-                    metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
-                }
-                if (codeRegistration != 0 && metadataRegistration != 0)
-                {
-                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                    Init(codeRegistration, metadataRegistration);
-                    return true;
-                }
+            }
+            ulong codeRegistration;
+            ulong metadataRegistration;
+            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+            var data = dataList.ToArray();
+            var exec = execList.ToArray();
+            plusSearch.SetSearch(imageBase, data);
+            plusSearch.SetPointerRangeFirst(imageBase, data);
+            plusSearch.SetPointerRangeSecond(imageBase, exec);
+            if (is32Bit)
+            {
+                codeRegistration = plusSearch.FindCodeRegistration();
+                plusSearch.SetPointerRangeSecond(imageBase, data);
+                metadataRegistration = plusSearch.FindMetadataRegistration();
             }
             else
             {
-                Console.WriteLine("ERROR: This file has been protected.");
+                codeRegistration = plusSearch.FindCodeRegistration64Bit();
+                plusSearch.SetPointerRangeSecond(imageBase, data);
+                metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
+            }
+            if (codeRegistration != 0 && metadataRegistration != 0)
+            {
+                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                Init(codeRegistration, metadataRegistration);
+                return true;
             }
             return false;
         }

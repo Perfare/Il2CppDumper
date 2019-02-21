@@ -329,87 +329,62 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
-            if (sectionWithName.ContainsKey(".data.rel.ro") && sectionWithName.ContainsKey(".text") && sectionWithName.ContainsKey(".bss"))
+            if (!isDump && (!sectionWithName.ContainsKey(".data.rel.ro") || !sectionWithName.ContainsKey(".text") || !sectionWithName.ContainsKey(".bss")))
             {
-                var datarelro = sectionWithName[".data.rel.ro"];
-                var text = sectionWithName[".text"];
-                var bss = sectionWithName[".bss"];
-                sectionWithName.TryGetValue(".data.rel.ro.local", out var datarelrolocal);
-
-                var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
-                plusSearch.SetSearch(datarelro, datarelrolocal);
-                plusSearch.SetPointerRangeFirst(datarelro, datarelrolocal);
-                plusSearch.SetPointerRangeSecond(text);
-                var codeRegistration = plusSearch.FindCodeRegistration();
-                plusSearch.SetPointerRangeSecond(bss);
-                var metadataRegistration = plusSearch.FindMetadataRegistration();
-                if (codeRegistration != 0 && metadataRegistration != 0)
+                Console.WriteLine("ERROR: This file has been protected.");
+            }
+            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+            var dataList = new List<Elf32_Phdr>();
+            var execList = new List<Elf32_Phdr>();
+            foreach (var phdr in program_table)
+            {
+                if (phdr.p_memsz != 0ul)
                 {
-                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                    Init(codeRegistration, metadataRegistration);
-                    return true;
+                    switch (phdr.p_flags)
+                    {
+                        case 1u: //PF_X
+                        case 3u:
+                        case 5u:
+                        case 7u:
+                            execList.Add(phdr);
+                            break;
+                        case 2u: //PF_W && PF_R
+                        case 4u:
+                        case 6u:
+                            dataList.Add(phdr);
+                            break;
+                    }
                 }
+            }
+            var data = dataList.ToArray();
+            var exec = execList.ToArray();
+            plusSearch.SetSearch(data);
+            plusSearch.SetPointerRangeFirst(data);
+            if (isDump)
+            {
+                plusSearch.SetPointerRangeSecond(dumpAddr, exec);
             }
             else
             {
-                if (!isDump)
-                {
-                    Console.WriteLine("ERROR: This file has been protected.");
-                }
-                var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
-                var dataList = new List<Elf32_Phdr>();
-                var execList = new List<Elf32_Phdr>();
-                foreach (var phdr in program_table)
-                {
-                    if (phdr.p_memsz != 0ul)
-                    {
-                        switch (phdr.p_flags)
-                        {
-                            case 1u: //PF_X
-                            case 3u:
-                            case 5u:
-                            case 7u:
-                                execList.Add(phdr);
-                                break;
-                            case 2u: //PF_W && PF_R
-                            case 4u:
-                            case 6u:
-                                dataList.Add(phdr);
-                                break;
-                        }
-                    }
-                }
-                var data = dataList.ToArray();
-                var exec = execList.ToArray();
-                plusSearch.SetSearch(data);
-                plusSearch.SetPointerRangeFirst(data);
-                if (isDump)
-                {
-                    plusSearch.SetPointerRangeSecond(dumpAddr, exec);
-                }
-                else
-                {
-                    plusSearch.SetPointerRangeSecond(exec);
-                }
-                var codeRegistration = plusSearch.FindCodeRegistration();
-                if (isDump)
-                {
-                    plusSearch.SetPointerRangeSecond(dumpAddr, data);
-                }
-                else
-                {
-                    plusSearch.SetPointerRangeSecond(data);
-                }
+                plusSearch.SetPointerRangeSecond(exec);
+            }
+            var codeRegistration = plusSearch.FindCodeRegistration();
+            if (isDump)
+            {
+                plusSearch.SetPointerRangeSecond(dumpAddr, data);
+            }
+            else
+            {
+                plusSearch.SetPointerRangeSecond(data);
+            }
 
-                var metadataRegistration = plusSearch.FindMetadataRegistration();
-                if (codeRegistration != 0 && metadataRegistration != 0)
-                {
-                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                    Init(codeRegistration, metadataRegistration);
-                    return true;
-                }
+            var metadataRegistration = plusSearch.FindMetadataRegistration();
+            if (codeRegistration != 0 && metadataRegistration != 0)
+            {
+                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                Init(codeRegistration, metadataRegistration);
+                return true;
             }
             return false;
         }

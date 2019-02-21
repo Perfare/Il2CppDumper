@@ -81,27 +81,6 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
-            /*if (sectionWithName.ContainsKey(".data") && sectionWithName.ContainsKey(".text") && sectionWithName.ContainsKey(".bss"))
-            {
-                var data = sectionWithName[".data"];
-                var text = sectionWithName[".text"];
-                var bss = sectionWithName[".bss"];
-
-                var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
-                plusSearch.SetSearch(data);
-                plusSearch.SetPointerRangeFirst(data);
-                plusSearch.SetPointerRangeSecond(text);
-                var codeRegistration = plusSearch.FindCodeRegistration64Bit();
-                plusSearch.SetPointerRangeSecond(bss);
-                var metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
-                if (codeRegistration != 0 && metadataRegistration != 0)
-                {
-                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                    Init(codeRegistration, metadataRegistration);
-                    return true;
-                }
-            }*/
             var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
             var dataList = new List<Elf64_Phdr>();
             var execList = new List<Elf64_Phdr>();

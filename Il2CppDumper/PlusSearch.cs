@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Il2CppDumper
 {
@@ -142,6 +140,22 @@ namespace Il2CppDumper
             }
         }
 
+        public void SetSearch(params NSOSegmentHeader[] sections)
+        {
+            foreach (var section in sections)
+            {
+                if (section != null)
+                {
+                    search.Add(new Section
+                    {
+                        start = section.FileOffset,
+                        end = section.FileOffset + section.DecompressedSize,
+                        address = section.MemoryOffset
+                    });
+                }
+            }
+        }
+
         public void SetPointerRangeFirst(params MachoSection64Bit[] sections)
         {
             foreach (var section in sections)
@@ -249,6 +263,22 @@ namespace Il2CppDumper
                         start = section.PointerToRawData,
                         end = section.PointerToRawData + section.SizeOfRawData,
                         address = section.VirtualAddress + imageBase
+                    });
+                }
+            }
+        }
+
+        public void SetPointerRangeFirst(params NSOSegmentHeader[] sections)
+        {
+            foreach (var section in sections)
+            {
+                if (section != null)
+                {
+                    pointerRange1.Add(new Section
+                    {
+                        start = section.FileOffset,
+                        end = section.FileOffset + section.DecompressedSize,
+                        address = section.MemoryOffset
                     });
                 }
             }
@@ -385,6 +415,23 @@ namespace Il2CppDumper
                         start = section.VirtualAddress,
                         end = section.VirtualAddress + section.VirtualSize + imageBase,
                         address = section.VirtualAddress + imageBase
+                    });
+                }
+            }
+        }
+
+        public void SetPointerRangeSecond(params NSOSegmentHeader[] sections)
+        {
+            pointerRange2.Clear();
+            foreach (var section in sections)
+            {
+                if (section != null)
+                {
+                    pointerRange2.Add(new Section
+                    {
+                        start = section.MemoryOffset,
+                        end = section.MemoryOffset + section.DecompressedSize,
+                        address = section.MemoryOffset
                     });
                 }
             }

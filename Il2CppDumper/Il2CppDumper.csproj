@@ -47,6 +47,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Lz4DecoderStream.cs" />
+    <Compile Include="NSO.cs" />
+    <Compile Include="NSOClass.cs" />
     <Compile Include="VersionAttribute.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="DummyAssemblyCreator.cs" />

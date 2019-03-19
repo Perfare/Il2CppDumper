@@ -131,7 +131,7 @@ namespace Il2CppDumper
                     }
                 }
             }
-            if (version == 24)
+            if (version >= 24)
             {
                 /* ADRP X0, unk
                  * ADD X0, X0, unk

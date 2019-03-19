@@ -119,21 +119,26 @@ namespace Il2CppDumper
             var isElf = false;
             var isPE = false;
             var is64bit = false;
+            var isNSO = false;
             switch (il2cppMagic)
             {
                 default:
                     throw new Exception("ERROR: il2cpp file not supported.");
+                case 0x304F534E:
+                    isNSO = true;
+                    is64bit = true;
+                    break;
                 case 0x905A4D: //PE
                     isPE = true;
                     break;
                 case 0x464c457f: //ELF
                     isElf = true;
-                    if (il2cppBytes[4] == 2)
+                    if (il2cppBytes[4] == 2) //ELF64
                     {
-                        goto case 0xFEEDFACF; //ELF64
+                        is64bit = true;
                     }
                     break;
-                case 0xCAFEBABE: //FAT header
+                case 0xCAFEBABE: //FAT Mach-O
                 case 0xBEBAFECA:
                     var machofat = new MachoFat(new MemoryStream(il2cppBytes));
                     Console.Write("Select Platform: ");
@@ -147,14 +152,14 @@ namespace Il2CppDumper
                     var index = int.Parse(key.KeyChar.ToString()) - 1;
                     var magic = machofat.fats[index % 2].magic;
                     il2cppBytes = machofat.GetMacho(index % 2);
-                    if (magic == 0xFEEDFACF) // 64-bit mach object file
+                    if (magic == 0xFEEDFACF)
                         goto case 0xFEEDFACF;
                     else
                         goto case 0xFEEDFACE;
-                case 0xFEEDFACF: // 64-bit mach object file
+                case 0xFEEDFACF: // 64bit Mach-O
                     is64bit = true;
                     break;
-                case 0xFEEDFACE: // 32-bit mach object file
+                case 0xFEEDFACE: // 32bit Mach-O
                     break;
             }
 
@@ -162,7 +167,12 @@ namespace Il2CppDumper
             var modeKey = Console.ReadKey(true);
             var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.version;
             Console.WriteLine("Initializing il2cpp file...");
-            if (isPE)
+            if (isNSO)
+            {
+                var nso = new NSO(new MemoryStream(il2cppBytes), version, metadata.maxMetadataUsages);
+                il2cpp = nso.UnCompress();
+            }
+            else if (isPE)
             {
                 il2cpp = new PE(new MemoryStream(il2cppBytes), version, metadata.maxMetadataUsages);
             }

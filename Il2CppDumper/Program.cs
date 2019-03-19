@@ -14,14 +14,36 @@ namespace Il2CppDumper
     {
         private static Metadata metadata;
         private static Il2Cpp il2cpp;
-        private static Config config = new JavaScriptSerializer().Deserialize<Config>(File.ReadAllText(Application.StartupPath + @"\config.json"));
+        private static Config config = new JavaScriptSerializer().Deserialize<Config>(File.ReadAllText(Application.StartupPath + Path.DirectorySeparatorChar + @"config.json"));
         private static Dictionary<Il2CppMethodDefinition, string> methodModifiers = new Dictionary<Il2CppMethodDefinition, string>();
+
+        static void ShowHelp(string programName)
+        {
+            Console.WriteLine($"usage: {programName} path/to/global-metadata.dat path/to/libil2cpp.so");
+            Application.ExitThread();
+        }
 
         [STAThread]
         static void Main(string[] args)
         {
             byte[] il2cppBytes = null;
             byte[] metadataBytes = null;
+
+            if (args.Length == 1)
+            {
+                if (args[0] == "-h" || args[0] == "--help" || args[0] == "/?" || args[0] == "/h")
+                {
+                    ShowHelp(System.AppDomain.CurrentDomain.FriendlyName);
+                    return;
+                }
+            }
+
+            if (args.Length > 2)
+            {
+                ShowHelp(System.AppDomain.CurrentDomain.FriendlyName);
+                return;
+            }
+
             if (args.Length == 2)
             {
                 var file1 = File.ReadAllBytes(args[0]);

@@ -18,7 +18,7 @@ namespace Il2CppDumper
         private Dictionary<ulong, Il2CppType> typesdic = new Dictionary<ulong, Il2CppType>();
         public ulong[] metadataUsages;
         private Il2CppGenericMethodFunctionsDefinitions[] genericMethodTable;
-        private Il2CppMethodSpec[] methodSpecs;
+        public Il2CppMethodSpec[] methodSpecs;
         public Dictionary<int, ulong> genericMethoddDictionary;
         private bool isNew21;
         protected long maxMetadataUsages;

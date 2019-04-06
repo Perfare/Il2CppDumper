@@ -292,4 +292,10 @@ namespace Il2CppDumper
         /* Our type parameters. */
         public int genericParameterStart;
     }
+
+    public class Il2CppFieldRef
+    {
+        public int typeIndex;
+        public int fieldIndex; // local offset into type fields
+    }
 }

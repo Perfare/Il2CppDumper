@@ -313,7 +313,7 @@ namespace Il2CppDumper
                             writer.Write("enum ");
                         else
                             writer.Write("class ");
-                        var typeName = metadata.GetStringFromIndex(typeDef.nameIndex);
+                        var typeName = GetTypeName(typeDef);
                         writer.Write($"{typeName}");
                         if (extends.Count > 0)
                             writer.Write($" : {string.Join(", ", extends)}");
@@ -371,61 +371,65 @@ namespace Il2CppDumper
                                     var pointer = metadata.GetDefaultValueFromIndex(fieldDefault.dataIndex);
                                     if (pointer > 0)
                                     {
-                                        var pTypeToUse = il2cpp.types[fieldDefault.typeIndex];
+                                        var fieldDefaultType = il2cpp.types[fieldDefault.typeIndex];
                                         metadata.Position = pointer;
-                                        object multi = null;
-                                        switch (pTypeToUse.type)
+                                        object val = null;
+                                        switch (fieldDefaultType.type)
                                         {
                                             case Il2CppTypeEnum.IL2CPP_TYPE_BOOLEAN:
-                                                multi = metadata.ReadBoolean();
+                                                val = metadata.ReadBoolean();
                                                 break;
                                             case Il2CppTypeEnum.IL2CPP_TYPE_U1:
-                                                multi = metadata.ReadByte();
+                                                val = metadata.ReadByte();
                                                 break;
                                             case Il2CppTypeEnum.IL2CPP_TYPE_I1:
-                                                multi = metadata.ReadSByte();
+                                                val = metadata.ReadSByte();
                                                 break;
                                             case Il2CppTypeEnum.IL2CPP_TYPE_CHAR:
-                                                multi = BitConverter.ToChar(metadata.ReadBytes(2), 0);
+                                                val = BitConverter.ToChar(metadata.ReadBytes(2), 0);
                                                 break;
                                             case Il2CppTypeEnum.IL2CPP_TYPE_U2:
-                                                multi = metadata.ReadUInt16();
+                                                val = metadata.ReadUInt16();
                                                 break;
                                             case Il2CppTypeEnum.IL2CPP_TYPE_I2:
-                                                multi = metadata.ReadInt16();
+                                                val = metadata.ReadInt16();
                                                 break;
                                             case Il2CppTypeEnum.IL2CPP_TYPE_U4:
-                                                multi = metadata.ReadUInt32();
+                                                val = metadata.ReadUInt32();
                                                 break;
                                             case Il2CppTypeEnum.IL2CPP_TYPE_I4:
-                                                multi = metadata.ReadInt32();
+                                                val = metadata.ReadInt32();
                                                 break;
                                             case Il2CppTypeEnum.IL2CPP_TYPE_U8:
-                                                multi = metadata.ReadUInt64();
+                                                val = metadata.ReadUInt64();
                                                 break;
                                             case Il2CppTypeEnum.IL2CPP_TYPE_I8:
-                                                multi = metadata.ReadInt64();
+                                                val = metadata.ReadInt64();
                                                 break;
                                             case Il2CppTypeEnum.IL2CPP_TYPE_R4:
-                                                multi = metadata.ReadSingle();
+                                                val = metadata.ReadSingle();
                                                 break;
                                             case Il2CppTypeEnum.IL2CPP_TYPE_R8:
-                                                multi = metadata.ReadDouble();
+                                                val = metadata.ReadDouble();
                                                 break;
                                             case Il2CppTypeEnum.IL2CPP_TYPE_STRING:
-                                                var uiLen = metadata.ReadInt32();
-                                                multi = Encoding.UTF8.GetString(metadata.ReadBytes(uiLen));
+                                                var len = metadata.ReadInt32();
+                                                val = Encoding.UTF8.GetString(metadata.ReadBytes(len));
+                                                break;
+                                            //case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
+                                            default:
+                                                writer.Write($" /*Default value offset 0x{pointer:X}*/");
                                                 break;
                                         }
-                                        if (multi is string str)
+                                        if (val is string str)
                                             writer.Write($" = \"{ToEscapedString(str)}\"");
-                                        else if (multi is char c)
+                                        else if (val is char c)
                                         {
                                             var v = (int)c;
                                             writer.Write($" = '\\x{v:x}'");
                                         }
-                                        else if (multi != null)
-                                            writer.Write($" = {multi}");
+                                        else if (val != null)
+                                            writer.Write($" = {val}");
                                     }
                                 }
                                 if (config.DumpFieldOffset)
@@ -513,7 +517,7 @@ namespace Il2CppDumper
                                         writer.Write("); // RVA: 0x{0:X} Offset: 0x{1:X}\n", methodPointer, il2cpp.MapVATR(methodPointer));
                                         //Script - method
                                         var name = ToEscapedString(HandleSpecialCharacters(typeName + "$$" + methodName));
-                                        scriptwriter.WriteLine($"SetMethod(0x{methodPointer:X}, '{name}')");
+                                        scriptwriter.WriteLine($"SetName(0x{methodPointer:X}, '{name}')");
                                     }
                                     else
                                     {
@@ -537,17 +541,81 @@ namespace Il2CppDumper
                     writer.Write("*/\n}\n");
                 }
             }
-            //Script - stringLiteral
             scriptwriter.WriteLine("print('Make method name done')");
-            scriptwriter.WriteLine("print('Setting String...')");
+            //Script - MetadataUsage
+            scriptwriter.WriteLine("print('Setting MetadataUsage...')");
             if (il2cpp.version > 16)
             {
-                foreach (var i in metadata.stringLiteralsdic)
+                foreach (var i in metadata.metadataUsageDic[1]) //kIl2CppMetadataUsageTypeInfo
                 {
-                    scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:X}, r'{ToEscapedString(i.Value)}')");
+                    var type = il2cpp.types[i.Value];
+                    var typeName = GetTypeName(type, true);
+                    var legalName = "Class$" + HandleSpecialCharacters(typeName);
+                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
+                    scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'{typeName}')");
+                }
+                foreach (var i in metadata.metadataUsageDic[2]) //kIl2CppMetadataUsageIl2CppType
+                {
+                    var type = il2cpp.types[i.Value];
+                    var typeName = GetTypeName(type, true);
+                    var legalName = "Class$" + HandleSpecialCharacters(typeName);
+                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
+                    scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'{typeName}')");
+                }
+                foreach (var i in metadata.metadataUsageDic[3]) //kIl2CppMetadataUsageMethodDef
+                {
+                    var methodDef = metadata.methodDefs[i.Key];
+                    var typeName = GetTypeName(metadata.typeDefs[methodDef.declaringType]);
+                    var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex) + "()";
+                    var legalName = "Method$" + HandleSpecialCharacters(methodName);
+                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
+                    ulong methodPointer;
+                    if (methodDef.methodIndex >= 0)
+                    {
+                        methodPointer = il2cpp.methodPointers[methodDef.methodIndex];
+                    }
+                    else
+                    {
+                        il2cpp.genericMethoddDictionary.TryGetValue((int)i.Key, out methodPointer);
+                    }
+                    scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'0x{methodPointer:X}')");
+                }
+                foreach (var i in metadata.metadataUsageDic[4]) //kIl2CppMetadataUsageFieldInfo
+                {
+                    var fieldRef = metadata.fieldRefs[i.Value];
+                    var type = il2cpp.types[fieldRef.typeIndex];
+                    var typeDef = metadata.typeDefs[type.data.klassIndex];
+                    var fieldDef = metadata.fieldDefs[typeDef.fieldStart + fieldRef.fieldIndex];
+                    var fieldName = GetTypeName(type, true) + "." + metadata.GetStringFromIndex(fieldDef.nameIndex);
+                    var legalName = "Field$" + HandleSpecialCharacters(fieldName);
+                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
+                    scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'{fieldName}')");
+                }
+                foreach (var i in metadata.metadataUsageDic[5]) //kIl2CppMetadataUsageStringLiteral
+                {
+                    scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:X}, r'{ToEscapedString(metadata.GetStringLiteralFromIndex(i.Value))}')");
+                }
+                foreach (var i in metadata.metadataUsageDic[6]) //kIl2CppMetadataUsageMethodRef
+                {
+                    var methodSpec = il2cpp.methodSpecs[i.Value];
+                    var methodDef = metadata.methodDefs[methodSpec.methodDefinitionIndex];
+                    var typeName = GetTypeName(metadata.typeDefs[methodDef.declaringType]);
+                    var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex) + "()";
+                    var legalName = "Method$" + HandleSpecialCharacters(methodName);
+                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
+                    ulong methodPointer;
+                    if (methodDef.methodIndex >= 0)
+                    {
+                        methodPointer = il2cpp.methodPointers[methodDef.methodIndex];
+                    }
+                    else
+                    {
+                        il2cpp.genericMethoddDictionary.TryGetValue(methodSpec.methodDefinitionIndex, out methodPointer);
+                    }
+                    scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'0x{methodPointer:X}')");
                 }
             }
-            scriptwriter.WriteLine("print('Set string done')");
+            scriptwriter.WriteLine("print('Set MetadataUsage done')");
             //Script - MakeFunction
             if (config.MakeFunction)
             {
@@ -588,7 +656,7 @@ namespace Il2CppDumper
             }
         }
 
-        private static string GetTypeName(Il2CppType pType)
+        private static string GetTypeName(Il2CppType pType, bool fullName = false)
         {
             string ret;
             switch (pType.type)
@@ -596,8 +664,17 @@ namespace Il2CppDumper
                 case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
                 case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
                     {
-                        var klass = metadata.typeDefs[pType.data.klassIndex];
-                        ret = metadata.GetStringFromIndex(klass.nameIndex);
+                        var typeDef = metadata.typeDefs[pType.data.klassIndex];
+                        ret = string.Empty;
+                        if (fullName)
+                        {
+                            ret = metadata.GetStringFromIndex(typeDef.namespaceIndex);
+                            if (ret != string.Empty)
+                            {
+                                ret += ".";
+                            }
+                        }
+                        ret += GetTypeName(typeDef);
                         break;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
@@ -640,6 +717,17 @@ namespace Il2CppDumper
                     break;
             }
 
+            return ret;
+        }
+
+        private static string GetTypeName(Il2CppTypeDefinition typeDef)
+        {
+            var ret = string.Empty;
+            if (typeDef.declaringTypeIndex != -1)
+            {
+                ret += GetTypeName(il2cpp.types[typeDef.declaringTypeIndex]) + ".";
+            }
+            ret += metadata.GetStringFromIndex(typeDef.nameIndex);
             return ret;
         }
 
@@ -722,6 +810,7 @@ namespace Il2CppDumper
             str = str.Replace("<", "_");
             str = str.Replace(">", "_");
             str = str.Replace(",", "_");
+            str = str.Replace("-", "_");
             return str;
         }
 

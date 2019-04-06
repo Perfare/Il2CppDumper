@@ -72,7 +72,7 @@ namespace Il2CppDumper {
         ///	idc.MakeComm(addr, comm)
         ///	index += 1
         ///
-        ///def SetMethod(addr, name):
+        ///def SetName(addr, name):
         ///	i = 0
         ///	ret = idc.MakeNameEx(addr, name, SN_NOWARN)
         ///	if ret == 0:
@@ -81,7 +81,7 @@ namespace Il2CppDumper {
         ///
         ///def MakeFunction(start, end):
         ///	if GetFunctionAttr(start, FUNCATTR_START) == 0xFFFFFFFF:
-        ///		idc.Mak [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        ///		idc.MakeF [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         internal static string ida {
             get {

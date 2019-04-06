@@ -25,11 +25,12 @@ namespace Il2CppDumper
         private Il2CppMetadataUsagePair[] metadataUsagePairs;
         public int[] attributeTypes;
         public int[] interfaceIndices;
-        public SortedDictionary<uint, string> stringLiteralsdic;
+        public Dictionary<uint, SortedDictionary<uint, uint>> metadataUsageDic;
         public long maxMetadataUsages;
         public int[] nestedTypeIndices;
         public Il2CppEventDefinition[] eventDefs;
         public Il2CppGenericContainer[] genericContainers;
+        public Il2CppFieldRef[] fieldRefs;
 
         public Metadata(Stream stream, float version) : base(stream)
         {
@@ -87,7 +88,11 @@ namespace Il2CppDumper
                 metadataUsageLists = ReadClassArray<Il2CppMetadataUsageList>(pMetadataHdr.metadataUsageListsOffset, pMetadataHdr.metadataUsageListsCount / MySizeOf(typeof(Il2CppMetadataUsageList)));
                 //Il2CppMetadataUsagePair
                 metadataUsagePairs = ReadClassArray<Il2CppMetadataUsagePair>(pMetadataHdr.metadataUsagePairsOffset, pMetadataHdr.metadataUsagePairsCount / MySizeOf(typeof(Il2CppMetadataUsagePair)));
+
                 CreateStringLiteralDic();
+
+                //Il2CppFieldRef
+                fieldRefs = ReadMetadataClassArray<Il2CppFieldRef>(pMetadataHdr.fieldRefsOffset, pMetadataHdr.fieldRefsCount);
             }
             if (version > 20)
             {
@@ -96,6 +101,11 @@ namespace Il2CppDumper
                 //AttributeTypes
                 attributeTypes = ReadClassArray<int>(pMetadataHdr.attributeTypesOffset, pMetadataHdr.attributeTypesCount / 4);
             }
+        }
+
+        private T[] ReadMetadataClassArray<T>(int addr, int count) where T : new()
+        {
+            return ReadClassArray<T>(addr, count / MySizeOf(typeof(T)));
         }
 
         public Il2CppFieldDefaultValue GetFieldDefaultValueFromIndex(int index)
@@ -138,7 +148,7 @@ namespace Il2CppDumper
             }
         }
 
-        private string GetStringLiteralFromIndex(uint index)
+        public string GetStringLiteralFromIndex(uint index)
         {
             var stringLiteral = stringLiterals[index];
             Position = pMetadataHdr.stringLiteralDataOffset + stringLiteral.dataIndex;
@@ -147,7 +157,11 @@ namespace Il2CppDumper
 
         private void CreateStringLiteralDic()
         {
-            stringLiteralsdic = new SortedDictionary<uint, string>();
+            metadataUsageDic = new Dictionary<uint, SortedDictionary<uint, uint>>();
+            for (uint i = 1; i <= 6u; i++)
+            {
+                metadataUsageDic[i] = new SortedDictionary<uint, uint>();
+            }
             foreach (var metadataUsageList in metadataUsageLists)
             {
                 for (int i = 0; i < metadataUsageList.count; i++)
@@ -156,13 +170,10 @@ namespace Il2CppDumper
                     var metadataUsagePair = metadataUsagePairs[offset];
                     var usage = GetEncodedIndexType(metadataUsagePair.encodedSourceIndex);
                     var decodedIndex = GetDecodedMethodIndex(metadataUsagePair.encodedSourceIndex);
-                    if (usage == 5) //kIl2CppMetadataUsageStringLiteral
-                    {
-                        stringLiteralsdic[metadataUsagePair.destinationIndex] = GetStringLiteralFromIndex(decodedIndex);
-                    }
+                    metadataUsageDic[usage][metadataUsagePair.destinationIndex] = decodedIndex;
                 }
             }
-            maxMetadataUsages = stringLiteralsdic.Last().Key + 1;
+            maxMetadataUsages = metadataUsageDic[5].Last().Key + 1;
         }
 
 

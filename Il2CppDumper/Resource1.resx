@@ -129,7 +129,7 @@ def SetString(addr, comm):
 	idc.MakeComm(addr, comm)
 	index += 1
 
-def SetMethod(addr, name):
+def SetName(addr, name):
 	i = 0
 	ret = idc.MakeNameEx(addr, name, SN_NOWARN)
 	if ret == 0:

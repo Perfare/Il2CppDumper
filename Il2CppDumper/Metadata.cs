@@ -8,9 +8,7 @@ namespace Il2CppDumper
 {
     public sealed class Metadata : MyBinaryReader
     {
-        private Il2CppGlobalMetadataHeader pMetadataHdr;
-        public int uiImageCount;
-        public int uiNumTypes;
+        private Il2CppGlobalMetadataHeader metadataHeader;
         public Il2CppImageDefinition[] imageDefs;
         public Il2CppTypeDefinition[] typeDefs;
         public Il2CppMethodDefinition[] methodDefs;
@@ -35,13 +33,12 @@ namespace Il2CppDumper
         public Metadata(Stream stream, float version) : base(stream)
         {
             this.version = version;
-            //pMetadataHdr
-            pMetadataHdr = ReadClass<Il2CppGlobalMetadataHeader>();
-            if (pMetadataHdr.sanity != 0xFAB11BAF)
+            metadataHeader = ReadClass<Il2CppGlobalMetadataHeader>();
+            if (metadataHeader.sanity != 0xFAB11BAF)
             {
                 throw new Exception("ERROR: Metadata file supplied is not valid metadata file.");
             }
-            switch (pMetadataHdr.version)
+            switch (metadataHeader.version)
             {
                 case 16:
                 case 19:
@@ -54,52 +51,32 @@ namespace Il2CppDumper
                 default:
                     throw new Exception($"ERROR: Metadata file supplied is not a supported version[{version}].");
             }
-            //ImageDefinition
-            uiImageCount = pMetadataHdr.imagesCount / MySizeOf(typeof(Il2CppImageDefinition));
-            uiNumTypes = pMetadataHdr.typeDefinitionsCount / MySizeOf(typeof(Il2CppTypeDefinition));
-            imageDefs = ReadClassArray<Il2CppImageDefinition>(pMetadataHdr.imagesOffset, uiImageCount);
-            //GetTypeDefinitionFromIndex
-            typeDefs = ReadClassArray<Il2CppTypeDefinition>(pMetadataHdr.typeDefinitionsOffset, uiNumTypes);
-            //GetMethodDefinitionFromIndex
-            methodDefs = ReadClassArray<Il2CppMethodDefinition>(pMetadataHdr.methodsOffset, pMetadataHdr.methodsCount / MySizeOf(typeof(Il2CppMethodDefinition)));
-            //GetParameterDefinitionFromIndex
-            parameterDefs = ReadClassArray<Il2CppParameterDefinition>(pMetadataHdr.parametersOffset, pMetadataHdr.parametersCount / MySizeOf(typeof(Il2CppParameterDefinition)));
-            //GetFieldDefinitionFromIndex
-            fieldDefs = ReadClassArray<Il2CppFieldDefinition>(pMetadataHdr.fieldsOffset, pMetadataHdr.fieldsCount / MySizeOf(typeof(Il2CppFieldDefinition)));
-            //FieldDefaultValue
-            fieldDefaultValues = ReadClassArray<Il2CppFieldDefaultValue>(pMetadataHdr.fieldDefaultValuesOffset, pMetadataHdr.fieldDefaultValuesCount / MySizeOf(typeof(Il2CppFieldDefaultValue)));
-            //ParameterDefaultValue
-            parameterDefaultValues = ReadClassArray<Il2CppParameterDefaultValue>(pMetadataHdr.parameterDefaultValuesOffset, pMetadataHdr.parameterDefaultValuesCount / MySizeOf(typeof(Il2CppParameterDefaultValue)));
-            //GetPropertyDefinitionFromIndex
-            propertyDefs = ReadClassArray<Il2CppPropertyDefinition>(pMetadataHdr.propertiesOffset, pMetadataHdr.propertiesCount / MySizeOf(typeof(Il2CppPropertyDefinition)));
-            //GetInterfaceFromIndex
-            interfaceIndices = ReadClassArray<int>(pMetadataHdr.interfacesOffset, pMetadataHdr.interfacesCount / 4);
-            //GetNestedTypeFromIndex
-            nestedTypeIndices = ReadClassArray<int>(pMetadataHdr.nestedTypesOffset, pMetadataHdr.nestedTypesCount / 4);
-            //GetEventDefinitionFromIndex
-            eventDefs = ReadClassArray<Il2CppEventDefinition>(pMetadataHdr.eventsOffset, pMetadataHdr.eventsCount / MySizeOf(typeof(Il2CppEventDefinition)));
-            //GetGenericContainerFromIndex
-            genericContainers = ReadClassArray<Il2CppGenericContainer>(pMetadataHdr.genericContainersOffset, pMetadataHdr.genericContainersCount / MySizeOf(typeof(Il2CppGenericContainer)));
+            imageDefs = ReadMetadataClassArray<Il2CppImageDefinition>(metadataHeader.imagesOffset, metadataHeader.imagesCount);
+            typeDefs = ReadMetadataClassArray<Il2CppTypeDefinition>(metadataHeader.typeDefinitionsOffset, metadataHeader.typeDefinitionsCount);
+            methodDefs = ReadMetadataClassArray<Il2CppMethodDefinition>(metadataHeader.methodsOffset, metadataHeader.methodsCount);
+            parameterDefs = ReadMetadataClassArray<Il2CppParameterDefinition>(metadataHeader.parametersOffset, metadataHeader.parametersCount);
+            fieldDefs = ReadMetadataClassArray<Il2CppFieldDefinition>(metadataHeader.fieldsOffset, metadataHeader.fieldsCount);
+            fieldDefaultValues = ReadMetadataClassArray<Il2CppFieldDefaultValue>(metadataHeader.fieldDefaultValuesOffset, metadataHeader.fieldDefaultValuesCount);
+            parameterDefaultValues = ReadMetadataClassArray<Il2CppParameterDefaultValue>(metadataHeader.parameterDefaultValuesOffset, metadataHeader.parameterDefaultValuesCount);
+            propertyDefs = ReadMetadataClassArray<Il2CppPropertyDefinition>(metadataHeader.propertiesOffset, metadataHeader.propertiesCount);
+            interfaceIndices = ReadClassArray<int>(metadataHeader.interfacesOffset, metadataHeader.interfacesCount / 4);
+            nestedTypeIndices = ReadClassArray<int>(metadataHeader.nestedTypesOffset, metadataHeader.nestedTypesCount / 4);
+            eventDefs = ReadMetadataClassArray<Il2CppEventDefinition>(metadataHeader.eventsOffset, metadataHeader.eventsCount);
+            genericContainers = ReadMetadataClassArray<Il2CppGenericContainer>(metadataHeader.genericContainersOffset, metadataHeader.genericContainersCount);
             if (version > 16)
             {
-                //Il2CppStringLiteral
-                stringLiterals = ReadClassArray<Il2CppStringLiteral>(pMetadataHdr.stringLiteralOffset, pMetadataHdr.stringLiteralCount / MySizeOf(typeof(Il2CppStringLiteral)));
-                //Il2CppMetadataUsageList
-                metadataUsageLists = ReadClassArray<Il2CppMetadataUsageList>(pMetadataHdr.metadataUsageListsOffset, pMetadataHdr.metadataUsageListsCount / MySizeOf(typeof(Il2CppMetadataUsageList)));
-                //Il2CppMetadataUsagePair
-                metadataUsagePairs = ReadClassArray<Il2CppMetadataUsagePair>(pMetadataHdr.metadataUsagePairsOffset, pMetadataHdr.metadataUsagePairsCount / MySizeOf(typeof(Il2CppMetadataUsagePair)));
+                stringLiterals = ReadMetadataClassArray<Il2CppStringLiteral>(metadataHeader.stringLiteralOffset, metadataHeader.stringLiteralCount);
+                metadataUsageLists = ReadMetadataClassArray<Il2CppMetadataUsageList>(metadataHeader.metadataUsageListsOffset, metadataHeader.metadataUsageListsCount);
+                metadataUsagePairs = ReadMetadataClassArray<Il2CppMetadataUsagePair>(metadataHeader.metadataUsagePairsOffset, metadataHeader.metadataUsagePairsCount);
 
                 CreateStringLiteralDic();
 
-                //Il2CppFieldRef
-                fieldRefs = ReadMetadataClassArray<Il2CppFieldRef>(pMetadataHdr.fieldRefsOffset, pMetadataHdr.fieldRefsCount);
+                fieldRefs = ReadMetadataClassArray<Il2CppFieldRef>(metadataHeader.fieldRefsOffset, metadataHeader.fieldRefsCount);
             }
             if (version > 20)
             {
-                //CustomAttributeTypeRange
-                attributeTypeRanges = ReadClassArray<Il2CppCustomAttributeTypeRange>(pMetadataHdr.attributesInfoOffset, pMetadataHdr.attributesInfoCount / MySizeOf(typeof(Il2CppCustomAttributeTypeRange)));
-                //AttributeTypes
-                attributeTypes = ReadClassArray<int>(pMetadataHdr.attributeTypesOffset, pMetadataHdr.attributeTypesCount / 4);
+                attributeTypeRanges = ReadMetadataClassArray<Il2CppCustomAttributeTypeRange>(metadataHeader.attributesInfoOffset, metadataHeader.attributesInfoCount);
+                attributeTypes = ReadClassArray<int>(metadataHeader.attributeTypesOffset, metadataHeader.attributeTypesCount / 4);
             }
         }
 
@@ -120,12 +97,12 @@ namespace Il2CppDumper
 
         public int GetDefaultValueFromIndex(int index)
         {
-            return pMetadataHdr.fieldAndParameterDefaultValueDataOffset + index;
+            return metadataHeader.fieldAndParameterDefaultValueDataOffset + index;
         }
 
         public string GetStringFromIndex(int index)
         {
-            return ReadStringToNull(pMetadataHdr.stringOffset + index);
+            return ReadStringToNull(metadataHeader.stringOffset + index);
         }
 
         public int GetCustomAttributeIndex(Il2CppImageDefinition imageDef, int customAttributeIndex, uint token)
@@ -151,7 +128,7 @@ namespace Il2CppDumper
         public string GetStringLiteralFromIndex(uint index)
         {
             var stringLiteral = stringLiterals[index];
-            Position = pMetadataHdr.stringLiteralDataOffset + stringLiteral.dataIndex;
+            Position = metadataHeader.stringLiteralDataOffset + stringLiteral.dataIndex;
             return Encoding.UTF8.GetString(ReadBytes((int)stringLiteral.length));
         }
 
@@ -175,7 +152,6 @@ namespace Il2CppDumper
             }
             maxMetadataUsages = metadataUsageDic[5].Last().Key + 1;
         }
-
 
         private uint GetEncodedIndexType(uint index)
         {

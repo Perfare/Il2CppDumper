@@ -69,7 +69,7 @@ namespace Il2CppDumper
                 metadataUsageLists = ReadMetadataClassArray<Il2CppMetadataUsageList>(metadataHeader.metadataUsageListsOffset, metadataHeader.metadataUsageListsCount);
                 metadataUsagePairs = ReadMetadataClassArray<Il2CppMetadataUsagePair>(metadataHeader.metadataUsagePairsOffset, metadataHeader.metadataUsagePairsCount);
 
-                CreateStringLiteralDic();
+                ProcessingMetadataUsage();
 
                 fieldRefs = ReadMetadataClassArray<Il2CppFieldRef>(metadataHeader.fieldRefsOffset, metadataHeader.fieldRefsCount);
             }
@@ -132,7 +132,7 @@ namespace Il2CppDumper
             return Encoding.UTF8.GetString(ReadBytes((int)stringLiteral.length));
         }
 
-        private void CreateStringLiteralDic()
+        private void ProcessingMetadataUsage()
         {
             metadataUsageDic = new Dictionary<uint, SortedDictionary<uint, uint>>();
             for (uint i = 1; i <= 6u; i++)
@@ -150,7 +150,7 @@ namespace Il2CppDumper
                     metadataUsageDic[usage][metadataUsagePair.destinationIndex] = decodedIndex;
                 }
             }
-            maxMetadataUsages = metadataUsageDic[5].Last().Key + 1;
+            maxMetadataUsages = metadataUsageDic.Max(x => x.Value.Max(y => y.Key)) + 1;
         }
 
         private uint GetEncodedIndexType(uint index)

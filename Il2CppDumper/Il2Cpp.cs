@@ -36,6 +36,18 @@ namespace Il2CppDumper
             this.maxMetadataUsages = maxMetadataUsages;
         }
 
+        protected bool AutoInit(ulong codeRegistration, ulong metadataRegistration)
+        {
+            Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+            Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+            if (codeRegistration != 0 && metadataRegistration != 0)
+            {
+                Init(codeRegistration, metadataRegistration);
+                return true;
+            }
+            return false;
+        }
+
         public virtual void Init(ulong codeRegistration, ulong metadataRegistration)
         {
             if (is32Bit)
@@ -111,9 +123,9 @@ namespace Il2CppDumper
             if (isNew21)
             {
                 var ptr = fieldOffsets[typeIndex];
-                dynamic pos;
                 if (ptr >= 0)
                 {
+                    dynamic pos;
                     if (is32Bit)
                         pos = MapVATR((uint)ptr) + 4 * fieldIndexInType;
                     else

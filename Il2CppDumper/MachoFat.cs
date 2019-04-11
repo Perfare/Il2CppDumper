@@ -20,20 +20,20 @@ namespace Il2CppDumper
             {
                 Position += 8;
                 fats[i] = new Fat();
-                fats[i].file_offset = BitConverter.ToUInt32(ReadBytes(4).Reverse().ToArray(), 0);
+                fats[i].offset = BitConverter.ToUInt32(ReadBytes(4).Reverse().ToArray(), 0);
                 fats[i].size = BitConverter.ToUInt32(ReadBytes(4).Reverse().ToArray(), 0);
                 Position += 4;
             }
             for (var i = 0; i < size; i++)
             {
-                Position = fats[i].file_offset;
+                Position = fats[i].offset;
                 fats[i].magic = ReadUInt32();
             }
         }
 
         public byte[] GetMacho(int index)
         {
-            Position = fats[index].file_offset;
+            Position = fats[index].offset;
             return ReadBytes((int)fats[index].size);
         }
     }

@@ -296,7 +296,6 @@ namespace Il2CppDumper
                 uint dynsymOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_SYMTAB).d_un);
                 uint dynstrOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_STRTAB).d_un);
                 var dynsymSize = dynstrOffset - dynsymOffset;
-                //var dynstrSize = dynamic_table.First(x => x.d_tag == DT_STRSZ).d_un;
                 uint reldynOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_REL).d_un);
                 var reldynSize = dynamic_table.First(x => x.d_tag == DT_RELSZ).d_un;
                 dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsymOffset, dynsymSize / 16);
@@ -379,14 +378,7 @@ namespace Il2CppDumper
             }
 
             var metadataRegistration = plusSearch.FindMetadataRegistration();
-            if (codeRegistration != 0 && metadataRegistration != 0)
-            {
-                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                Init(codeRegistration, metadataRegistration);
-                return true;
-            }
-            return false;
+            return AutoInit(codeRegistration, metadataRegistration);
         }
 
         public override bool SymbolSearch()

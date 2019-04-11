@@ -38,7 +38,7 @@ namespace Il2CppDumper
                     {
                         start = section.offset,
                         end = section.offset + section.size,
-                        address = section.address
+                        address = section.addr
                     });
                 }
             }
@@ -54,7 +54,7 @@ namespace Il2CppDumper
                     {
                         start = section.offset,
                         end = section.offset + section.size,
-                        address = section.address
+                        address = section.addr
                     });
                 }
             }
@@ -166,7 +166,7 @@ namespace Il2CppDumper
                     {
                         start = section.offset,
                         end = section.offset + section.size,
-                        address = section.address
+                        address = section.addr
                     });
                 }
             }
@@ -182,7 +182,7 @@ namespace Il2CppDumper
                     {
                         start = section.offset,
                         end = section.offset + section.size,
-                        address = section.address
+                        address = section.addr
                     });
                 }
             }
@@ -293,9 +293,9 @@ namespace Il2CppDumper
                 {
                     pointerRange2.Add(new Section
                     {
-                        start = section.address,
-                        end = section.address + section.size,
-                        address = section.address
+                        start = section.addr,
+                        end = section.addr + section.size,
+                        address = section.addr
                     });
                 }
             }
@@ -310,9 +310,9 @@ namespace Il2CppDumper
                 {
                     pointerRange2.Add(new Section
                     {
-                        start = section.address,
-                        end = section.address + section.size,
-                        address = section.address
+                        start = section.addr,
+                        end = section.addr + section.size,
+                        address = section.addr
                     });
                 }
             }

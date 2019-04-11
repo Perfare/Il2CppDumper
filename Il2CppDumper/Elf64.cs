@@ -112,14 +112,7 @@ namespace Il2CppDumper
             var codeRegistration = plusSearch.FindCodeRegistration64Bit();
             plusSearch.SetPointerRangeSecond(data);
             var metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
-            if (codeRegistration != 0 && metadataRegistration != 0)
-            {
-                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                Init(codeRegistration, metadataRegistration);
-                return true;
-            }
-            return false;
+            return AutoInit(codeRegistration, metadataRegistration);
         }
 
         public override bool SymbolSearch()

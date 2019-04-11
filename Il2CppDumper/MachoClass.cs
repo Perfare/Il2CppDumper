@@ -7,25 +7,27 @@ namespace Il2CppDumper
 {
     public class MachoSection
     {
-        public string section_name;
-        public uint address;
+        public string sectname;
+        public uint addr;
         public uint size;
         public uint offset;
+        public uint flags;
         public uint end;
     }
 
     public class MachoSection64Bit
     {
-        public string section_name;
-        public ulong address;
+        public string sectname;
+        public ulong addr;
         public ulong size;
         public ulong offset;
+        public uint flags;
         public ulong end;
     }
 
     public class Fat
     {
-        public uint file_offset;
+        public uint offset;
         public uint size;
         public uint magic;
     }

@@ -16,50 +16,49 @@ namespace Il2CppDumper
 
         public Macho64(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
-            Position += 16;//skip
+            Position += 16; //skip magic, cputype, cpusubtype, filetype
             var ncmds = ReadUInt32();
-            Position += 12;//skip
+            Position += 12; //skip sizeofcmds, flags, reserved
             for (var i = 0; i < ncmds; i++)
             {
-                var offset = Position;
-                var loadCommandType = ReadUInt32();
-                var command_size = ReadUInt32();
-                if (loadCommandType == 0x19) //SEGMENT_64
+                var pos = Position;
+                var cmd = ReadUInt32();
+                var cmdsize = ReadUInt32();
+                if (cmd == 0x19) //LC_SEGMENT_64
                 {
-                    var segment_name = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
-                    if (segment_name == "__TEXT" || segment_name == "__DATA" || segment_name == "__RODATA")
+                    Position += 56; //skip segname, vmaddr, vmsize, fileoff, filesize, maxprot, initprot
+                    var nsects = ReadUInt32();
+                    Position += 4; //skip flags
+                    for (var j = 0; j < nsects; j++)
                     {
-                        Position += 40;//skip
-                        var number_of_sections = ReadUInt32();
-                        Position += 4;//skip
-                        for (var j = 0; j < number_of_sections; j++)
-                        {
-                            var section_name = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
-                            Position += 16;//skip
-                            var address = ReadUInt64();
-                            var size = ReadUInt64();
-                            var offset2 = (uint)ReadUInt64();
-                            var end = address + size;
-                            sections.Add(new MachoSection64Bit { section_name = section_name, address = address, size = size, offset = offset2, end = end });
-                            Position += 24;
-                        }
+                        var section = new MachoSection64Bit();
+                        sections.Add(section);
+                        section.sectname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
+                        Position += 16; //skip segname
+                        section.addr = ReadUInt64();
+                        section.size = ReadUInt64();
+                        section.offset = ReadUInt32();
+                        Position += 12; //skip align, reloff, nreloc
+                        section.flags = ReadUInt32();
+                        section.end = section.addr + section.size;
+                        Position += 12; //skip reserved1, reserved2, reserved3
                     }
                 }
-                Position = offset + command_size;//skip
+                Position = pos + cmdsize;//skip
             }
         }
 
         public override dynamic MapVATR(dynamic uiAddr)
         {
-            var section = sections.First(x => uiAddr >= x.address && uiAddr <= x.end);
-            return uiAddr - (section.address - section.offset);
+            var section = sections.First(x => uiAddr >= x.addr && uiAddr <= x.end);
+            return uiAddr - (section.addr - section.offset);
         }
 
         public override bool Search()
         {
             if (version < 23)
             {
-                var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
+                var __mod_init_func = sections.First(x => x.sectname == "__mod_init_func");
                 var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
                 foreach (var i in addrs)
                 {
@@ -100,7 +99,7 @@ namespace Il2CppDumper
                  * MOV W3, #0
                  * B sub
                  */
-                var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
+                var __mod_init_func = sections.First(x => x.sectname == "__mod_init_func");
                 var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
                 foreach (var i in addrs)
                 {
@@ -141,7 +140,7 @@ namespace Il2CppDumper
                  * MOV X2, #0
                  * B sub
                  */
-                var __mod_init_func = sections.First(x => x.section_name == "__mod_init_func");
+                var __mod_init_func = sections.First(x => x.sectname == "__mod_init_func");
                 var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
                 foreach (var i in addrs)
                 {
@@ -177,11 +176,11 @@ namespace Il2CppDumper
 
         public override bool AdvancedSearch(int methodCount)
         {
-            var __consts = sections.Where(x => x.section_name == "__const").ToArray();
+            var __consts = sections.Where(x => x.sectname == "__const").ToArray();
             var __const = __consts[0];
             var __const2 = __consts[1];
-            var __text = sections.First(x => x.section_name == "__text");
-            var __common = sections.First(x => x.section_name == "__common");
+            var __text = sections.First(x => x.sectname == "__text");
+            var __common = sections.First(x => x.sectname == "__common");
             ulong codeRegistration = 0;
             ulong metadataRegistration = 0;
             var pmethodPointers = FindPointersAsc(methodCount, __const, __text);
@@ -249,18 +248,18 @@ namespace Il2CppDumper
         {
             var add = 0ul;
             var searchend = search.offset + search.size;
-            var rangeend = range.address + range.size;
+            var rangeend = range.addr + range.size;
             while (search.offset + add < searchend)
             {
                 var temp = ReadClassArray<ulong>(search.offset + add, readCount);
-                var r = Array.FindLastIndex(temp, x => x < range.address || x > rangeend);
+                var r = Array.FindLastIndex(temp, x => x < range.addr || x > rangeend);
                 if (r != -1)
                 {
                     add += (ulong)(++r * 8);
                 }
                 else
                 {
-                    return search.address + add; //VirtualAddress
+                    return search.addr + add; //VirtualAddress
                 }
             }
             return 0;
@@ -270,18 +269,18 @@ namespace Il2CppDumper
         {
             var add = 0L;
             var searchend = search.offset + search.size;
-            var rangeend = range.address + range.size;
+            var rangeend = range.addr + range.size;
             while (searchend + (ulong)add > search.offset)
             {
                 var temp = ReadClassArray<ulong>((long)searchend + add - 8 * readCount, readCount);
-                var r = Array.FindIndex(temp, x => x < range.address || x > rangeend);
+                var r = Array.FindIndex(temp, x => x < range.addr || x > rangeend);
                 if (r != -1)
                 {
                     add -= (readCount - r) * 8;
                 }
                 else
                 {
-                    return search.address + search.size + (ulong)add - 8ul * (ulong)readCount; //VirtualAddress
+                    return search.addr + search.size + (ulong)add - 8ul * (ulong)readCount; //VirtualAddress
                 }
             }
             return 0;
@@ -295,7 +294,7 @@ namespace Il2CppDumper
             {
                 if (ReadUInt64() == pointer)
                 {
-                    return (ulong)Position - search.offset + search.address; //VirtualAddress
+                    return (ulong)Position - search.offset + search.addr; //VirtualAddress
                 }
             }
             return 0;
@@ -303,38 +302,18 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
-            //TODO 使用flags处理可执行段和数据段
-            var __consts = sections.Where(x => x.section_name == "__const").ToArray();
-            var __const = __consts[0];
-            var __const2 = __consts[1];
-            var __text = sections.First(x => x.section_name == "__text");
-            var __common = sections.First(x => x.section_name == "__common");
-            var __il2cpp = sections.FirstOrDefault(x => x.section_name == ".il2cpp");
-            var __bss = sections.FirstOrDefault(x => x.section_name == "__bss");
+            var data = sections.Where(x => x.sectname == "__const").ToArray();
+            var code = sections.Where(x => x.flags == 0x80000400).ToArray();
+            var bss = sections.Where(x => x.flags == 1u).ToArray();
 
             var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
-            plusSearch.SetSearch(__const, __const2);
-            plusSearch.SetPointerRangeFirst(__const2, __const2);
-            plusSearch.SetPointerRangeSecond(__text, __il2cpp);
+            plusSearch.SetSearch(data);
+            plusSearch.SetPointerRangeFirst(data);
+            plusSearch.SetPointerRangeSecond(code);
             var codeRegistration = plusSearch.FindCodeRegistration64Bit();
-            if (version == 16)
-            {
-                Console.WriteLine("WARNING: Version 16 can only get CodeRegistration");
-                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                return false;
-            }
-
-            plusSearch.SetPointerRangeSecond(__bss, __common);
+            plusSearch.SetPointerRangeSecond(bss);
             var metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
-            if (codeRegistration != 0 && metadataRegistration != 0)
-            {
-                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                Init(codeRegistration, metadataRegistration);
-                return true;
-            }
-
-            return false;
+            return AutoInit(codeRegistration, metadataRegistration);
         }
 
         public override bool SymbolSearch()

@@ -303,12 +303,14 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
+            //TODO 使用flags处理可执行段和数据段
             var __consts = sections.Where(x => x.section_name == "__const").ToArray();
             var __const = __consts[0];
             var __const2 = __consts[1];
             var __text = sections.First(x => x.section_name == "__text");
             var __common = sections.First(x => x.section_name == "__common");
             var __il2cpp = sections.FirstOrDefault(x => x.section_name == ".il2cpp");
+            var __bss = sections.FirstOrDefault(x => x.section_name == "__bss");
 
             var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
             plusSearch.SetSearch(__const, __const2);
@@ -322,7 +324,7 @@ namespace Il2CppDumper
                 return false;
             }
 
-            plusSearch.SetPointerRangeSecond(__common);
+            plusSearch.SetPointerRangeSecond(__bss, __common);
             var metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
             if (codeRegistration != 0 && metadataRegistration != 0)
             {

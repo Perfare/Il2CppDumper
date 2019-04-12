@@ -15,4 +15,4 @@ Before clicking `Submit new issue`, try the [latest build](https://ci.appveyor.c
 
 - Describe the issue
 
-- Upload binary executable and global-metadata.dat
+- Upload executable file and global-metadata.dat

@@ -84,7 +84,7 @@ namespace Il2CppDumper
             var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
             var dataList = new List<Elf64_Phdr>();
             var execList = new List<Elf64_Phdr>();
-            foreach (var phdr in program_table)
+            foreach (var phdr in program_table.Where(x => x.p_type == 1u))
             {
                 if (phdr.p_memsz != 0ul)
                 {

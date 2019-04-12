@@ -10,12 +10,12 @@ Extraction code is based on [Il2CppDumper](https://github.com/Jumboperson/Il2Cpp
 
 ## Features
 
-* Supports il2cpp binaries in ELF, ELF64, Mach-O and PE format
+* Supports il2cpp binaries in ELF, ELF64, Mach-O, PE and NSO format
 * Supports global-metadata version 16 and 19-24
 * Extracts .NET metadata including types, fields, properties, methods and attributes
 * Supports automated IDA script generation
-  * name and tag methods
-  * store dynamic string literals in comments
+  * rename method
+  * name and tag metadata
   * makefunction to improve ida analysis
 * Generates dummy DLLs that can be viewed in .NET decompilers
 
@@ -90,7 +90,3 @@ The specified `global-metadata.dat` is invalid and the program cannot recognize 
 Try other extraction modes.
 
 If all automated extraction modes failed with this error and you are sure that the files you supplied are not corrupted/obfuscated, please file an issue with the logs and sample files.
-
-#### `WARNING: Version 16 can only get CodeRegistration`
-
-Use the CodeRegistration information to get the MetadataRegistration, then use the manual mode to process the file.

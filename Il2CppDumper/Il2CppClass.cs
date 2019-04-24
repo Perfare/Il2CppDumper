@@ -4,7 +4,9 @@ namespace Il2CppDumper
 {
     public class Il2CppCodeRegistration
     {
+        [Version(Max = 24.1f)]
         public ulong methodPointersCount;
+        [Version(Max = 24.1f)]
         public ulong methodPointers;
         [Version(Max = 21)]
         public ulong delegateWrappersFromNativeToManagedCount;
@@ -44,6 +46,10 @@ namespace Il2CppDumper
         public ulong interopDataCount;
         [Version(Min = 23)]
         public ulong interopData;
+        [Version(Min = 24.2f)]
+        public ulong codeGenModulesCount;
+        [Version(Min = 24.2f)]
+        public ulong codeGenModules;
     }
 
     public class Il2CppMetadataRegistration
@@ -197,4 +203,19 @@ namespace Il2CppDumper
         public int classIndexIndex;
         public int methodIndexIndex;
     };
+
+    public class Il2CppCodeGenModule
+    {
+        public ulong moduleName;
+        public ulong methodPointerCount;
+        public ulong methodPointers;
+        public ulong invokerIndices;
+        public ulong reversePInvokeWrapperCount;
+        public ulong reversePInvokeWrapperIndices;
+        public ulong rgctxRangesCount;
+        public ulong rgctxRanges;
+        public ulong rgctxsCount;
+        public ulong rgctxs;
+        public ulong debuggerMetadata;
+    }
 }

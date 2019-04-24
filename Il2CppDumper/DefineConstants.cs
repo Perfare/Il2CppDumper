@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Il2CppDumper
 {
@@ -95,6 +96,9 @@ namespace Il2CppDumper
             {28,"object"},
             {30,"T"},
         };
+
+        public static Version Unity20183 = new Version(2018, 3);
+        public static Version Unity20191 = new Version(2019, 1);
     }
 
     static class ElfConstants

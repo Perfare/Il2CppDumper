@@ -101,19 +101,35 @@ namespace Il2CppDumper
             {
                 throw new Exception("ERROR: Metadata file supplied is not valid metadata file.");
             }
-            var metadataVersion = (float)BitConverter.ToInt32(metadataBytes, 4);
+            float fixedMetadataVersion;
+            var metadataVersion = BitConverter.ToInt32(metadataBytes, 4);
             if (metadataVersion == 24)
             {
-                Console.WriteLine("Is the Unity version greater than or equal to 2018.3?");
-                Console.WriteLine("1.Yes 2.No");
-                var key = Console.ReadKey(true);
-                if (key.KeyChar == '1')
+                Console.WriteLine("Input Unity version (Just enter the first two numbers eg. 5.6, 2017.1): ");
+                var str = Console.ReadLine();
+                if (string.IsNullOrEmpty(str) || !str.Contains("."))
+                    throw new Exception("You must enter the correct Unity version number");
+                var strs = Array.ConvertAll(str.Split('.'), int.Parse);
+                var unityVersion = new Version(strs[0], strs[1]);
+                if (unityVersion >= Unity20191)
                 {
-                    metadataVersion = 24.1f;
+                    fixedMetadataVersion = 24.2f;
+                }
+                else if (unityVersion >= Unity20183)
+                {
+                    fixedMetadataVersion = 24.1f;
+                }
+                else
+                {
+                    fixedMetadataVersion = metadataVersion;
                 }
             }
+            else
+            {
+                fixedMetadataVersion = metadataVersion;
+            }
             Console.WriteLine("Initializing metadata...");
-            metadata = new Metadata(new MemoryStream(metadataBytes), metadataVersion);
+            metadata = new Metadata(new MemoryStream(metadataBytes), fixedMetadataVersion);
             //判断il2cpp的magic
             var il2cppMagic = BitConverter.ToUInt32(il2cppBytes, 0);
             var isElf = false;

@@ -46,7 +46,9 @@ namespace Il2CppDumper
         public int interfaceOffsetsCount;
         public int typeDefinitionsOffset; // Il2CppTypeDefinition
         public int typeDefinitionsCount;
+        [Version(Max = 24.1f)]
         public int rgctxEntriesOffset; // Il2CppRGCTXDefinition
+        [Version(Max = 24.1f)]
         public int rgctxEntriesCount;
         public int imagesOffset; // Il2CppImageDefinition
         public int imagesCount;

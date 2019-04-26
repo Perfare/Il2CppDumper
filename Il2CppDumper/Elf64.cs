@@ -74,11 +74,6 @@ namespace Il2CppDumper
             return false;
         }
 
-        public override bool AdvancedSearch(int methodCount)
-        {
-            return false;
-        }
-
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
             var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);

@@ -180,7 +180,7 @@ namespace Il2CppDumper
                     break;
             }
 
-            Console.WriteLine("Select Mode: 1.Manual 2.Auto 3.Auto(Advanced) 4.Auto(Plus) 5.Auto(Symbol)");
+            Console.WriteLine("Select Mode: 1.Manual 2.Auto 3.Auto(Plus) 4.Auto(Symbol)");
             var modeKey = Console.ReadKey(true);
             var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.version;
             Console.WriteLine("Initializing il2cpp file...");
@@ -224,13 +224,10 @@ namespace Il2CppDumper
                     case '2': //Auto
                         flag = il2cpp.Search();
                         break;
-                    case '3': //Auto(Advanced)
-                        flag = il2cpp.AdvancedSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0));
-                        break;
-                    case '4': //Auto(Plus)
+                    case '3': //Auto(Plus)
                         flag = il2cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length);
                         break;
-                    case '5': //Auto(Symbol)
+                    case '4': //Auto(Symbol)
                         flag = il2cpp.SymbolSearch();
                         break;
                     default:

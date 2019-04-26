@@ -33,12 +33,6 @@ The parameters (`CodeRegistration` and `MetadataRegistration`) that are passed t
 
 Automatically finds the `il2cpp_codegen_register()` function by signature matching and read out the first (`CodeRegistration`) and second (`MetadataRegistration`) parameter passed to the `il2cpp::vm::MetadataCache::Register()` method that will be invoked in the registration function. May not work well due to compiler optimizations.
 
-#### Auto(Advanced)
-
-Matches possible pointers in the data section. Generally works better than `Auto` mode.
-
-Supports metadata version 20 and later (only `CodeRegistration` address can be found on metadata version 16).
-
 #### Auto(Plus) - **Recommended**
 
 Matches possible pointers in the data section with some guidance from global-metadata. Works better than `Auto(Advanced)` mode on certain binaries.

@@ -28,7 +28,6 @@ namespace Il2CppDumper
         public abstract dynamic MapVATR(dynamic uiAddr);
 
         public abstract bool Search();
-        public abstract bool AdvancedSearch(int methodCount);
         public abstract bool PlusSearch(int methodCount, int typeDefinitionsCount);
         public abstract bool SymbolSearch();
 

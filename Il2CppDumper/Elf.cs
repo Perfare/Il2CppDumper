@@ -165,172 +165,6 @@ namespace Il2CppDumper
             return false;
         }
 
-        public override bool AdvancedSearch(int methodCount)
-        {
-            if (sectionWithName.ContainsKey(".data.rel.ro") && sectionWithName.ContainsKey(".text") && sectionWithName.ContainsKey(".bss"))
-            {
-                var datarelro = sectionWithName[".data.rel.ro"];
-                var text = sectionWithName[".text"];
-                var bss = sectionWithName[".bss"];
-                uint codeRegistration = 0;
-                uint metadataRegistration = 0;
-                Elf32_Shdr datarelrolocal = null;
-                if (sectionWithName.ContainsKey(".data.rel.ro.local"))
-                    datarelrolocal = sectionWithName[".data.rel.ro.local"];
-                var pmethodPointers = FindPointersAsc(methodCount, datarelro, text);
-                if (pmethodPointers == 0 && datarelrolocal != null)
-                    pmethodPointers = FindPointersAsc(methodCount, datarelrolocal, text);
-                if (pmethodPointers != 0)
-                {
-                    codeRegistration = FindReference(pmethodPointers, datarelro);
-                    if (codeRegistration == 0 && datarelrolocal != null)
-                        codeRegistration = FindReference(pmethodPointers, datarelrolocal);
-                    if (codeRegistration == 0)
-                    {
-                        pmethodPointers = FindPointersDesc(methodCount, datarelro, text);
-                        if (pmethodPointers == 0 && datarelrolocal != null)
-                            pmethodPointers = FindPointersDesc(methodCount, datarelrolocal, text);
-                        if (pmethodPointers != 0)
-                        {
-                            codeRegistration = FindReference(pmethodPointers, datarelro);
-                            if (codeRegistration == 0 && datarelrolocal != null)
-                                codeRegistration = FindReference(pmethodPointers, datarelrolocal);
-                        }
-                    }
-                }
-                var pmetadataUsages = FindPointersAsc(maxMetadataUsages, datarelro, bss);
-                if (pmetadataUsages == 0 && datarelrolocal != null)
-                    pmetadataUsages = FindPointersAsc(maxMetadataUsages, datarelrolocal, bss);
-                if (pmetadataUsages != 0)
-                {
-                    metadataRegistration = FindReference(pmetadataUsages, datarelro);
-                    if (metadataRegistration == 0 && datarelrolocal != null)
-                        metadataRegistration = FindReference(pmetadataUsages, datarelrolocal);
-                    if (metadataRegistration == 0)
-                    {
-                        pmetadataUsages = FindPointersDesc(maxMetadataUsages, datarelro, bss);
-                        if (pmetadataUsages == 0 && datarelrolocal != null)
-                            pmetadataUsages = FindPointersDesc(maxMetadataUsages, datarelrolocal, bss);
-                        if (pmetadataUsages != 0)
-                        {
-                            metadataRegistration = FindReference(pmetadataUsages, datarelro);
-                            if (metadataRegistration == 0 && datarelrolocal != null)
-                                metadataRegistration = FindReference(pmetadataUsages, datarelrolocal);
-                        }
-                    }
-                }
-                if (codeRegistration != 0 && metadataRegistration != 0)
-                {
-                    codeRegistration -= 8u;
-                    metadataRegistration -= 64u;
-                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                    Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                    Init(codeRegistration, metadataRegistration);
-                    return true;
-                }
-            }
-            else if (!isDump)
-            {
-                Console.WriteLine("ERROR: This file has been protected.");
-            }
-            return false;
-        }
-
-        private uint FindPointersAsc(long readCount, Elf32_Shdr search, Elf32_Shdr range)
-        {
-            var add = 0;
-            var searchend = search.sh_offset + search.sh_size;
-            var rangeend = range.sh_addr + range.sh_size;
-            while (search.sh_offset + add < searchend)
-            {
-                var temp = ReadClassArray<int>(search.sh_offset + add, readCount);
-                var r = Array.FindLastIndex(temp, x => x < range.sh_addr || x > rangeend);
-                if (r != -1)
-                {
-                    add += ++r * 4;
-                }
-                else
-                {
-                    return search.sh_addr + (uint)add; //VirtualAddress
-                }
-            }
-            return 0;
-        }
-
-        private uint FindPointersDesc(long readCount, Elf32_Shdr search, Elf32_Shdr range)
-        {
-            var add = 0;
-            var searchend = search.sh_offset + search.sh_size;
-            var rangeend = range.sh_addr + range.sh_size;
-            while (searchend + add > search.sh_offset)
-            {
-                var temp = ReadClassArray<int>(searchend + add - 4 * readCount, readCount);
-                var r = Array.FindIndex(temp, x => x < range.sh_addr || x > rangeend);
-                if (r != -1)
-                {
-                    add -= (int)((readCount - r) * 4);
-                }
-                else
-                {
-                    return (uint)(search.sh_addr + search.sh_size + add - 4 * readCount); //VirtualAddress
-                }
-            }
-            return 0;
-        }
-
-        private uint FindReference(uint pointer, Elf32_Shdr search)
-        {
-            var searchend = search.sh_offset + search.sh_size;
-            Position = search.sh_offset;
-            while (Position < searchend)
-            {
-                if (ReadUInt32() == pointer)
-                {
-                    return (uint)Position - search.sh_offset + search.sh_addr; //VirtualAddress
-                }
-            }
-            return 0;
-        }
-
-        private void RelocationProcessing()
-        {
-            Console.WriteLine("Applying relocations...");
-
-            try
-            {
-                uint dynsymOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_SYMTAB).d_un);
-                uint dynstrOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_STRTAB).d_un);
-                var dynsymSize = dynstrOffset - dynsymOffset;
-                uint reldynOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_REL).d_un);
-                var reldynSize = dynamic_table.First(x => x.d_tag == DT_RELSZ).d_un;
-                dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsymOffset, dynsymSize / 16);
-                var rel_table = ReadClassArray<Elf32_Rel>(reldynOffset, reldynSize / 8);
-                var writer = new BinaryWriter(BaseStream);
-                var isx86 = elf_header.e_machine == 0x3;
-                foreach (var rel in rel_table)
-                {
-                    var type = rel.r_info & 0xff;
-                    var sym = rel.r_info >> 8;
-                    switch (type)
-                    {
-                        case R_386_32 when isx86:
-                        case R_ARM_ABS32 when !isx86:
-                            {
-                                var dynamic_symbol = dynamic_symbol_table[sym];
-                                Position = MapVATR(rel.r_offset);
-                                writer.Write(dynamic_symbol.st_value);
-                                break;
-                            }
-                    }
-                }
-                writer.Flush();
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
             if (!isDump && (!sectionWithName.ContainsKey(".data.rel.ro") || !sectionWithName.ContainsKey(".text") || !sectionWithName.ContainsKey(".bss")))
@@ -414,6 +248,45 @@ namespace Il2CppDumper
             }
             Console.WriteLine("ERROR: No symbol is detected");
             return false;
+        }
+
+
+        private void RelocationProcessing()
+        {
+            Console.WriteLine("Applying relocations...");
+            try
+            {
+                uint dynsymOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_SYMTAB).d_un);
+                uint dynstrOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_STRTAB).d_un);
+                var dynsymSize = dynstrOffset - dynsymOffset;
+                uint reldynOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_REL).d_un);
+                var reldynSize = dynamic_table.First(x => x.d_tag == DT_RELSZ).d_un;
+                dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsymOffset, dynsymSize / 16);
+                var rel_table = ReadClassArray<Elf32_Rel>(reldynOffset, reldynSize / 8);
+                var writer = new BinaryWriter(BaseStream);
+                var isx86 = elf_header.e_machine == 0x3;
+                foreach (var rel in rel_table)
+                {
+                    var type = rel.r_info & 0xff;
+                    var sym = rel.r_info >> 8;
+                    switch (type)
+                    {
+                        case R_386_32 when isx86:
+                        case R_ARM_ABS32 when !isx86:
+                            {
+                                var dynamic_symbol = dynamic_symbol_table[sym];
+                                Position = MapVATR(rel.r_offset);
+                                writer.Write(dynamic_symbol.st_value);
+                                break;
+                            }
+                    }
+                }
+                writer.Flush();
+            }
+            catch
+            {
+                // ignored
+            }
         }
     }
 }

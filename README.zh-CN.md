@@ -20,9 +20,15 @@
 #### Manual
 你需要手动输入`CodeRegistration`和`MetadataRegistration`的指针地址，一般需要依靠反汇编工具来获取地址
 #### Auto
-原理是通过函数的特征字节找到`il2cpp_codegen_register`函数并获取传入`il2cpp::vm::MetadataCache::Register`中的参数1（`CodeRegistration`）和参数2（`MetadataRegistration`）。不过由于不同编译器优化差异，很多情况下无法正常工作。
+通过函数的特征字节找到`il2cpp_codegen_register`函数并获取传入`il2cpp::vm::MetadataCache::Register`中的参数1（`CodeRegistration`）和参数2（`MetadataRegistration`）。由于不同编译器优化差异，很多情况下无法正常工作。
 #### Auto(Plus) - **优先使用此模式**
-支持Metadata 20及以后的版本，在16版本下只能获取到`CodeRegistration`地址，以metadata的数据作为依据，指针特征作为判读条件进行搜索，对于某些文件处理的比Auto(Advanced)好。
+以metadata的数据作为依据，指针特征作为判读条件进行搜索。
+
+支持Metadata版本20~2018.3
+
+在16版本下只能获取到`CodeRegistration`地址
+
+在2019.1版本下只能获取到`MetadataRegistration`地址
 #### Auto(Symbol)
 目前只支持ELF，使用自带的符号进行处理。
 

@@ -81,6 +81,7 @@ namespace Il2CppDumper
                     for (int i = 0; i < pCodeGenModules.Length; i++)
                     {
                         var codeGenModule = MapVATR<Il2CppCodeGenModule>(pCodeGenModules[i]);
+                        codeGenModules[i] = codeGenModule;
                         try
                         {
                             var ptrs = Array.ConvertAll(MapVATR<uint>(codeGenModule.methodPointers, (long)codeGenModule.methodPointerCount), x => (ulong)x);
@@ -88,11 +89,10 @@ namespace Il2CppDumper
                         }
                         catch
                         {
-                            //当整个DLL只有泛型函数时就有可能出现这种情况
+                            //当整个DLL只有泛型函数时就会出现这种情况
                             Console.WriteLine($"WARNING: Unable to get function pointers for {ReadStringToNull(MapVATR(codeGenModule.moduleName))}");
                             codeGenModuleMethodPointers[i] = new ulong[codeGenModule.methodPointerCount];
                         }
-                        codeGenModules[i] = codeGenModule;
                     }
 
                 }
@@ -131,9 +131,18 @@ namespace Il2CppDumper
                     for (int i = 0; i < pCodeGenModules.Length; i++)
                     {
                         var codeGenModule = MapVATR<Il2CppCodeGenModule>(pCodeGenModules[i]);
-                        var ptrs = MapVATR<ulong>(codeGenModule.methodPointers, (long)codeGenModule.methodPointerCount);
                         codeGenModules[i] = codeGenModule;
-                        codeGenModuleMethodPointers[i] = ptrs;
+                        try
+                        {
+                            var ptrs = MapVATR<ulong>(codeGenModule.methodPointers, (long)codeGenModule.methodPointerCount);
+                            codeGenModuleMethodPointers[i] = ptrs;
+                        }
+                        catch
+                        {
+                            //当整个DLL只有泛型函数时就会出现这种情况
+                            Console.WriteLine($"WARNING: Unable to get function pointers for {ReadStringToNull(MapVATR(codeGenModule.moduleName))}");
+                            codeGenModuleMethodPointers[i] = new ulong[codeGenModule.methodPointerCount];
+                        }
                     }
                 }
                 else

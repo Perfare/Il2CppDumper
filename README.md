@@ -35,9 +35,13 @@ Automatically finds the `il2cpp_codegen_register()` function by signature matchi
 
 #### Auto(Plus) - **Recommended**
 
-Matches possible pointers in the data section with some guidance from global-metadata. Works better than `Auto(Advanced)` mode on certain binaries.
+Matches possible pointers in the data section with some guidance from global-metadata.
 
-Supports metadata version 20 and later (only `CodeRegistration` address can be found on metadata version 16).
+Supports metadata version 20 - 2018.3
+
+only `CodeRegistration` address can be found on metadata version 16
+
+only `MetadataRegistration` address can be found on metadata version 2019.1
 
 #### Auto(Symbol)
 

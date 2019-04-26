@@ -16,9 +16,23 @@ namespace Il2CppDumper
         private bool isDump;
         private uint dumpAddr;
 
-        private static readonly byte[] ARMFeatureBytes = { 0x1c, 0x0, 0x9f, 0xe5, 0x1c, 0x10, 0x9f, 0xe5, 0x1c, 0x20, 0x9f, 0xe5 };
-        private static readonly byte[] X86FeatureBytes1 = { 0x8D, 0x83 };//lea eax, X
-        private static readonly byte[] X86FeatureBytes2 = { 0x89, 0x44, 0x24, 0x04, 0x8D, 0x83 };//mov [esp+4], eax and lea eax, X
+        //默认编译器
+        /*
+         * LDR R1, [R1,R2]
+         * ADD R0, R12, R2
+         * ADD R2, R3, R2
+         */
+        private static readonly byte[] ARMFeatureBytesv21 = { 0x02, 0x10, 0x91, 0xE7, 0x02, 0x00, 0x8C, 0xE0, 0x02, 0x20, 0x83, 0xE0 };
+        /*
+         * LDR R1, [PC,R1]
+         * ADD R0, PC, R0
+         * ADD R2, PC, R2
+         */
+        private static readonly byte[] ARMFeatureBytesv24 = { 0x01, 0x10, 0x9F, 0xE7, 0x00, 0x00, 0x8F, 0xE0, 0x02, 0x20, 0x8F, 0xE0 };
+        //TODO
+        private static readonly byte[] X86FeatureBytesv21 = { 0x02, 0x10, 0x91, 0xE7, 0x02, 0x00, 0x8C, 0xE0, 0x02, 0x20, 0x83, 0xE0 };
+        //TODO
+        private static readonly byte[] X86FeatureBytesv24 = { 0x01, 0x10, 0x9F, 0xE7, 0x00, 0x00, 0x8F, 0xE0, 0x02, 0x20, 0x8F, 0xE0 };
 
         public Elf(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
@@ -99,63 +113,54 @@ namespace Il2CppDumper
         public override bool Search()
         {
             var _GLOBAL_OFFSET_TABLE_ = dynamic_table.First(x => x.d_tag == DT_PLTGOT).d_un;
-            uint initOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_INIT_ARRAY).d_un);
-            var initSize = dynamic_table.First(x => x.d_tag == DT_INIT_ARRAYSZ).d_un;
-            var addrs = ReadClassArray<uint>(initOffset, initSize / 4u);
-            foreach (var i in addrs)
+            var execs = program_table.Where(x => x.p_type == 1u && (x.p_flags & 1) == 1).ToArray();
+            var resultList = new List<int>();
+            byte[] featureBytes = null;
+            if (version < 24f)
             {
-                if (i > 0)
+                featureBytes = elf_header.e_machine == 40 ? ARMFeatureBytesv21 : X86FeatureBytesv21;
+            }
+            else if (version >= 24f)
+            {
+                featureBytes = elf_header.e_machine == 40 ? ARMFeatureBytesv24 : X86FeatureBytesv24;
+            }
+            foreach (var exec in execs)
+            {
+                Position = exec.p_offset;
+                var buff = ReadBytes((int)exec.p_filesz);
+                resultList.AddRange(buff.IndicesOf(featureBytes));
+            }
+            if (resultList.Count == 1)
+            {
+                uint codeRegistration = 0;
+                uint metadataRegistration = 0;
+                if (version < 24f)
                 {
-                    Position = i;
-                    if (elf_header.e_machine == 0x28) //ARM
+                    if (elf_header.e_machine == 40)
                     {
-                        var buff = ReadBytes(12);
-                        if (ARMFeatureBytes.SequenceEqual(buff))
-                        {
-                            Position = i + 0x2c;
-                            var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                            Position = subaddr + 0x28;
-                            var codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                            Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                            Position = subaddr + 0x2C;
-                            var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                            Position = MapVATR(ptr);
-                            var metadataRegistration = ReadUInt32();
-                            Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                            Init(codeRegistration, metadataRegistration);
-                            return true;
-                        }
-                    }
-                    else if (elf_header.e_machine == 0x3) //x86
-                    {
-                        Position = i + 22;
-                        var buff = ReadBytes(2);
-                        if (X86FeatureBytes1.SequenceEqual(buff))
-                        {
-                            Position = i + 28;
-                            buff = ReadBytes(6);
-                            if (X86FeatureBytes2.SequenceEqual(buff))
-                            {
-                                Position = i + 0x18;
-                                var subaddr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                Position = subaddr + 0x2C;
-                                var codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                                Position = subaddr + 0x20;
-                                var temp = ReadUInt16();
-                                var metadataRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
-                                if (temp == 0x838B)//mov
-                                {
-                                    Position = MapVATR(metadataRegistration);
-                                    metadataRegistration = ReadUInt32();
-                                }
-                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                                Init(codeRegistration, metadataRegistration);
-                                return true;
-                            }
-                        }
+                        var result = (uint)resultList[0];
+                        Position = result + 0x14;
+                        codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                        Position = result + 0x18;
+                        var ptr = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
+                        Position = MapVATR(ptr);
+                        metadataRegistration = ReadUInt32();
                     }
                 }
+                else if (version >= 24f)
+                {
+                    if (elf_header.e_machine == 40)
+                    {
+                        var result = (uint)resultList[0];
+                        Position = result + 0x14;
+                        codeRegistration = ReadUInt32() + result + 0xcu;
+                        Position = result + 0x10;
+                        var ptr = ReadUInt32() + result + 0x8;
+                        Position = MapVATR(ptr);
+                        metadataRegistration = ReadUInt32();
+                    }
+                }
+                return AutoInit(codeRegistration, metadataRegistration);
             }
             return false;
         }

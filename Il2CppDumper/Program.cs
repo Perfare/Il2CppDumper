@@ -16,6 +16,7 @@ namespace Il2CppDumper
         private static Il2Cpp il2cpp;
         private static Config config = new JavaScriptSerializer().Deserialize<Config>(File.ReadAllText(Application.StartupPath + Path.DirectorySeparatorChar + @"config.json"));
         private static Dictionary<Il2CppMethodDefinition, string> methodModifiers = new Dictionary<Il2CppMethodDefinition, string>();
+        private static Dictionary<Il2CppTypeDefinition, int> typeDefImageIndices = new Dictionary<Il2CppTypeDefinition, int>();
 
         static void ShowHelp(string programName)
         {
@@ -258,14 +259,16 @@ namespace Il2CppDumper
                 writer.Write($"// Image {imageIndex}: {metadata.GetStringFromIndex(imageDef.nameIndex)} - {imageDef.typeStart}\n");
             }
             //dump type
-            foreach (var imageDef in metadata.imageDefs)
+            for (var imageIndex = 0; imageIndex < metadata.imageDefs.Length; imageIndex++)
             {
                 try
                 {
+                    var imageDef = metadata.imageDefs[imageIndex];
                     var typeEnd = imageDef.typeStart + imageDef.typeCount;
                     for (int idx = imageDef.typeStart; idx < typeEnd; idx++)
                     {
                         var typeDef = metadata.typeDefs[idx];
+                        typeDefImageIndices.Add(typeDef, imageIndex);
                         var isStruct = false;
                         var isEnum = false;
                         var extends = new List<string>();
@@ -519,15 +522,7 @@ namespace Il2CppDumper
                                 writer.Write(string.Join(", ", parameterStrs));
                                 if (config.DumpMethodOffset)
                                 {
-                                    ulong methodPointer;
-                                    if (methodDef.methodIndex >= 0)
-                                    {
-                                        methodPointer = il2cpp.methodPointers[methodDef.methodIndex];
-                                    }
-                                    else
-                                    {
-                                        il2cpp.genericMethoddDictionary.TryGetValue(i, out methodPointer);
-                                    }
+                                    var methodPointer = il2cpp.GetMethodPointer(methodDef.methodIndex, i, imageIndex, methodDef.token);
                                     if (methodPointer > 0)
                                     {
                                         writer.Write("); // RVA: 0x{0:X} Offset: 0x{1:X}\n", methodPointer, il2cpp.MapVATR(methodPointer));
@@ -581,19 +576,13 @@ namespace Il2CppDumper
                 foreach (var i in metadata.metadataUsageDic[3]) //kIl2CppMetadataUsageMethodDef
                 {
                     var methodDef = metadata.methodDefs[i.Key];
-                    var typeName = GetTypeName(metadata.typeDefs[methodDef.declaringType]);
+                    var typeDef = metadata.typeDefs[methodDef.declaringType];
+                    var typeName = GetTypeName(typeDef);
                     var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex) + "()";
                     var legalName = "Method$" + HandleSpecialCharacters(methodName);
                     scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
-                    ulong methodPointer;
-                    if (methodDef.methodIndex >= 0)
-                    {
-                        methodPointer = il2cpp.methodPointers[methodDef.methodIndex];
-                    }
-                    else
-                    {
-                        il2cpp.genericMethoddDictionary.TryGetValue((int)i.Key, out methodPointer);
-                    }
+                    var imageIndex = typeDefImageIndices[typeDef];
+                    var methodPointer = il2cpp.GetMethodPointer(methodDef.methodIndex, (int)i.Key, imageIndex, methodDef.token);
                     scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'0x{methodPointer:X}')");
                 }
                 foreach (var i in metadata.metadataUsageDic[4]) //kIl2CppMetadataUsageFieldInfo
@@ -615,19 +604,13 @@ namespace Il2CppDumper
                 {
                     var methodSpec = il2cpp.methodSpecs[i.Value];
                     var methodDef = metadata.methodDefs[methodSpec.methodDefinitionIndex];
-                    var typeName = GetTypeName(metadata.typeDefs[methodDef.declaringType]);
+                    var typeDef = metadata.typeDefs[methodDef.declaringType];
+                    var typeName = GetTypeName(typeDef);
                     var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex) + "()";
                     var legalName = "Method$" + HandleSpecialCharacters(methodName);
                     scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
-                    ulong methodPointer;
-                    if (methodDef.methodIndex >= 0)
-                    {
-                        methodPointer = il2cpp.methodPointers[methodDef.methodIndex];
-                    }
-                    else
-                    {
-                        il2cpp.genericMethoddDictionary.TryGetValue(methodSpec.methodDefinitionIndex, out methodPointer);
-                    }
+                    var imageIndex = typeDefImageIndices[typeDef];
+                    var methodPointer = il2cpp.GetMethodPointer(methodDef.methodIndex, methodSpec.methodDefinitionIndex, imageIndex, methodDef.token);
                     scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'0x{methodPointer:X}')");
                 }
                 scriptwriter.WriteLine("print('Set MetadataUsage done')");
@@ -635,7 +618,19 @@ namespace Il2CppDumper
             //Script - MakeFunction
             if (config.MakeFunction)
             {
-                var orderedPointers = il2cpp.methodPointers.ToList();
+                List<ulong> orderedPointers;
+                if (il2cpp.version >= 24.2f)
+                {
+                    orderedPointers = new List<ulong>();
+                    foreach (var methodPointers in il2cpp.codeGenModuleMethodPointers)
+                    {
+                        orderedPointers.AddRange(methodPointers);
+                    }
+                }
+                else
+                {
+                    orderedPointers = il2cpp.methodPointers.ToList();
+                }
                 orderedPointers.AddRange(il2cpp.genericMethodPointers.Where(x => x > 0));
                 orderedPointers.AddRange(il2cpp.invokerPointers);
                 orderedPointers.AddRange(il2cpp.customAttributeGenerators);

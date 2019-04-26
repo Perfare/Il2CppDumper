@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BoyerMooreHorspool.cs" />
     <Compile Include="Lz4DecoderStream.cs" />
     <Compile Include="NSO.cs" />
     <Compile Include="NSOClass.cs" />

@@ -19,9 +19,11 @@ namespace Il2CppDumper
         public ulong[] metadataUsages;
         private Il2CppGenericMethodFunctionsDefinitions[] genericMethodTable;
         public Il2CppMethodSpec[] methodSpecs;
-        public Dictionary<int, ulong> genericMethoddDictionary;
+        private Dictionary<int, ulong> genericMethoddDictionary;
         private bool isNew21;
         protected long maxMetadataUsages;
+        private Il2CppCodeGenModule[] codeGenModules;
+        public ulong[][] codeGenModuleMethodPointers;
 
         public abstract dynamic MapVATR(dynamic uiAddr);
 
@@ -50,70 +52,106 @@ namespace Il2CppDumper
 
         public virtual void Init(ulong codeRegistration, ulong metadataRegistration)
         {
+            pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
+            pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
             if (is32Bit)
             {
-                pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
-                pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
-                methodPointers = Array.ConvertAll(MapVATR<uint>(pCodeRegistration.methodPointers, (long)pCodeRegistration.methodPointersCount), x => (ulong)x);
                 genericMethodPointers = Array.ConvertAll(MapVATR<uint>(pCodeRegistration.genericMethodPointers, (long)pCodeRegistration.genericMethodPointersCount), x => (ulong)x);
                 invokerPointers = Array.ConvertAll(MapVATR<uint>(pCodeRegistration.invokerPointers, (long)pCodeRegistration.invokerPointersCount), x => (ulong)x);
                 customAttributeGenerators = Array.ConvertAll(MapVATR<uint>(pCodeRegistration.customAttributeGenerators, pCodeRegistration.customAttributeCount), x => (ulong)x);
                 fieldOffsets = Array.ConvertAll(MapVATR<int>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount), x => (long)x);
-                //TODO 在21版本中存在两种FieldOffset，通过判断前5个数值是否为0确认是指针还是int
+                //在21版本中存在两种FieldOffset，通过判断前5个数值是否为0确认是指针还是int
                 isNew21 = version > 21 || (version == 21 && fieldOffsets.ToList().FindIndex(x => x > 0) == 5);
-                var ptypes = MapVATR<uint>(pMetadataRegistration.types, pMetadataRegistration.typesCount);
+                var pTypes = MapVATR<uint>(pMetadataRegistration.types, pMetadataRegistration.typesCount);
                 types = new Il2CppType[pMetadataRegistration.typesCount];
                 for (var i = 0; i < pMetadataRegistration.typesCount; ++i)
                 {
-                    types[i] = MapVATR<Il2CppType>(ptypes[i]);
+                    types[i] = MapVATR<Il2CppType>(pTypes[i]);
                     types[i].Init();
-                    typesdic.Add(ptypes[i], types[i]);
+                    typesdic.Add(pTypes[i], types[i]);
                 }
                 if (version > 16)
-                    metadataUsages = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.metadataUsages, maxMetadataUsages), x => (ulong)x);
-                //处理泛型
-                genericMethodTable = MapVATR<Il2CppGenericMethodFunctionsDefinitions>(pMetadataRegistration.genericMethodTable, pMetadataRegistration.genericMethodTableCount);
-                methodSpecs = MapVATR<Il2CppMethodSpec>(pMetadataRegistration.methodSpecs, pMetadataRegistration.methodSpecsCount);
-                genericMethoddDictionary = new Dictionary<int, ulong>(genericMethodTable.Length);
-                foreach (var table in genericMethodTable)
                 {
-                    var index = methodSpecs[table.genericMethodIndex].methodDefinitionIndex;
-                    if (!genericMethoddDictionary.ContainsKey(index))
-                        genericMethoddDictionary.Add(index, genericMethodPointers[table.indices.methodIndex]);
+                    metadataUsages = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.metadataUsages, maxMetadataUsages), x => (ulong)x);
+                }
+                if (version >= 24.2f)
+                {
+                    var pCodeGenModules = MapVATR<uint>(pCodeRegistration.codeGenModules, (long)pCodeRegistration.codeGenModulesCount);
+                    codeGenModules = new Il2CppCodeGenModule[pCodeGenModules.Length];
+                    codeGenModuleMethodPointers = new ulong[pCodeGenModules.Length][];
+                    for (int i = 0; i < pCodeGenModules.Length; i++)
+                    {
+                        var codeGenModule = MapVATR<Il2CppCodeGenModule>(pCodeGenModules[i]);
+                        try
+                        {
+                            var ptrs = Array.ConvertAll(MapVATR<uint>(codeGenModule.methodPointers, (long)codeGenModule.methodPointerCount), x => (ulong)x);
+                            codeGenModuleMethodPointers[i] = ptrs;
+                        }
+                        catch
+                        {
+                            //当整个DLL只有泛型函数时就有可能出现这种情况
+                            Console.WriteLine($"WARNING: Unable to get function pointers for {ReadStringToNull(MapVATR(codeGenModule.moduleName))}");
+                            codeGenModuleMethodPointers[i] = new ulong[codeGenModule.methodPointerCount];
+                        }
+                        codeGenModules[i] = codeGenModule;
+                    }
+
+                }
+                else
+                {
+                    methodPointers = Array.ConvertAll(MapVATR<uint>(pCodeRegistration.methodPointers, (long)pCodeRegistration.methodPointersCount), x => (ulong)x);
                 }
             }
             else
             {
-                pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
-                pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
-                methodPointers = MapVATR<ulong>(pCodeRegistration.methodPointers, (long)pCodeRegistration.methodPointersCount);
                 genericMethodPointers = MapVATR<ulong>(pCodeRegistration.genericMethodPointers, (long)pCodeRegistration.genericMethodPointersCount);
                 invokerPointers = MapVATR<ulong>(pCodeRegistration.invokerPointers, (long)pCodeRegistration.invokerPointersCount);
                 customAttributeGenerators = MapVATR<ulong>(pCodeRegistration.customAttributeGenerators, pCodeRegistration.customAttributeCount);
                 fieldOffsets = MapVATR<long>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount);
-                //TODO 在21版本中存在两种FieldOffset，通过判断前5个数值是否为0确认是指针还是int
+                //在21版本中存在两种FieldOffset，通过判断前5个数值是否为0确认是指针还是int
                 isNew21 = version > 21 || (version == 21 && fieldOffsets.ToList().FindIndex(x => x > 0) == 5);
                 if (!isNew21)
                     fieldOffsets = Array.ConvertAll(MapVATR<int>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount), x => (long)x);
-                var ptypes = MapVATR<ulong>(pMetadataRegistration.types, pMetadataRegistration.typesCount);
+                var pTypes = MapVATR<ulong>(pMetadataRegistration.types, pMetadataRegistration.typesCount);
                 types = new Il2CppType[pMetadataRegistration.typesCount];
                 for (var i = 0; i < pMetadataRegistration.typesCount; ++i)
                 {
-                    types[i] = MapVATR<Il2CppType>(ptypes[i]);
+                    types[i] = MapVATR<Il2CppType>(pTypes[i]);
                     types[i].Init();
-                    typesdic.Add(ptypes[i], types[i]);
+                    typesdic.Add(pTypes[i], types[i]);
                 }
                 if (version > 16)
-                    metadataUsages = MapVATR<ulong>(pMetadataRegistration.metadataUsages, maxMetadataUsages);
-                //处理泛型
-                genericMethodTable = MapVATR<Il2CppGenericMethodFunctionsDefinitions>(pMetadataRegistration.genericMethodTable, pMetadataRegistration.genericMethodTableCount);
-                methodSpecs = MapVATR<Il2CppMethodSpec>(pMetadataRegistration.methodSpecs, pMetadataRegistration.methodSpecsCount);
-                genericMethoddDictionary = new Dictionary<int, ulong>(genericMethodTable.Length);
-                foreach (var table in genericMethodTable)
                 {
-                    var index = methodSpecs[table.genericMethodIndex].methodDefinitionIndex;
-                    if (!genericMethoddDictionary.ContainsKey(index))
-                        genericMethoddDictionary.Add(index, genericMethodPointers[table.indices.methodIndex]);
+                    metadataUsages = MapVATR<ulong>(pMetadataRegistration.metadataUsages, maxMetadataUsages);
+                }
+                if (version >= 24.2f)
+                {
+                    var pCodeGenModules = MapVATR<ulong>(pCodeRegistration.codeGenModules, (long)pCodeRegistration.codeGenModulesCount);
+                    codeGenModules = new Il2CppCodeGenModule[pCodeGenModules.Length];
+                    codeGenModuleMethodPointers = new ulong[pCodeGenModules.Length][];
+                    for (int i = 0; i < pCodeGenModules.Length; i++)
+                    {
+                        var codeGenModule = MapVATR<Il2CppCodeGenModule>(pCodeGenModules[i]);
+                        var ptrs = MapVATR<ulong>(codeGenModule.methodPointers, (long)codeGenModule.methodPointerCount);
+                        codeGenModules[i] = codeGenModule;
+                        codeGenModuleMethodPointers[i] = ptrs;
+                    }
+                }
+                else
+                {
+                    methodPointers = MapVATR<ulong>(pCodeRegistration.methodPointers, (long)pCodeRegistration.methodPointersCount);
+                }
+            }
+            //处理泛型
+            genericMethodTable = MapVATR<Il2CppGenericMethodFunctionsDefinitions>(pMetadataRegistration.genericMethodTable, pMetadataRegistration.genericMethodTableCount);
+            methodSpecs = MapVATR<Il2CppMethodSpec>(pMetadataRegistration.methodSpecs, pMetadataRegistration.methodSpecsCount);
+            genericMethoddDictionary = new Dictionary<int, ulong>(genericMethodTable.Length);
+            foreach (var table in genericMethodTable)
+            {
+                var index = methodSpecs[table.genericMethodIndex].methodDefinitionIndex;
+                if (!genericMethoddDictionary.ContainsKey(index))
+                {
+                    genericMethoddDictionary.Add(index, genericMethodPointers[table.indices.methodIndex]);
                 }
             }
         }
@@ -162,6 +200,32 @@ namespace Il2CppDumper
             if (is32Bit)
                 return Array.ConvertAll(MapVATR<uint>(pointer, count), x => (ulong)x);
             return MapVATR<ulong>(pointer, count);
+        }
+
+        public ulong GetMethodPointer(int methodIndex, int methodDefinitionIndex, int imageIndex, uint methodToken)
+        {
+            if (version >= 24.2f)
+            {
+                if (genericMethoddDictionary.TryGetValue(methodDefinitionIndex, out var methodPointer))
+                {
+                    return methodPointer;
+                }
+                else
+                {
+                    var ptrs = codeGenModuleMethodPointers[imageIndex];
+                    var methodPointerIndex = methodToken & 0x00FFFFFFu;
+                    return ptrs[methodPointerIndex - 1];
+                }
+            }
+            else
+            {
+                if (methodIndex >= 0)
+                {
+                    return methodPointers[methodIndex];
+                }
+                genericMethoddDictionary.TryGetValue(methodDefinitionIndex, out var methodPointer);
+                return methodPointer;
+            }
         }
     }
 }

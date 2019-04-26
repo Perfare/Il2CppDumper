@@ -132,7 +132,9 @@ namespace Il2CppDumper
         public int parentIndex;
         public int elementTypeIndex; // we can probably remove this one. Only used for enums
 
+        [Version(Max = 24.1f)]
         public int rgctxStartIndex;
+        [Version(Max = 24.1f)]
         public int rgctxCount;
 
         public int genericContainerIndex;
@@ -188,10 +190,15 @@ namespace Il2CppDumper
         [Version(Max = 24)]
         public int customAttributeIndex;
         public int genericContainerIndex;
+        [Version(Max = 24.1f)]
         public int methodIndex;
+        [Version(Max = 24.1f)]
         public int invokerIndex;
+        [Version(Max = 24.1f)]
         public int delegateWrapperIndex;
+        [Version(Max = 24.1f)]
         public int rgctxStartIndex;
+        [Version(Max = 24.1f)]
         public int rgctxCount;
         public uint token;
         public ushort flags;

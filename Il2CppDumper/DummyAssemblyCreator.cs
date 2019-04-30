@@ -279,38 +279,41 @@ namespace Il2CppDumper
             if (il2cpp.version > 20)
             {
                 var engine = Assemblies.Find(x => x.MainModule.Types.Any(t => t.Namespace == "UnityEngine" && t.Name == "SerializeField"));
-                var serializeField = engine.MainModule.Types.First(x => x.Name == "SerializeField").Methods.First();
-                foreach (var imageDef in metadata.imageDefs)
+                if (engine != null)
                 {
-                    var typeEnd = imageDef.typeStart + imageDef.typeCount;
-                    for (int index = imageDef.typeStart; index < typeEnd; index++)
+                    var serializeField = engine.MainModule.Types.First(x => x.Name == "SerializeField").Methods.First();
+                    foreach (var imageDef in metadata.imageDefs)
                     {
-                        var typeDef = metadata.typeDefs[index];
-                        var typeDefinition = typeDefinitionDic[index];
-                        //field
-                        var fieldEnd = typeDef.fieldStart + typeDef.field_count;
-                        for (var i = typeDef.fieldStart; i < fieldEnd; ++i)
+                        var typeEnd = imageDef.typeStart + imageDef.typeCount;
+                        for (int index = imageDef.typeStart; index < typeEnd; index++)
                         {
-                            var fieldDef = metadata.fieldDefs[i];
-                            var fieldName = metadata.GetStringFromIndex(fieldDef.nameIndex);
-                            var fieldDefinition = typeDefinition.Fields.First(x => x.Name == fieldName);
-                            //fieldAttribute
-                            var attributeIndex = metadata.GetCustomAttributeIndex(imageDef, fieldDef.customAttributeIndex, fieldDef.token);
-                            if (attributeIndex >= 0)
+                            var typeDef = metadata.typeDefs[index];
+                            var typeDefinition = typeDefinitionDic[index];
+                            //field
+                            var fieldEnd = typeDef.fieldStart + typeDef.field_count;
+                            for (var i = typeDef.fieldStart; i < fieldEnd; ++i)
                             {
-                                var attributeTypeRange = metadata.attributeTypeRanges[attributeIndex];
-                                for (int j = 0; j < attributeTypeRange.count; j++)
+                                var fieldDef = metadata.fieldDefs[i];
+                                var fieldName = metadata.GetStringFromIndex(fieldDef.nameIndex);
+                                var fieldDefinition = typeDefinition.Fields.First(x => x.Name == fieldName);
+                                //fieldAttribute
+                                var attributeIndex = metadata.GetCustomAttributeIndex(imageDef, fieldDef.customAttributeIndex, fieldDef.token);
+                                if (attributeIndex >= 0)
                                 {
-                                    var attributeTypeIndex = metadata.attributeTypes[attributeTypeRange.start + j];
-                                    var attributeType = il2cpp.types[attributeTypeIndex];
-                                    if (attributeType.type == Il2CppTypeEnum.IL2CPP_TYPE_CLASS)
+                                    var attributeTypeRange = metadata.attributeTypeRanges[attributeIndex];
+                                    for (int j = 0; j < attributeTypeRange.count; j++)
                                     {
-                                        var klass = metadata.typeDefs[attributeType.data.klassIndex];
-                                        var attributeName = metadata.GetStringFromIndex(klass.nameIndex);
-                                        if (attributeName == "SerializeField")
+                                        var attributeTypeIndex = metadata.attributeTypes[attributeTypeRange.start + j];
+                                        var attributeType = il2cpp.types[attributeTypeIndex];
+                                        if (attributeType.type == Il2CppTypeEnum.IL2CPP_TYPE_CLASS)
                                         {
-                                            var customAttribute = new CustomAttribute(typeDefinition.Module.Import(serializeField));
-                                            fieldDefinition.CustomAttributes.Add(customAttribute);
+                                            var klass = metadata.typeDefs[attributeType.data.klassIndex];
+                                            var attributeName = metadata.GetStringFromIndex(klass.nameIndex);
+                                            if (attributeName == "SerializeField")
+                                            {
+                                                var customAttribute = new CustomAttribute(typeDefinition.Module.Import(serializeField));
+                                                fieldDefinition.CustomAttributes.Add(customAttribute);
+                                            }
                                         }
                                     }
                                 }

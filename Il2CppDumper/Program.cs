@@ -106,23 +106,28 @@ namespace Il2CppDumper
             var metadataVersion = BitConverter.ToInt32(metadataBytes, 4);
             if (metadataVersion == 24)
             {
-                Console.WriteLine("Input Unity version (Just enter the first two numbers eg. 5.6, 2017.1): ");
+                Console.WriteLine("Input Unity version (Just enter the first two numbers eg. *.*, ****.*): ");
                 var str = Console.ReadLine();
-                if (string.IsNullOrEmpty(str) || !str.Contains("."))
+                try
+                {
+                    var strs = Array.ConvertAll(str.Split('.'), int.Parse);
+                    var unityVersion = new Version(strs[0], strs[1]);
+                    if (unityVersion >= Unity20191)
+                    {
+                        fixedMetadataVersion = 24.2f;
+                    }
+                    else if (unityVersion >= Unity20183)
+                    {
+                        fixedMetadataVersion = 24.1f;
+                    }
+                    else
+                    {
+                        fixedMetadataVersion = metadataVersion;
+                    }
+                }
+                catch
+                {
                     throw new Exception("You must enter the correct Unity version number");
-                var strs = Array.ConvertAll(str.Split('.'), int.Parse);
-                var unityVersion = new Version(strs[0], strs[1]);
-                if (unityVersion >= Unity20191)
-                {
-                    fixedMetadataVersion = 24.2f;
-                }
-                else if (unityVersion >= Unity20183)
-                {
-                    fixedMetadataVersion = 24.1f;
-                }
-                else
-                {
-                    fixedMetadataVersion = metadataVersion;
                 }
             }
             else

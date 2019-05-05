@@ -577,14 +577,14 @@ namespace Il2CppDumper
                 }
                 foreach (var i in metadata.metadataUsageDic[3]) //kIl2CppMetadataUsageMethodDef
                 {
-                    var methodDef = metadata.methodDefs[i.Key];
+                    var methodDef = metadata.methodDefs[i.Value];
                     var typeDef = metadata.typeDefs[methodDef.declaringType];
                     var typeName = GetTypeName(typeDef);
                     var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex) + "()";
                     var legalName = "Method$" + HandleSpecialCharacters(methodName);
                     scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
                     var imageIndex = typeDefImageIndices[typeDef];
-                    var methodPointer = il2cpp.GetMethodPointer(methodDef.methodIndex, (int)i.Key, imageIndex, methodDef.token);
+                    var methodPointer = il2cpp.GetMethodPointer(methodDef.methodIndex, (int)i.Value, imageIndex, methodDef.token);
                     scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'0x{methodPointer:X}')");
                 }
                 foreach (var i in metadata.metadataUsageDic[4]) //kIl2CppMetadataUsageFieldInfo
@@ -709,7 +709,6 @@ namespace Il2CppDumper
                         var generic_class = il2cpp.MapVATR<Il2CppGenericClass>(type.data.generic_class);
                         var typeDef = metadata.typeDefs[generic_class.typeDefinitionIndex];
                         ret = metadata.GetStringFromIndex(typeDef.nameIndex);
-                        var typeNames = new List<string>();
                         var genericInst = il2cpp.MapVATR<Il2CppGenericInst>(generic_class.context.class_inst);
                         ret += GetGenericTypeParams(genericInst);
                         break;
@@ -754,7 +753,7 @@ namespace Il2CppDumper
 
         private static string GetGenericTypeParams(Il2CppGenericInst genericInst)
         {
-            List<string> typeNames = new List<string>();
+            var typeNames = new List<string>();
             var pointers = il2cpp.GetPointers(genericInst.type_argv, (long)genericInst.type_argc);
             for (uint i = 0; i < genericInst.type_argc; ++i)
             {

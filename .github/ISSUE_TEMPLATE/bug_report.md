@@ -1,13 +1,13 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Bug report
 title: ''
 labels: ''
 assignees: ''
 
 ---
 
-Before clicking `Submit new issue`, try the [latest build](https://ci.appveyor.com/project/Perfare/il2cppdumper/branch/master/artifacts)
+Note: if you do not provide all of the following information I will directly ignore and close this issue
 
 - Il2CppDumper version
 

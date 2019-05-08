@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-提交之前, 请先使用[latest build](https://ci.appveyor.com/project/Perfare/il2cppdumper/branch/master/artifacts)版本
+请注意：如果你没有提供以下所有信息我将会直接无视并关闭这个issue
 
 - Il2CppDumper版本
 

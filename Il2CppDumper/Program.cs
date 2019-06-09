@@ -84,8 +84,10 @@ namespace Il2CppDumper
             }
             try
             {
-                Init(il2cppBytes, metadataBytes);
-                Dump();
+                if (Init(il2cppBytes, metadataBytes))
+                {
+                    Dump();
+                }
             }
             catch (Exception e)
             {
@@ -95,7 +97,7 @@ namespace Il2CppDumper
             Console.ReadKey(true);
         }
 
-        private static void Init(byte[] il2cppBytes, byte[] metadataBytes)
+        private static bool Init(byte[] il2cppBytes, byte[] metadataBytes)
         {
             var sanity = BitConverter.ToUInt32(metadataBytes, 0);
             if (sanity != 0xFAB11BAF)
@@ -106,12 +108,12 @@ namespace Il2CppDumper
             var metadataVersion = BitConverter.ToInt32(metadataBytes, 4);
             if (metadataVersion == 24)
             {
-                Console.WriteLine("Input Unity version (Just enter the first two numbers eg. *.*, ****.*): ");
-                var str = Console.ReadLine();
+                Console.WriteLine("Input Unity version: ");
+                var stringVersion = Console.ReadLine();
                 try
                 {
-                    var strs = Array.ConvertAll(str.Split('.'), int.Parse);
-                    var unityVersion = new Version(strs[0], strs[1]);
+                    var versionSplit = Array.ConvertAll(Regex.Replace(stringVersion, @"\D", ".").Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries), int.Parse);
+                    var unityVersion = new Version(versionSplit[0], versionSplit[1]);
                     if (unityVersion >= Unity20191)
                     {
                         fixedMetadataVersion = 24.2f;
@@ -236,7 +238,8 @@ namespace Il2CppDumper
                         flag = il2cpp.SymbolSearch();
                         break;
                     default:
-                        return;
+                        Console.WriteLine("ERROR: You have to choose a mode.");
+                        return false;
                 }
                 if (!flag)
                     throw new Exception();
@@ -245,6 +248,7 @@ namespace Il2CppDumper
             {
                 throw new Exception("ERROR: Can't use this mode to process file, try another mode.");
             }
+            return true;
         }
 
         private static void Dump()

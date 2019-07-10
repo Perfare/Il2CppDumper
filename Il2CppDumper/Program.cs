@@ -108,6 +108,8 @@ namespace Il2CppDumper
             var metadataVersion = BitConverter.ToInt32(metadataBytes, 4);
             if (metadataVersion == 24)
             {
+                // This line needs regular maintenance of word correction.
+                Console.WriteLine("Important versions are mainly divided into the following three:\nAbove 2019.1, above 2017.3 or below.");
                 Console.WriteLine("Input Unity version: ");
                 var stringVersion = Console.ReadLine();
                 try

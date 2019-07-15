@@ -13,8 +13,7 @@ namespace Il2CppDumper
         private Elf32_Dyn[] dynamic_table;
         private Elf32_Sym[] dynamic_symbol_table;
         private Dictionary<string, Elf32_Shdr> sectionWithName = new Dictionary<string, Elf32_Shdr>();
-        private bool isDump;
-        private uint dumpAddr;
+        private bool isDumped;
 
         //默认编译器
         /*
@@ -64,19 +63,22 @@ namespace Il2CppDumper
             if (!GetSectionWithName())
             {
                 Console.WriteLine("Detected this may be a dump file. If not, it must be protected.");
-                isDump = true;
+                isDumped = true;
                 Console.WriteLine("Input dump address:");
-                dumpAddr = Convert.ToUInt32(Console.ReadLine(), 16);
+                var dumpAddr = Convert.ToUInt32(Console.ReadLine(), 16);
                 foreach (var phdr in program_table)
                 {
                     phdr.p_offset = phdr.p_vaddr;
                     phdr.p_filesz = phdr.p_memsz;
+                    phdr.p_vaddr += dumpAddr;
                 }
-                Console.WriteLine("Note that in this state, the Offset of the output is actually RVA.");
             }
             var pt_dynamic = program_table.First(x => x.p_type == 2u);
             dynamic_table = ReadClassArray<Elf32_Dyn>(pt_dynamic.p_offset, pt_dynamic.p_filesz / 8u);
-            RelocationProcessing();
+            if (!isDumped)
+            {
+                RelocationProcessing();
+            }
         }
 
         private bool GetSectionWithName()
@@ -101,11 +103,6 @@ namespace Il2CppDumper
 
         public override dynamic MapVATR(dynamic uiAddr)
         {
-            if (isDump && uiAddr > dumpAddr)
-            {
-                uiAddr -= dumpAddr;
-                return uiAddr;
-            }
             var program_header_table = program_table.First(x => uiAddr >= x.p_vaddr && uiAddr <= (x.p_vaddr + x.p_memsz));
             return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
         }
@@ -167,7 +164,7 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
-            if (!isDump && (!sectionWithName.ContainsKey(".data.rel.ro") || !sectionWithName.ContainsKey(".text") || !sectionWithName.ContainsKey(".bss")))
+            if (!isDumped && (!sectionWithName.ContainsKey(".data.rel.ro") || !sectionWithName.ContainsKey(".text") || !sectionWithName.ContainsKey(".bss")))
             {
                 Console.WriteLine("ERROR: This file has been protected.");
             }
@@ -198,24 +195,9 @@ namespace Il2CppDumper
             var exec = execList.ToArray();
             plusSearch.SetSearch(data);
             plusSearch.SetPointerRangeFirst(data);
-            if (isDump)
-            {
-                plusSearch.SetPointerRangeSecond(dumpAddr, exec);
-            }
-            else
-            {
-                plusSearch.SetPointerRangeSecond(exec);
-            }
+            plusSearch.SetPointerRangeSecond(exec);
             var codeRegistration = plusSearch.FindCodeRegistration();
-            if (isDump)
-            {
-                plusSearch.SetPointerRangeSecond(dumpAddr, data);
-            }
-            else
-            {
-                plusSearch.SetPointerRangeSecond(data);
-            }
-
+            plusSearch.SetPointerRangeSecond(data);
             var metadataRegistration = plusSearch.FindMetadataRegistration();
             return AutoInit(codeRegistration, metadataRegistration);
         }

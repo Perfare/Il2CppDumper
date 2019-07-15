@@ -13,6 +13,7 @@ namespace Il2CppDumper
         private Elf64_Dyn[] dynamic_table;
         private Elf64_Sym[] dynamic_symbol_table;
         private Dictionary<string, Elf64_Shdr> sectionWithName = new Dictionary<string, Elf64_Shdr>();
+        private bool isDumped;
 
         public Elf64(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
@@ -38,13 +39,28 @@ namespace Il2CppDumper
             elf_header.e_shnum = ReadUInt16();
             elf_header.e_shtrndx = ReadUInt16();
             program_table = ReadClassArray<Elf64_Phdr>(elf_header.e_phoff, elf_header.e_phnum);
-            GetSectionWithName();
+            if (!GetSectionWithName())
+            {
+                Console.WriteLine("Detected this may be a dump file. If not, it must be protected.");
+                isDumped = true;
+                Console.WriteLine("Input dump address:");
+                var dumpAddr = Convert.ToUInt64(Console.ReadLine(), 16);
+                foreach (var phdr in program_table)
+                {
+                    phdr.p_offset = phdr.p_vaddr;
+                    phdr.p_filesz = phdr.p_memsz;
+                    phdr.p_vaddr += dumpAddr;
+                }
+            }
             var pt_dynamic = program_table.First(x => x.p_type == 2u);
             dynamic_table = ReadClassArray<Elf64_Dyn>(pt_dynamic.p_offset, (long)pt_dynamic.p_filesz / 16L);
-            RelocationProcessing();
+            if (!isDumped)
+            {
+                RelocationProcessing();
+            }
         }
 
-        private void GetSectionWithName()
+        private bool GetSectionWithName()
         {
             try
             {
@@ -59,8 +75,9 @@ namespace Il2CppDumper
             }
             catch
             {
-                Console.WriteLine("WARNING: Unable to get section.");
+                return false;
             }
+            return true;
         }
 
         public override dynamic MapVATR(dynamic uiAddr)
@@ -76,6 +93,10 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
+            if (!isDumped && (!sectionWithName.ContainsKey(".data.rel.ro") || !sectionWithName.ContainsKey(".text") || !sectionWithName.ContainsKey(".bss")))
+            {
+                Console.WriteLine("ERROR: This file has been protected.");
+            }
             var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
             var dataList = new List<Elf64_Phdr>();
             var execList = new List<Elf64_Phdr>();

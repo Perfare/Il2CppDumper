@@ -271,23 +271,6 @@ namespace Il2CppDumper
             }
         }
 
-        public void SetPointerRangeSecond(uint dumpAddr, params Elf32_Phdr[] sections)
-        {
-            pointerRange2.Clear();
-            foreach (var section in sections)
-            {
-                if (section != null)
-                {
-                    pointerRange2.Add(new Section
-                    {
-                        start = section.p_vaddr + dumpAddr,
-                        end = section.p_vaddr + dumpAddr + section.p_memsz,
-                        address = section.p_vaddr
-                    });
-                }
-            }
-        }
-
         public void SetPointerRangeSecond(params Elf64_Phdr[] sections)
         {
             pointerRange2.Clear();

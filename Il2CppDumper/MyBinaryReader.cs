@@ -9,7 +9,7 @@ namespace Il2CppDumper
     public class MyBinaryReader : BinaryReader
     {
         public float version;
-        protected bool is32Bit;
+        public bool is32Bit;
         private MethodInfo readClass;
 
 

@@ -85,26 +85,14 @@ namespace Il2CppDumper
                         break;
                 }
             }
-            ulong codeRegistration;
-            ulong metadataRegistration;
             var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
             var data = dataList.ToArray();
             var exec = execList.ToArray();
-            plusSearch.SetSearch(imageBase, data);
-            plusSearch.SetPointerRangeFirst(imageBase, data);
-            plusSearch.SetPointerRangeSecond(imageBase, exec);
-            if (is32Bit)
-            {
-                codeRegistration = plusSearch.FindCodeRegistration();
-                plusSearch.SetPointerRangeSecond(imageBase, data);
-                metadataRegistration = plusSearch.FindMetadataRegistration();
-            }
-            else
-            {
-                codeRegistration = plusSearch.FindCodeRegistration64Bit();
-                plusSearch.SetPointerRangeSecond(imageBase, data);
-                metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
-            }
+            plusSearch.SetSection(SearchSectionType.Exec, imageBase, exec);
+            plusSearch.SetSection(SearchSectionType.Data, imageBase, data);
+            plusSearch.SetSection(SearchSectionType.Bss, imageBase, data);
+            var codeRegistration = plusSearch.FindCodeRegistration();
+            var metadataRegistration = plusSearch.FindMetadataRegistration();
             return AutoInit(codeRegistration, metadataRegistration);
         }
 

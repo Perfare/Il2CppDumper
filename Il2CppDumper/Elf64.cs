@@ -97,7 +97,6 @@ namespace Il2CppDumper
             {
                 Console.WriteLine("ERROR: This file has been protected.");
             }
-            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
             var dataList = new List<Elf64_Phdr>();
             var execList = new List<Elf64_Phdr>();
             foreach (var phdr in program_table.Where(x => x.p_type == 1u))
@@ -122,12 +121,12 @@ namespace Il2CppDumper
             }
             var data = dataList.ToArray();
             var exec = execList.ToArray();
-            plusSearch.SetSearch(data);
-            plusSearch.SetPointerRangeFirst(data);
-            plusSearch.SetPointerRangeSecond(exec);
-            var codeRegistration = plusSearch.FindCodeRegistration64Bit();
-            plusSearch.SetPointerRangeSecond(data);
-            var metadataRegistration = plusSearch.FindMetadataRegistration64Bit();
+            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+            plusSearch.SetSection(SearchSectionType.Exec, exec);
+            plusSearch.SetSection(SearchSectionType.Data, data);
+            plusSearch.SetSection(SearchSectionType.Bss, data);
+            var codeRegistration = plusSearch.FindCodeRegistration();
+            var metadataRegistration = plusSearch.FindMetadataRegistration();
             return AutoInit(codeRegistration, metadataRegistration);
         }
 

@@ -27,7 +27,6 @@ namespace Il2CppDumper
         public ulong[][] codeGenModuleMethodPointers;
 
         public abstract dynamic MapVATR(dynamic uiAddr);
-
         public abstract bool Search();
         public abstract bool PlusSearch(int methodCount, int typeDefinitionsCount);
         public abstract bool SymbolSearch();

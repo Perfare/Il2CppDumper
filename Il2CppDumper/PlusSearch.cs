@@ -1,24 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Il2CppDumper
 {
     public class PlusSearch
     {
-        private class Section
-        {
-            public ulong start;
-            public ulong end;
-            public ulong address;
-        }
-
         private Il2Cpp il2Cpp;
         private int methodCount;
         private int typeDefinitionsCount;
         private long maxMetadataUsages;
-        private List<Section> search = new List<Section>();
-        private List<Section> pointerRange1 = new List<Section>();
-        private List<Section> pointerRange2 = new List<Section>();
+        private List<SearchSection> exec;
+        private List<SearchSection> data;
+        private List<SearchSection> bss;
 
         public PlusSearch(Il2Cpp il2Cpp, int methodCount, int typeDefinitionsCount, long maxMetadataUsages)
         {
@@ -28,306 +22,168 @@ namespace Il2CppDumper
             this.maxMetadataUsages = maxMetadataUsages;
         }
 
-        public void SetSearch(params MachoSection64Bit[] sections)
+        public void SetSection(SearchSectionType type, params Elf32_Phdr[] sections)
         {
+            var secs = new List<SearchSection>();
             foreach (var section in sections)
             {
                 if (section != null)
                 {
-                    search.Add(new Section
+                    secs.Add(new SearchSection
                     {
-                        start = section.offset,
-                        end = section.offset + section.size,
-                        address = section.addr
+                        offset = section.p_offset,
+                        offsetEnd = section.p_offset + section.p_filesz,
+                        address = section.p_vaddr,
+                        addressEnd = section.p_vaddr + section.p_memsz
                     });
                 }
             }
+            SetSection(type, secs);
         }
 
-        public void SetSearch(params MachoSection[] sections)
+        public void SetSection(SearchSectionType type, params Elf64_Phdr[] sections)
         {
+            var secs = new List<SearchSection>();
             foreach (var section in sections)
             {
                 if (section != null)
                 {
-                    search.Add(new Section
+                    secs.Add(new SearchSection
                     {
-                        start = section.offset,
-                        end = section.offset + section.size,
-                        address = section.addr
+                        offset = section.p_offset,
+                        offsetEnd = section.p_offset + section.p_filesz,
+                        address = section.p_vaddr,
+                        addressEnd = section.p_vaddr + section.p_memsz
                     });
                 }
             }
+            SetSection(type, secs);
         }
 
-        public void SetSearch(params Elf32_Phdr[] sections)
+        public void SetSection(SearchSectionType type, params MachoSection[] sections)
         {
+            var secs = new List<SearchSection>();
             foreach (var section in sections)
             {
                 if (section != null)
                 {
-                    search.Add(new Section
+                    secs.Add(new SearchSection
                     {
-                        start = section.p_offset,
-                        end = section.p_offset + section.p_filesz,
-                        address = section.p_vaddr
+                        offset = section.offset,
+                        offsetEnd = section.offset + section.size,
+                        address = section.addr,
+                        addressEnd = section.addr + section.size
                     });
                 }
             }
+            SetSection(type, secs);
         }
 
-        public void SetSearch(params Elf64_Phdr[] sections)
+        public void SetSection(SearchSectionType type, params MachoSection64Bit[] sections)
         {
+            var secs = new List<SearchSection>();
             foreach (var section in sections)
             {
                 if (section != null)
                 {
-                    search.Add(new Section
+                    secs.Add(new SearchSection
                     {
-                        start = section.p_offset,
-                        end = section.p_offset + section.p_filesz,
-                        address = section.p_vaddr
+                        offset = section.offset,
+                        offsetEnd = section.offset + section.size,
+                        address = section.addr,
+                        addressEnd = section.addr + section.size
                     });
                 }
             }
+            SetSection(type, secs);
         }
 
-        public void SetSearch(ulong imageBase, params SectionHeader[] sections)
+        public void SetSection(SearchSectionType type, ulong imageBase, params SectionHeader[] sections)
         {
+            var secs = new List<SearchSection>();
             foreach (var section in sections)
             {
                 if (section != null)
                 {
-                    search.Add(new Section
+                    secs.Add(new SearchSection
                     {
-                        start = section.PointerToRawData,
-                        end = section.PointerToRawData + section.SizeOfRawData,
-                        address = section.VirtualAddress + imageBase
+                        offset = section.PointerToRawData,
+                        offsetEnd = section.PointerToRawData + section.SizeOfRawData,
+                        address = section.VirtualAddress + imageBase,
+                        addressEnd = section.VirtualAddress + section.VirtualSize + imageBase
                     });
                 }
             }
+            SetSection(type, secs);
         }
 
-        public void SetSearch(params NSOSegmentHeader[] sections)
+        public void SetSection(SearchSectionType type, params NSOSegmentHeader[] sections)
         {
+            var secs = new List<SearchSection>();
             foreach (var section in sections)
             {
                 if (section != null)
                 {
-                    search.Add(new Section
+                    secs.Add(new SearchSection
                     {
-                        start = section.FileOffset,
-                        end = section.FileOffset + section.DecompressedSize,
-                        address = section.MemoryOffset
+                        offset = section.FileOffset,
+                        offsetEnd = section.FileOffset + section.DecompressedSize,
+                        address = section.MemoryOffset,
+                        addressEnd = section.MemoryOffset + section.DecompressedSize
                     });
                 }
             }
+            SetSection(type, secs);
         }
 
-        public void SetPointerRangeFirst(params MachoSection64Bit[] sections)
+        private void SetSection(SearchSectionType type, List<SearchSection> secs)
         {
-            foreach (var section in sections)
+            switch (type)
             {
-                if (section != null)
-                {
-                    pointerRange1.Add(new Section
-                    {
-                        start = section.offset,
-                        end = section.offset + section.size,
-                        address = section.addr
-                    });
-                }
-            }
-        }
-
-        public void SetPointerRangeFirst(params MachoSection[] sections)
-        {
-            foreach (var section in sections)
-            {
-                if (section != null)
-                {
-                    pointerRange1.Add(new Section
-                    {
-                        start = section.offset,
-                        end = section.offset + section.size,
-                        address = section.addr
-                    });
-                }
-            }
-        }
-
-        public void SetPointerRangeFirst(params Elf32_Phdr[] sections)
-        {
-            foreach (var section in sections)
-            {
-                if (section != null)
-                {
-                    pointerRange1.Add(new Section
-                    {
-                        start = section.p_offset,
-                        end = section.p_offset + section.p_filesz,
-                        address = section.p_vaddr
-                    });
-                }
-            }
-        }
-
-        public void SetPointerRangeFirst(params Elf64_Phdr[] sections)
-        {
-            foreach (var section in sections)
-            {
-                if (section != null)
-                {
-                    pointerRange1.Add(new Section
-                    {
-                        start = section.p_offset,
-                        end = section.p_offset + section.p_filesz,
-                        address = section.p_vaddr
-                    });
-                }
-            }
-        }
-
-        public void SetPointerRangeFirst(ulong imageBase, params SectionHeader[] sections)
-        {
-            foreach (var section in sections)
-            {
-                if (section != null)
-                {
-                    pointerRange1.Add(new Section
-                    {
-                        start = section.PointerToRawData,
-                        end = section.PointerToRawData + section.SizeOfRawData,
-                        address = section.VirtualAddress + imageBase
-                    });
-                }
-            }
-        }
-
-        public void SetPointerRangeFirst(params NSOSegmentHeader[] sections)
-        {
-            foreach (var section in sections)
-            {
-                if (section != null)
-                {
-                    pointerRange1.Add(new Section
-                    {
-                        start = section.FileOffset,
-                        end = section.FileOffset + section.DecompressedSize,
-                        address = section.MemoryOffset
-                    });
-                }
-            }
-        }
-
-        public void SetPointerRangeSecond(params MachoSection64Bit[] sections)
-        {
-            pointerRange2.Clear();
-            foreach (var section in sections)
-            {
-                if (section != null)
-                {
-                    pointerRange2.Add(new Section
-                    {
-                        start = section.addr,
-                        end = section.addr + section.size,
-                        address = section.addr
-                    });
-                }
-            }
-        }
-
-        public void SetPointerRangeSecond(params MachoSection[] sections)
-        {
-            pointerRange2.Clear();
-            foreach (var section in sections)
-            {
-                if (section != null)
-                {
-                    pointerRange2.Add(new Section
-                    {
-                        start = section.addr,
-                        end = section.addr + section.size,
-                        address = section.addr
-                    });
-                }
-            }
-        }
-
-        public void SetPointerRangeSecond(params Elf32_Phdr[] sections)
-        {
-            pointerRange2.Clear();
-            foreach (var section in sections)
-            {
-                if (section != null)
-                {
-                    pointerRange2.Add(new Section
-                    {
-                        start = section.p_vaddr,
-                        end = section.p_vaddr + section.p_memsz,
-                        address = section.p_vaddr
-                    });
-                }
-            }
-        }
-
-        public void SetPointerRangeSecond(params Elf64_Phdr[] sections)
-        {
-            pointerRange2.Clear();
-            foreach (var section in sections)
-            {
-                if (section != null)
-                {
-                    pointerRange2.Add(new Section
-                    {
-                        start = section.p_vaddr,
-                        end = section.p_vaddr + section.p_memsz,
-                        address = section.p_vaddr
-                    });
-                }
-            }
-        }
-
-        public void SetPointerRangeSecond(ulong imageBase, params SectionHeader[] sections)
-        {
-            pointerRange2.Clear();
-            foreach (var section in sections)
-            {
-                if (section != null)
-                {
-                    pointerRange2.Add(new Section
-                    {
-                        start = section.VirtualAddress,
-                        end = section.VirtualAddress + section.VirtualSize + imageBase,
-                        address = section.VirtualAddress + imageBase
-                    });
-                }
-            }
-        }
-
-        public void SetPointerRangeSecond(params NSOSegmentHeader[] sections)
-        {
-            pointerRange2.Clear();
-            foreach (var section in sections)
-            {
-                if (section != null)
-                {
-                    pointerRange2.Add(new Section
-                    {
-                        start = section.MemoryOffset,
-                        end = section.MemoryOffset + section.DecompressedSize,
-                        address = section.MemoryOffset
-                    });
-                }
+                case SearchSectionType.Exec:
+                    exec = secs;
+                    break;
+                case SearchSectionType.Data:
+                    data = secs;
+                    break;
+                case SearchSectionType.Bss:
+                    bss = secs;
+                    break;
             }
         }
 
         public ulong FindCodeRegistration()
         {
-            foreach (var section in search)
+            if (il2Cpp.is32Bit)
             {
-                il2Cpp.Position = section.start;
-                while ((ulong)il2Cpp.Position < section.end)
+                if (il2Cpp.version >= 24.2)
+                {
+                    return FindCodeRegistration32Bit2019();
+                }
+                return FindCodeRegistration32Bit();
+            }
+            if (il2Cpp.version >= 24.2)
+            {
+                return FindCodeRegistration64Bit2019();
+            }
+            return FindCodeRegistration64Bit();
+        }
+
+        public ulong FindMetadataRegistration()
+        {
+            if (il2Cpp.is32Bit)
+            {
+                return FindMetadataRegistration32Bit();
+            }
+            return FindMetadataRegistration64Bit();
+        }
+
+        private ulong FindCodeRegistration32Bit()
+        {
+            foreach (var section in data)
+            {
+                il2Cpp.Position = section.offset;
+                while ((ulong)il2Cpp.Position < section.offsetEnd)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadUInt32() == methodCount)
@@ -335,12 +191,12 @@ namespace Il2CppDumper
                         try
                         {
                             uint pointer = il2Cpp.MapVATR(il2Cpp.ReadUInt32());
-                            if (CheckPointerRangeFirst(pointer))
+                            if (CheckPointerRangeDataRa(pointer))
                             {
                                 var pointers = il2Cpp.ReadClassArray<uint>(pointer, methodCount);
-                                if (CheckPointerRangeSecond(pointers))
+                                if (CheckPointerRangeExecVa(pointers))
                                 {
-                                    return (ulong)addr - section.start + section.address; //VirtualAddress
+                                    return (ulong)addr - section.offset + section.address;
                                 }
                             }
                         }
@@ -356,12 +212,12 @@ namespace Il2CppDumper
             return 0ul;
         }
 
-        public ulong FindCodeRegistration64Bit()
+        private ulong FindCodeRegistration64Bit()
         {
-            foreach (var section in search)
+            foreach (var section in data)
             {
-                il2Cpp.Position = section.start;
-                while ((ulong)il2Cpp.Position < section.end)
+                il2Cpp.Position = section.offset;
+                while ((ulong)il2Cpp.Position < section.offsetEnd)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadInt64() == methodCount)
@@ -369,12 +225,12 @@ namespace Il2CppDumper
                         try
                         {
                             ulong pointer = il2Cpp.MapVATR(il2Cpp.ReadUInt64());
-                            if (CheckPointerRangeFirst(pointer))
+                            if (CheckPointerRangeDataRa(pointer))
                             {
                                 var pointers = il2Cpp.ReadClassArray<ulong>(pointer, methodCount);
-                                if (CheckPointerRangeSecond(pointers))
+                                if (CheckPointerRangeExecVa(pointers))
                                 {
-                                    return (ulong)addr - section.start + section.address; //VirtualAddress
+                                    return (ulong)addr - section.offset + section.address;
                                 }
                             }
                         }
@@ -390,12 +246,12 @@ namespace Il2CppDumper
             return 0ul;
         }
 
-        public ulong FindMetadataRegistration()
+        private ulong FindMetadataRegistration32Bit()
         {
-            foreach (var section in search)
+            foreach (var section in data)
             {
-                il2Cpp.Position = section.start;
-                while ((ulong)il2Cpp.Position < section.end)
+                il2Cpp.Position = section.offset;
+                while ((ulong)il2Cpp.Position < section.offsetEnd)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadInt32() == typeDefinitionsCount)
@@ -404,12 +260,12 @@ namespace Il2CppDumper
                         {
                             il2Cpp.Position += 8;
                             uint pointer = il2Cpp.MapVATR(il2Cpp.ReadUInt32());
-                            if (CheckPointerRangeFirst(pointer))
+                            if (CheckPointerRangeDataRa(pointer))
                             {
                                 var pointers = il2Cpp.ReadClassArray<uint>(pointer, maxMetadataUsages);
-                                if (CheckPointerRangeSecond(pointers))
+                                if (CheckPointerRangeBssVa(pointers))
                                 {
-                                    return (ulong)addr - 48ul - section.start + section.address; //VirtualAddress
+                                    return (ulong)addr - 48ul - section.offset + section.address;
                                 }
                             }
                         }
@@ -425,12 +281,12 @@ namespace Il2CppDumper
             return 0ul;
         }
 
-        public ulong FindMetadataRegistration64Bit()
+        private ulong FindMetadataRegistration64Bit()
         {
-            foreach (var section in search)
+            foreach (var section in data)
             {
-                il2Cpp.Position = section.start;
-                while ((ulong)il2Cpp.Position < section.end)
+                il2Cpp.Position = section.offset;
+                while ((ulong)il2Cpp.Position < section.offsetEnd)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadInt64() == typeDefinitionsCount)
@@ -439,12 +295,12 @@ namespace Il2CppDumper
                         {
                             il2Cpp.Position += 16;
                             ulong pointer = il2Cpp.MapVATR(il2Cpp.ReadUInt64());
-                            if (CheckPointerRangeFirst(pointer))
+                            if (CheckPointerRangeDataRa(pointer))
                             {
                                 var pointers = il2Cpp.ReadClassArray<ulong>(pointer, maxMetadataUsages);
-                                if (CheckPointerRangeSecond(pointers))
+                                if (CheckPointerRangeBssVa(pointers))
                                 {
-                                    return (ulong)addr - 96ul - section.start + section.address; //VirtualAddress
+                                    return (ulong)addr - 96ul - section.offset + section.address;
                                 }
                             }
                         }
@@ -460,19 +316,139 @@ namespace Il2CppDumper
             return 0ul;
         }
 
-        private bool CheckPointerRangeFirst(ulong pointer)
+        private bool CheckPointerRangeDataRa(ulong pointer)
         {
-            return pointerRange1.Any(x => pointer >= x.start && pointer <= x.end);
+            return data.Any(x => pointer >= x.offset && pointer <= x.offsetEnd);
         }
 
-        private bool CheckPointerRangeSecond(ulong[] pointers)
+        private bool CheckPointerRangeExecVa(ulong[] pointers)
         {
-            return pointers.All(x => pointerRange2.Any(y => x >= y.start && x <= y.end));
+            return pointers.All(x => exec.Any(y => x >= y.address && x <= y.addressEnd));
         }
 
-        private bool CheckPointerRangeSecond(uint[] pointers)
+        private bool CheckPointerRangeExecVa(uint[] pointers)
         {
-            return pointers.All(x => pointerRange2.Any(y => x >= y.start && x <= y.end));
+            return pointers.All(x => exec.Any(y => x >= y.address && x <= y.addressEnd));
+        }
+
+        private bool CheckPointerRangeBssVa(ulong[] pointers)
+        {
+            return pointers.All(x => bss.Any(y => x >= y.address && x <= y.addressEnd));
+        }
+
+        private bool CheckPointerRangeBssVa(uint[] pointers)
+        {
+            return pointers.All(x => bss.Any(y => x >= y.address && x <= y.addressEnd));
+        }
+
+        private static readonly byte[] featureBytes2019 = { 0x6D, 0x73, 0x63, 0x6F, 0x72, 0x6C, 0x69, 0x62, 0x2E, 0x64, 0x6C, 0x6C, 0x00 };
+
+        private ulong FindCodeRegistration32Bit2019()
+        {
+            var secs = il2Cpp is Elf ? exec : data;
+            foreach (var sec in secs)
+            {
+                il2Cpp.Position = sec.offset;
+                var buff = il2Cpp.ReadBytes((int)(sec.offsetEnd - sec.offset));
+                foreach (var index in buff.IndicesOf(featureBytes2019))
+                {
+                    var va = (ulong)index + sec.address;
+                    foreach (var dataSec in data)
+                    {
+                        il2Cpp.Position = dataSec.offset;
+                        while ((ulong)il2Cpp.Position < dataSec.offsetEnd)
+                        {
+                            var offset = il2Cpp.Position;
+                            if (il2Cpp.ReadUInt32() == va)
+                            {
+                                var va2 = (ulong)offset - dataSec.offset + dataSec.address;
+                                foreach (var dataSec2 in data)
+                                {
+                                    il2Cpp.Position = dataSec2.offset;
+                                    while ((ulong)il2Cpp.Position < dataSec2.offsetEnd)
+                                    {
+                                        var offset2 = il2Cpp.Position;
+                                        if (il2Cpp.ReadUInt32() == va2)
+                                        {
+                                            var va3 = (ulong)offset2 - dataSec2.offset + dataSec2.address;
+                                            foreach (var dataSec3 in data)
+                                            {
+                                                il2Cpp.Position = dataSec3.offset;
+                                                while ((ulong)il2Cpp.Position < dataSec3.offsetEnd)
+                                                {
+                                                    var offset3 = il2Cpp.Position;
+                                                    if (il2Cpp.ReadUInt32() == va3)
+                                                    {
+                                                        return (ulong)offset3 - dataSec3.offset + dataSec3.address - 52ul;
+                                                    }
+                                                }
+                                            }
+
+                                        }
+                                        il2Cpp.Position = offset2 + 4;
+                                    }
+                                }
+                            }
+                            il2Cpp.Position = offset + 4;
+                        }
+                    }
+                }
+            }
+            return 0ul;
+        }
+
+        private ulong FindCodeRegistration64Bit2019()
+        {
+            var secs = il2Cpp is Elf64 ? exec : data;
+            foreach (var sec in secs)
+            {
+                il2Cpp.Position = sec.offset;
+                var buff = il2Cpp.ReadBytes((int)(sec.offsetEnd - sec.offset));
+                foreach (var index in buff.IndicesOf(featureBytes2019))
+                {
+                    var va = (ulong)index + sec.address;
+                    foreach (var dataSec in data)
+                    {
+                        il2Cpp.Position = dataSec.offset;
+                        while ((ulong)il2Cpp.Position < dataSec.offsetEnd)
+                        {
+                            var offset = il2Cpp.Position;
+                            if (il2Cpp.ReadUInt64() == va)
+                            {
+                                var va2 = (ulong)offset - dataSec.offset + dataSec.address;
+                                foreach (var dataSec2 in data)
+                                {
+                                    il2Cpp.Position = dataSec2.offset;
+                                    while ((ulong)il2Cpp.Position < dataSec2.offsetEnd)
+                                    {
+                                        var offset2 = il2Cpp.Position;
+                                        if (il2Cpp.ReadUInt64() == va2)
+                                        {
+                                            var va3 = (ulong)offset2 - dataSec2.offset + dataSec2.address;
+                                            foreach (var dataSec3 in data)
+                                            {
+                                                il2Cpp.Position = dataSec3.offset;
+                                                while ((ulong)il2Cpp.Position < dataSec3.offsetEnd)
+                                                {
+                                                    var offset3 = il2Cpp.Position;
+                                                    if (il2Cpp.ReadUInt64() == va3)
+                                                    {
+                                                        return (ulong)offset3 - dataSec3.offset + dataSec3.address - 104ul;
+                                                    }
+                                                }
+                                            }
+
+                                        }
+                                        il2Cpp.Position = offset2 + 8;
+                                    }
+                                }
+                            }
+                            il2Cpp.Position = offset + 8;
+                        }
+                    }
+                }
+            }
+            return 0ul;
         }
     }
 }

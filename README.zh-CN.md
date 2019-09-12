@@ -24,11 +24,10 @@
 #### Auto(Plus) - **优先使用此模式**
 以metadata的数据作为依据，指针特征作为判读条件进行搜索。
 
-支持Metadata版本20~2018.3
+支持Metadata版本20及以后版本
 
 在16版本下只能获取到`CodeRegistration`地址
 
-在2019.1版本下只能获取到`MetadataRegistration`地址
 #### Auto(Symbol)
 目前只支持ELF，使用自带的符号进行处理。
 

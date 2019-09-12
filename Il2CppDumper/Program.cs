@@ -117,7 +117,6 @@ namespace Il2CppDumper
                     if (unityVersion >= Unity20191)
                     {
                         fixedMetadataVersion = 24.2f;
-                        Console.WriteLine("Warning: Auto mode can't work in versions above 2019");
                     }
                     else if (unityVersion >= Unity20183)
                     {

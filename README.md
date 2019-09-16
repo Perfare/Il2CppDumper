@@ -86,3 +86,8 @@ The specified `global-metadata.dat` is invalid and the program cannot recognize 
 Try other extraction modes.
 
 If all automated extraction modes failed with this error and you are sure that the files you supplied are not corrupted/obfuscated, please file an issue with the logs and sample files.
+
+## Tutorial by Cesar
+https://www.unknowncheats.me/forum/general-programming-and-reversing/355005-il2cppdumper-tutorial-finding-coderegistration-metadataregistration.html#post2573336
+
+His git: https://github.com/morelli690/

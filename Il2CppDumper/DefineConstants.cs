@@ -108,6 +108,7 @@ namespace Il2CppDumper
         public const int DT_SYMTAB = 6;
         public const int DT_RELA = 7;
         public const int DT_RELASZ = 8;
+        public const int DT_INIT = 12;
         public const int DT_REL = 17;
         public const int DT_RELSZ = 18;
         public const int DT_INIT_ARRAY = 25;

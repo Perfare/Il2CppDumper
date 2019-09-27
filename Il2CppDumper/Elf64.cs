@@ -57,6 +57,10 @@ namespace Il2CppDumper
             if (!isDumped)
             {
                 RelocationProcessing();
+                if (CheckProtection())
+                {
+                    Console.WriteLine("ERROR: This file is protected.");
+                }
             }
         }
 
@@ -201,6 +205,30 @@ namespace Il2CppDumper
             {
                 // ignored
             }
+        }
+
+        private bool CheckProtection()
+        {
+            //简单的加壳检测，检测是否含有init function或者JNI_OnLoad
+            //.init_proc
+            if (dynamic_table.FirstOrDefault(x => x.d_tag == DT_INIT) != null)
+            {
+                Console.WriteLine("WARNING: find .init_proc");
+                return true;
+            }
+            //JNI_OnLoad
+            ulong dynstrOffset = MapVATR(dynamic_table.First(x => x.d_tag == DT_STRTAB).d_un);
+            foreach (var dynamic_symbol in dynamic_symbol_table)
+            {
+                var name = ReadStringToNull(dynstrOffset + dynamic_symbol.st_name);
+                switch (name)
+                {
+                    case "JNI_OnLoad":
+                        Console.WriteLine("WARNING: find JNI_OnLoad");
+                        return true;
+                }
+            }
+            return false;
         }
     }
 }

@@ -533,8 +533,7 @@ namespace Il2CppDumper
                                     {
                                         writer.Write("); // RVA: 0x{0:X} Offset: 0x{1:X}\n", methodPointer, il2cpp.MapVATR(methodPointer));
                                         //Script - method
-                                        var name = ToEscapedString(HandleSpecialCharacters(typeName + "$$" + methodName));
-                                        scriptwriter.WriteLine($"SetName(0x{methodPointer:X}, '{name}')");
+                                        scriptwriter.WriteLine($"SetName(0x{methodPointer:X}, '{typeName + "$$" + methodName}')");
                                     }
                                     else
                                     {
@@ -567,17 +566,15 @@ namespace Il2CppDumper
                 {
                     var type = il2cpp.types[i.Value];
                     var typeName = GetTypeName(type, true);
-                    var legalName = "Class$" + HandleSpecialCharacters(typeName);
-                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
-                    scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'{typeName}')");
+                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{"Class$" + typeName}')");
+                    scriptwriter.WriteLine($"idc.set_cmt(0x{il2cpp.metadataUsages[i.Key]:X}, r'{typeName}', 1)");
                 }
                 foreach (var i in metadata.metadataUsageDic[2]) //kIl2CppMetadataUsageIl2CppType
                 {
                     var type = il2cpp.types[i.Value];
                     var typeName = GetTypeName(type, true);
-                    var legalName = "Class$" + HandleSpecialCharacters(typeName);
-                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
-                    scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'{typeName}')");
+                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{"Class$" + typeName}')");
+                    scriptwriter.WriteLine($"idc.set_cmt(0x{il2cpp.metadataUsages[i.Key]:X}, r'{typeName}', 1)");
                 }
                 foreach (var i in metadata.metadataUsageDic[3]) //kIl2CppMetadataUsageMethodDef
                 {
@@ -585,11 +582,11 @@ namespace Il2CppDumper
                     var typeDef = metadata.typeDefs[methodDef.declaringType];
                     var typeName = GetTypeName(typeDef);
                     var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex) + "()";
-                    var legalName = "Method$" + HandleSpecialCharacters(methodName);
-                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
+                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}')");
+                    scriptwriter.WriteLine($"idc.set_cmt(0x{il2cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}', 1)");
                     var imageIndex = typeDefImageIndices[typeDef];
                     var methodPointer = il2cpp.GetMethodPointer(methodDef.methodIndex, (int)i.Value, imageIndex, methodDef.token);
-                    scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'0x{methodPointer:X}')");
+                    scriptwriter.WriteLine($"idc.set_cmt(0x{il2cpp.metadataUsages[i.Key]:X}, '0x{methodPointer:X}', 0)");
                 }
                 foreach (var i in metadata.metadataUsageDic[4]) //kIl2CppMetadataUsageFieldInfo
                 {
@@ -598,9 +595,8 @@ namespace Il2CppDumper
                     var typeDef = metadata.typeDefs[type.data.klassIndex];
                     var fieldDef = metadata.fieldDefs[typeDef.fieldStart + fieldRef.fieldIndex];
                     var fieldName = GetTypeName(type, true) + "." + metadata.GetStringFromIndex(fieldDef.nameIndex);
-                    var legalName = "Field$" + HandleSpecialCharacters(fieldName);
-                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
-                    scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'{fieldName}')");
+                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{"Field$" + fieldName}')");
+                    scriptwriter.WriteLine($"idc.set_cmt(0x{il2cpp.metadataUsages[i.Key]:X}, r'{fieldName}', 1)");
                 }
                 foreach (var i in metadata.metadataUsageDic[5]) //kIl2CppMetadataUsageStringLiteral
                 {
@@ -627,11 +623,11 @@ namespace Il2CppDumper
                         methodName += GetGenericTypeParams(methodInst);
                     }
 
-                    var legalName = "Method$" + HandleSpecialCharacters(methodName);
-                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{legalName}')");
+                    scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}')");
+                    scriptwriter.WriteLine($"idc.set_cmt(0x{il2cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}', 1)");
                     var imageIndex = typeDefImageIndices[typeDef];
                     var methodPointer = il2cpp.GetMethodPointer(methodDef.methodIndex, methodSpec.methodDefinitionIndex, imageIndex, methodDef.token);
-                    scriptwriter.WriteLine($"idc.MakeComm(0x{il2cpp.metadataUsages[i.Key]:X}, r'0x{methodPointer:X}')");
+                    scriptwriter.WriteLine($"idc.set_cmt(0x{il2cpp.metadataUsages[i.Key]:X}, '0x{methodPointer:X}', 0)");
                 }
                 scriptwriter.WriteLine("print('Set MetadataUsage done')");
             }
@@ -837,16 +833,6 @@ namespace Il2CppDumper
             if ((methodDef.flags & METHOD_ATTRIBUTE_PINVOKE_IMPL) != 0)
                 str += "extern ";
             methodModifiers.Add(methodDef, str);
-            return str;
-        }
-
-        private static string HandleSpecialCharacters(string str)
-        {
-            str = Regex.Replace(str, @"`\d", "");
-            str = str.Replace("<", "_");
-            str = str.Replace(">", "_");
-            str = str.Replace(",", "_");
-            str = str.Replace("-", "_");
             return str;
         }
 

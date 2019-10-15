@@ -45,9 +45,9 @@ namespace Il2CppDumper {
                 return resourceMan;
             }
         }
-
+        
         /// <summary>
-        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性
         ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
@@ -63,25 +63,23 @@ namespace Il2CppDumper {
         /// <summary>
         ///   查找类似 #encoding: utf-8
         ///import idaapi
-        ///import random
         ///
         ///def SetString(addr, comm):
         ///	global index
         ///	name = &quot;StringLiteral_&quot; + str(index);
-        ///	ret = idc.MakeNameEx(addr, name, SN_NOWARN)
-        ///	idc.MakeComm(addr, comm)
+        ///	ret = idc.set_name(addr, name, SN_NOWARN)
+        ///	idc.set_cmt(addr, comm, 1)
         ///	index += 1
         ///
         ///def SetName(addr, name):
-        ///	i = 0
-        ///	ret = idc.MakeNameEx(addr, name, SN_NOWARN)
+        ///	ret = idc.set_name(addr, name, SN_NOWARN | SN_NOCHECK)
         ///	if ret == 0:
         ///		new_name = name + &apos;_&apos; + str(addr)
-        ///		ret = idc.MakeNameEx(addr, str(new_name), SN_NOWARN)
+        ///		ret = idc.set_name(addr, new_name, SN_NOWARN | SN_NOCHECK)
         ///
         ///def MakeFunction(start, end):
-        ///	if GetFunctionAttr(start, FUNCATTR_START) == 0xFFFFFFFF:
-        ///		idc.MakeF [字符串的其余部分被截断]&quot;; 的本地化字符串。
+        ///	if idc.get_func_attr(start, FUNCATTR_START) == start:
+        ///		ida_funcs.del_func [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         internal static string ida {
             get {

@@ -120,27 +120,24 @@
   <data name="ida" xml:space="preserve">
     <value>#encoding: utf-8
 import idaapi
-import random
 
 def SetString(addr, comm):
 	global index
 	name = "StringLiteral_" + str(index);
-	ret = idc.MakeNameEx(addr, name, SN_NOWARN)
-	idc.MakeComm(addr, comm)
+	ret = idc.set_name(addr, name, SN_NOWARN)
+	idc.set_cmt(addr, comm, 1)
 	index += 1
 
 def SetName(addr, name):
-	i = 0
-	ret = idc.MakeNameEx(addr, name, SN_NOWARN)
+	ret = idc.set_name(addr, name, SN_NOWARN | SN_NOCHECK)
 	if ret == 0:
 		new_name = name + '_' + str(addr)
-		ret = idc.MakeNameEx(addr, str(new_name), SN_NOWARN)
+		ret = idc.set_name(addr, new_name, SN_NOWARN | SN_NOCHECK)
 
 def MakeFunction(start, end):
-	if GetFunctionAttr(start, FUNCATTR_START) == 0xFFFFFFFF:
-		idc.MakeFunction(start, end)
-	else:
-		idc.SetFunctionEnd(start, end)
+	if idc.get_func_attr(start, FUNCATTR_START) == start:
+		ida_funcs.del_func(start)
+	ida_funcs.add_func(start, end)
 
 index = 1
 print('Making method name...')</value>

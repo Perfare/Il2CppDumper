@@ -13,6 +13,8 @@ namespace Il2CppDumper
         public ulong[] genericMethodPointers;
         public ulong[] invokerPointers;
         public ulong[] customAttributeGenerators;
+        public ulong[] reversePInvokeWrappers;
+        public ulong[] unresolvedVirtualCallPointers;
         private long[] fieldOffsets;
         public Il2CppType[] types;
         private Dictionary<ulong, Il2CppType> typesdic = new Dictionary<ulong, Il2CppType>();
@@ -53,12 +55,21 @@ namespace Il2CppDumper
         {
             pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
             pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
+            genericMethodPointers = ReadPointers(pCodeRegistration.genericMethodPointers, pCodeRegistration.genericMethodPointersCount);
+            invokerPointers = ReadPointers(pCodeRegistration.invokerPointers, pCodeRegistration.invokerPointersCount);
+            customAttributeGenerators = ReadPointers(pCodeRegistration.customAttributeGenerators, pCodeRegistration.customAttributeCount);
+            if (version > 16)
+            {
+                metadataUsages = ReadPointers(pMetadataRegistration.metadataUsages, maxMetadataUsages);
+            }
+            if (version >= 22)
+            {
+                reversePInvokeWrappers = ReadPointers(pCodeRegistration.reversePInvokeWrappers, pCodeRegistration.reversePInvokeWrapperCount);
+                unresolvedVirtualCallPointers = ReadPointers(pCodeRegistration.unresolvedVirtualCallPointers, pCodeRegistration.unresolvedVirtualCallCount);
+            }
             if (is32Bit)
             {
                 genericInsts = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.genericInsts, pMetadataRegistration.genericInstsCount), x => MapVATR<Il2CppGenericInst>(x));
-                genericMethodPointers = Array.ConvertAll(MapVATR<uint>(pCodeRegistration.genericMethodPointers, (long)pCodeRegistration.genericMethodPointersCount), x => (ulong)x);
-                invokerPointers = Array.ConvertAll(MapVATR<uint>(pCodeRegistration.invokerPointers, (long)pCodeRegistration.invokerPointersCount), x => (ulong)x);
-                customAttributeGenerators = Array.ConvertAll(MapVATR<uint>(pCodeRegistration.customAttributeGenerators, pCodeRegistration.customAttributeCount), x => (ulong)x);
                 fieldOffsets = Array.ConvertAll(MapVATR<int>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount), x => (long)x);
                 //在21版本中存在两种FieldOffset，通过判断前5个数值是否为0确认是指针还是int
                 isNew21 = version > 21 || (version == 21 && fieldOffsets.ToList().FindIndex(x => x > 0) == 5);
@@ -69,10 +80,6 @@ namespace Il2CppDumper
                     types[i] = MapVATR<Il2CppType>(pTypes[i]);
                     types[i].Init();
                     typesdic.Add(pTypes[i], types[i]);
-                }
-                if (version > 16)
-                {
-                    metadataUsages = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.metadataUsages, maxMetadataUsages), x => (ulong)x);
                 }
                 if (version >= 24.2f)
                 {
@@ -85,8 +92,7 @@ namespace Il2CppDumper
                         codeGenModules[i] = codeGenModule;
                         try
                         {
-                            var ptrs = Array.ConvertAll(MapVATR<uint>(codeGenModule.methodPointers, (long)codeGenModule.methodPointerCount), x => (ulong)x);
-                            codeGenModuleMethodPointers[i] = ptrs;
+                            codeGenModuleMethodPointers[i] = ReadPointers(codeGenModule.methodPointers, codeGenModule.methodPointerCount);
                         }
                         catch
                         {
@@ -95,19 +101,15 @@ namespace Il2CppDumper
                             codeGenModuleMethodPointers[i] = new ulong[codeGenModule.methodPointerCount];
                         }
                     }
-
                 }
                 else
                 {
-                    methodPointers = Array.ConvertAll(MapVATR<uint>(pCodeRegistration.methodPointers, (long)pCodeRegistration.methodPointersCount), x => (ulong)x);
+                    methodPointers = ReadPointers(pCodeRegistration.methodPointers, pCodeRegistration.methodPointersCount);
                 }
             }
             else
             {
                 genericInsts = Array.ConvertAll(MapVATR<ulong>(pMetadataRegistration.genericInsts, pMetadataRegistration.genericInstsCount), x => MapVATR<Il2CppGenericInst>(x));
-                genericMethodPointers = MapVATR<ulong>(pCodeRegistration.genericMethodPointers, (long)pCodeRegistration.genericMethodPointersCount);
-                invokerPointers = MapVATR<ulong>(pCodeRegistration.invokerPointers, (long)pCodeRegistration.invokerPointersCount);
-                customAttributeGenerators = MapVATR<ulong>(pCodeRegistration.customAttributeGenerators, pCodeRegistration.customAttributeCount);
                 fieldOffsets = MapVATR<long>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount);
                 //在21版本中存在两种FieldOffset，通过判断前5个数值是否为0确认是指针还是int
                 isNew21 = version > 21 || (version == 21 && fieldOffsets.ToList().FindIndex(x => x > 0) == 5);
@@ -121,10 +123,6 @@ namespace Il2CppDumper
                     types[i].Init();
                     typesdic.Add(pTypes[i], types[i]);
                 }
-                if (version > 16)
-                {
-                    metadataUsages = MapVATR<ulong>(pMetadataRegistration.metadataUsages, maxMetadataUsages);
-                }
                 if (version >= 24.2f)
                 {
                     var pCodeGenModules = MapVATR<ulong>(pCodeRegistration.codeGenModules, (long)pCodeRegistration.codeGenModulesCount);
@@ -136,8 +134,7 @@ namespace Il2CppDumper
                         codeGenModules[i] = codeGenModule;
                         try
                         {
-                            var ptrs = MapVATR<ulong>(codeGenModule.methodPointers, (long)codeGenModule.methodPointerCount);
-                            codeGenModuleMethodPointers[i] = ptrs;
+                            codeGenModuleMethodPointers[i] = MapVATR<ulong>(codeGenModule.methodPointers, (long)codeGenModule.methodPointerCount);
                         }
                         catch
                         {
@@ -166,6 +163,25 @@ namespace Il2CppDumper
             }
         }
 
+        private ulong[] ReadPointers(ulong addr, dynamic count)
+        {
+            if (is32Bit)
+            {
+                return Array.ConvertAll(MapVATR<uint>(addr, (long)count), x => (ulong)x);
+            }
+            return MapVATR<ulong>(addr, (long)count);
+        }
+
+        public T[] MapVATR<T>(dynamic addr, long count) where T : new()
+        {
+            return ReadClassArray<T>(MapVATR(addr), count);
+        }
+
+        public T MapVATR<T>(dynamic addr) where T : new()
+        {
+            return ReadClass<T>(MapVATR(addr));
+        }
+
         public long GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex)
         {
             if (isNew21)
@@ -188,16 +204,6 @@ namespace Il2CppDumper
                 return 0;
             }
             return fieldOffsets[fieldIndex];
-        }
-
-        public T[] MapVATR<T>(dynamic addr, long count) where T : new()
-        {
-            return ReadClassArray<T>(MapVATR(addr), count);
-        }
-
-        public T MapVATR<T>(dynamic addr) where T : new()
-        {
-            return ReadClass<T>(MapVATR(addr));
         }
 
         public Il2CppType GetIl2CppType(ulong pointer)

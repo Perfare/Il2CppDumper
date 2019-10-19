@@ -647,10 +647,14 @@ namespace Il2CppDumper
                 {
                     orderedPointers = il2cpp.methodPointers.ToList();
                 }
-                orderedPointers.AddRange(il2cpp.genericMethodPointers.Where(x => x > 0));
+                orderedPointers.AddRange(il2cpp.genericMethodPointers);
                 orderedPointers.AddRange(il2cpp.invokerPointers);
                 orderedPointers.AddRange(il2cpp.customAttributeGenerators);
-                orderedPointers = orderedPointers.OrderBy(x => x).ToList();
+                orderedPointers.AddRange(il2cpp.reversePInvokeWrappers);
+                orderedPointers.AddRange(il2cpp.unresolvedVirtualCallPointers);
+                //TODO interopData内也包含函数
+                orderedPointers = orderedPointers.Distinct().OrderBy(x => x).ToList();
+                orderedPointers.Remove(0);
                 scriptwriter.WriteLine("print('Making function...')");
                 for (int i = 0; i < orderedPointers.Count - 1; i++)
                 {

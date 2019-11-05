@@ -61,33 +61,6 @@ namespace Il2CppDumper {
         }
         
         /// <summary>
-        ///   查找类似 #encoding: utf-8
-        ///import idaapi
-        ///
-        ///def SetString(addr, comm):
-        ///	global index
-        ///	name = &quot;StringLiteral_&quot; + str(index);
-        ///	ret = idc.set_name(addr, name, SN_NOWARN)
-        ///	idc.set_cmt(addr, comm, 1)
-        ///	index += 1
-        ///
-        ///def SetName(addr, name):
-        ///	ret = idc.set_name(addr, name, SN_NOWARN | SN_NOCHECK)
-        ///	if ret == 0:
-        ///		new_name = name + &apos;_&apos; + str(addr)
-        ///		ret = idc.set_name(addr, new_name, SN_NOWARN | SN_NOCHECK)
-        ///
-        ///def MakeFunction(start, end):
-        ///	if idc.get_func_attr(start, FUNCATTR_START) == start:
-        ///		ida_funcs.del_func [字符串的其余部分被截断]&quot;; 的本地化字符串。
-        /// </summary>
-        internal static string ida {
-            get {
-                return ResourceManager.GetString("ida", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   查找 System.Byte[] 类型的本地化资源。
         /// </summary>
         internal static byte[] Il2CppDummyDll {

@@ -256,8 +256,7 @@ namespace Il2CppDumper
             var writer = new StreamWriter(new FileStream("dump.cs", FileMode.Create), new UTF8Encoding(false));
             Console.WriteLine("Dumping...");
             //Script
-            var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create), new UTF8Encoding(false));
-            scriptwriter.WriteLine(Resource1.ida);
+            var scriptwriter = CreateScriptWriter();
             //dump image
             for (var imageIndex = 0; imageIndex < metadata.imageDefs.Length; imageIndex++)
             {
@@ -907,6 +906,38 @@ namespace Il2CppDumper
                 }
             }
             return re.ToString();
+        }
+
+        private static StreamWriter CreateScriptWriter()
+        {
+            var writer = new StreamWriter(new FileStream("script.py", FileMode.Create), new UTF8Encoding(false));
+            writer.WriteLine("#encoding: utf-8");
+            writer.WriteLine("import idaapi");
+            writer.WriteLine();
+            writer.WriteLine("def SetString(addr, comm):");
+            writer.WriteLine("\tglobal index");
+            writer.WriteLine("\tname = \"StringLiteral_\" + str(index);");
+            writer.WriteLine("\tret = idc.set_name(addr, name, SN_NOWARN)");
+            writer.WriteLine("\tidc.set_cmt(addr, comm, 1)");
+            writer.WriteLine("\tindex += 1");
+            writer.WriteLine();
+            writer.WriteLine("def SetName(addr, name):");
+            writer.WriteLine("\tret = idc.set_name(addr, name, SN_NOWARN | SN_NOCHECK)");
+            writer.WriteLine("\tif ret == 0:");
+            writer.WriteLine("\t\tnew_name = name + '_' + str(addr)");
+            writer.WriteLine("\t\tret = idc.set_name(addr, new_name, SN_NOWARN | SN_NOCHECK)");
+            writer.WriteLine();
+            writer.WriteLine("def MakeFunction(start, end):");
+            writer.WriteLine("\tnext_func = idc.get_next_func(start)");
+            writer.WriteLine("\tif next_func < end:");
+            writer.WriteLine("\t\tend = next_func");
+            writer.WriteLine("\tif idc.get_func_attr(start, FUNCATTR_START) == start:");
+            writer.WriteLine("\t\tida_funcs.del_func(start)");
+            writer.WriteLine("\tida_funcs.add_func(start, end)");
+            writer.WriteLine();
+            writer.WriteLine("index = 1");
+            writer.WriteLine("print('Making method name...')");
+            return writer;
         }
     }
 }

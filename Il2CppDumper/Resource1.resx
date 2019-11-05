@@ -117,31 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ida" xml:space="preserve">
-    <value>#encoding: utf-8
-import idaapi
-
-def SetString(addr, comm):
-	global index
-	name = "StringLiteral_" + str(index);
-	ret = idc.set_name(addr, name, SN_NOWARN)
-	idc.set_cmt(addr, comm, 1)
-	index += 1
-
-def SetName(addr, name):
-	ret = idc.set_name(addr, name, SN_NOWARN | SN_NOCHECK)
-	if ret == 0:
-		new_name = name + '_' + str(addr)
-		ret = idc.set_name(addr, new_name, SN_NOWARN | SN_NOCHECK)
-
-def MakeFunction(start, end):
-	if idc.get_func_attr(start, FUNCATTR_START) == start:
-		ida_funcs.del_func(start)
-	ida_funcs.add_func(start, end)
-
-index = 1
-print('Making method name...')</value>
-  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="Il2CppDummyDll" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\Il2CppDummyDll.dll;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

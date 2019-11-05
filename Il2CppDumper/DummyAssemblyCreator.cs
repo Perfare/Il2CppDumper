@@ -195,7 +195,8 @@ namespace Il2CppDumper
                         if (methodPointer > 0)
                         {
                             var customAttribute = new CustomAttribute(typeDefinition.Module.Import(addressAttribute));
-                            var rva = new CustomAttributeNamedArgument("RVA", new CustomAttributeArgument(stringType, $"0x{methodPointer:X}"));
+                            var fixedMethodPointer = il2cpp.FixPointer(methodPointer);
+                            var rva = new CustomAttributeNamedArgument("RVA", new CustomAttributeArgument(stringType, $"0x{fixedMethodPointer:X}"));
                             var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{il2cpp.MapVATR(methodPointer):X}"));
                             customAttribute.Fields.Add(rva);
                             customAttribute.Fields.Add(offset);

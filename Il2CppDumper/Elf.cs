@@ -14,6 +14,8 @@ namespace Il2CppDumper
         private Elf32_Sym[] dynamic_symbol_table;
         private Dictionary<string, Elf32_Shdr> sectionWithName = new Dictionary<string, Elf32_Shdr>();
         private bool isDumped;
+        private uint dumpAddr;
+
 
         //默认编译器
         /*
@@ -65,7 +67,7 @@ namespace Il2CppDumper
                 Console.WriteLine("Detected this may be a dump file. If not, it must be protected.");
                 isDumped = true;
                 Console.WriteLine("Input dump address:");
-                var dumpAddr = Convert.ToUInt32(Console.ReadLine(), 16);
+                dumpAddr = Convert.ToUInt32(Console.ReadLine(), 16);
                 foreach (var phdr in program_table)
                 {
                     phdr.p_offset = phdr.p_vaddr;
@@ -168,10 +170,6 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
-            if (!isDumped && (!sectionWithName.ContainsKey(".data.rel.ro") || !sectionWithName.ContainsKey(".text") || !sectionWithName.ContainsKey(".bss")))
-            {
-                Console.WriteLine("ERROR: This file has been protected.");
-            }
             var dataList = new List<Elf32_Phdr>();
             var execList = new List<Elf32_Phdr>();
             foreach (var phdr in program_table.Where(x => x.p_type == 1u))
@@ -278,7 +276,7 @@ namespace Il2CppDumper
         {
             //简单的加壳检测，检测是否含有init function或者JNI_OnLoad
             //.init_proc
-            if (dynamic_table.FirstOrDefault(x=>x.d_tag == DT_INIT) != null)
+            if (dynamic_table.FirstOrDefault(x => x.d_tag == DT_INIT) != null)
             {
                 Console.WriteLine("WARNING: find .init_proc");
                 return true;
@@ -296,6 +294,15 @@ namespace Il2CppDumper
                 }
             }
             return false;
+        }
+
+        public override ulong FixPointer(ulong pointer)
+        {
+            if (isDumped)
+            {
+                return pointer - dumpAddr;
+            }
+            return pointer;
         }
     }
 }

@@ -100,5 +100,10 @@ namespace Il2CppDumper
         {
             return false;
         }
+
+        public override ulong FixPointer(ulong pointer)
+        {
+            return pointer - imageBase;
+        }
     }
 }

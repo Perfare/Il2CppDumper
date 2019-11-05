@@ -531,9 +531,17 @@ namespace Il2CppDumper
                                     var methodPointer = il2cpp.GetMethodPointer(methodDef.methodIndex, i, imageIndex, methodDef.token);
                                     if (methodPointer > 0)
                                     {
-                                        writer.Write("); // RVA: 0x{0:X} Offset: 0x{1:X}\n", methodPointer, il2cpp.MapVATR(methodPointer));
-                                        //Script - method
-                                        scriptwriter.WriteLine($"SetName(0x{methodPointer:X}, '{typeName + "$$" + methodName}')");
+                                        var fixedMethodPointer = il2cpp.FixPointer(methodPointer);
+                                        writer.Write("); // RVA: 0x{0:X} Offset: 0x{1:X}\n", fixedMethodPointer, il2cpp.MapVATR(methodPointer));
+                                        //Script - methodPointer
+                                        if (il2cpp is PE)
+                                        {
+                                            scriptwriter.WriteLine($"SetName(0x{methodPointer:X}, '{typeName + "$$" + methodName}')");
+                                        }
+                                        else
+                                        {
+                                            scriptwriter.WriteLine($"SetName(0x{fixedMethodPointer:X}, '{typeName + "$$" + methodName}')");
+                                        }
                                     }
                                     else
                                     {
@@ -780,7 +788,8 @@ namespace Il2CppDumper
                 {
                     var typeIndex = metadata.attributeTypes[attributeTypeRange.start + i];
                     var methodPointer = il2cpp.customAttributeGenerators[index];
-                    sb.AppendFormat("{0}[{1}] // RVA: 0x{2:X} Offset: 0x{3:X}\n", padding, GetTypeName(il2cpp.types[typeIndex]), methodPointer, il2cpp.MapVATR(methodPointer));
+                    var fixedMethodPointer = il2cpp.FixPointer(methodPointer);
+                    sb.AppendFormat("{0}[{1}] // RVA: 0x{2:X} Offset: 0x{3:X}\n", padding, GetTypeName(il2cpp.types[typeIndex]), fixedMethodPointer, il2cpp.MapVATR(methodPointer));
                 }
                 return sb.ToString();
             }

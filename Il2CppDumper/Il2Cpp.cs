@@ -243,5 +243,10 @@ namespace Il2CppDumper
                 return methodPointer;
             }
         }
+
+        public virtual ulong FixPointer(ulong pointer)
+        {
+            return pointer;
+        }
     }
 }

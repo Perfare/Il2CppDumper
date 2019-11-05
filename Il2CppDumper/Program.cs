@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using System.Web.Script.Serialization;
+using Newtonsoft.Json;
 using static Il2CppDumper.DefineConstants;
 
 namespace Il2CppDumper
@@ -14,7 +14,7 @@ namespace Il2CppDumper
     {
         private static Metadata metadata;
         private static Il2Cpp il2cpp;
-        private static Config config = new JavaScriptSerializer().Deserialize<Config>(File.ReadAllText(Application.StartupPath + Path.DirectorySeparatorChar + @"config.json"));
+        private static Config config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(Application.StartupPath + Path.DirectorySeparatorChar + @"config.json"));
         private static Dictionary<Il2CppMethodDefinition, string> methodModifiers = new Dictionary<Il2CppMethodDefinition, string>();
         private static Dictionary<Il2CppTypeDefinition, int> typeDefImageIndices = new Dictionary<Il2CppTypeDefinition, int>();
 

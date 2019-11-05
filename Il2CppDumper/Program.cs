@@ -606,9 +606,15 @@ namespace Il2CppDumper
                     scriptwriter.WriteLine($"SetName(0x{il2cpp.metadataUsages[i.Key]:X}, '{"Field$" + fieldName}')");
                     scriptwriter.WriteLine($"idc.set_cmt(0x{il2cpp.metadataUsages[i.Key]:X}, r'{fieldName}', 1)");
                 }
-                foreach (var i in metadata.metadataUsageDic[5]) //kIl2CppMetadataUsageStringLiteral
+                var stringLiterals = metadata.metadataUsageDic[5].Select(x => new //kIl2CppMetadataUsageStringLiteral
                 {
-                    scriptwriter.WriteLine($"SetString(0x{il2cpp.metadataUsages[i.Key]:X}, r'{ToEscapedString(metadata.GetStringLiteralFromIndex(i.Value))}')");
+                    value = metadata.GetStringLiteralFromIndex(x.Value),
+                    address = $"0x{il2cpp.metadataUsages[x.Key]:X}"
+                }).ToArray();
+                File.WriteAllText("stringliteral.json", JsonConvert.SerializeObject(stringLiterals, Formatting.Indented), new UTF8Encoding(false));
+                foreach (var stringLiteral in stringLiterals)
+                {
+                    scriptwriter.WriteLine($"SetString({stringLiteral.address}, r'{ToEscapedString(stringLiteral.value)}')");
                 }
                 foreach (var i in metadata.metadataUsageDic[6]) //kIl2CppMetadataUsageMethodRef
                 {

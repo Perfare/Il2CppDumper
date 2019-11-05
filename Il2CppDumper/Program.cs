@@ -658,8 +658,11 @@ namespace Il2CppDumper
                 orderedPointers.AddRange(il2cpp.genericMethodPointers);
                 orderedPointers.AddRange(il2cpp.invokerPointers);
                 orderedPointers.AddRange(il2cpp.customAttributeGenerators);
-                orderedPointers.AddRange(il2cpp.reversePInvokeWrappers);
-                orderedPointers.AddRange(il2cpp.unresolvedVirtualCallPointers);
+                if (il2cpp.version >= 22)
+                {
+                    orderedPointers.AddRange(il2cpp.reversePInvokeWrappers);
+                    orderedPointers.AddRange(il2cpp.unresolvedVirtualCallPointers);
+                }
                 //TODO interopData内也包含函数
                 orderedPointers = orderedPointers.Distinct().OrderBy(x => x).ToList();
                 orderedPointers.Remove(0);
@@ -718,10 +721,10 @@ namespace Il2CppDumper
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
                     {
-                        var generic_class = il2cpp.MapVATR<Il2CppGenericClass>(type.data.generic_class);
-                        var typeDef = metadata.typeDefs[generic_class.typeDefinitionIndex];
+                        var genericClass = il2cpp.MapVATR<Il2CppGenericClass>(type.data.generic_class);
+                        var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
                         ret = metadata.GetStringFromIndex(typeDef.nameIndex);
-                        var genericInst = il2cpp.MapVATR<Il2CppGenericInst>(generic_class.context.class_inst);
+                        var genericInst = il2cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
                         ret += GetGenericTypeParams(genericInst);
                         break;
                     }
@@ -779,15 +782,15 @@ namespace Il2CppDumper
         {
             if (!config.DumpAttribute || il2cpp.version < 21)
                 return string.Empty;
-            var index = metadata.GetCustomAttributeIndex(image, customAttributeIndex, token);
-            if (index >= 0)
+            var attributeIndex = metadata.GetCustomAttributeIndex(image, customAttributeIndex, token);
+            if (attributeIndex >= 0)
             {
-                var attributeTypeRange = metadata.attributeTypeRanges[index];
+                var attributeTypeRange = metadata.attributeTypeRanges[attributeIndex];
                 var sb = new StringBuilder();
                 for (var i = 0; i < attributeTypeRange.count; i++)
                 {
                     var typeIndex = metadata.attributeTypes[attributeTypeRange.start + i];
-                    var methodPointer = il2cpp.customAttributeGenerators[index];
+                    var methodPointer = il2cpp.customAttributeGenerators[attributeIndex];
                     var fixedMethodPointer = il2cpp.FixPointer(methodPointer);
                     sb.AppendFormat("{0}[{1}] // RVA: 0x{2:X} Offset: 0x{3:X}\n", padding, GetTypeName(il2cpp.types[typeIndex]), fixedMethodPointer, il2cpp.MapVATR(methodPointer));
                 }

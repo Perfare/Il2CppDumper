@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BoyerMooreHorspool.cs" />
+    <Compile Include="Il2CppDummyDll.cs" />
     <Compile Include="Lz4DecoderStream.cs" />
     <Compile Include="NSO.cs" />
     <Compile Include="NSOClass.cs" />
@@ -68,11 +69,6 @@
     <Compile Include="PE.cs" />
     <Compile Include="PEClass.cs" />
     <Compile Include="PlusSearch.cs" />
-    <Compile Include="Resource1.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resource1.resx</DependentUpon>
-    </Compile>
     <Compile Include="ArmHelper.cs" />
     <Compile Include="DefineConstants.cs" />
     <Compile Include="ElfClass.cs" />
@@ -89,14 +85,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resource1.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resource1.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
-    <None Include="Resources\Il2CppDummyDll.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

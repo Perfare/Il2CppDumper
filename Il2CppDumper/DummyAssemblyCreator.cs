@@ -25,10 +25,11 @@ namespace Il2CppDumper
             this.metadata = metadata;
             this.il2cpp = il2cpp;
             //Il2CppDummyDll
-            var il2CppDummyDll = AssemblyDefinition.ReadAssembly(new MemoryStream(Resource1.Il2CppDummyDll));
-            var addressAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "AddressAttribute").Methods.First();
-            var fieldOffsetAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "FieldOffsetAttribute").Methods.First();
-            attributeAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "AttributeAttribute").Methods.First();
+            var il2CppDummyDll = Il2CppDummyDll.Create();
+            Assemblies.Add(il2CppDummyDll);
+            var addressAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "AddressAttribute").Methods[0];
+            var fieldOffsetAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "FieldOffsetAttribute").Methods[0];
+            attributeAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "AttributeAttribute").Methods[0];
             stringType = il2CppDummyDll.MainModule.TypeSystem.String;
 
             var resolver = new MyAssemblyResolver();
@@ -37,11 +38,13 @@ namespace Il2CppDumper
                 Kind = ModuleKind.Dll,
                 AssemblyResolver = resolver
             };
+            resolver.Register(il2CppDummyDll);
             //创建程序集，同时创建所有类
             foreach (var imageDef in metadata.imageDefs)
             {
-                var assemblyName = new AssemblyNameDefinition(metadata.GetStringFromIndex(imageDef.nameIndex).Replace(".dll", ""), new Version("3.7.1.6"));
-                var assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, metadata.GetStringFromIndex(imageDef.nameIndex), moduleParameters);
+                var imageName = metadata.GetStringFromIndex(imageDef.nameIndex);
+                var assemblyName = new AssemblyNameDefinition(imageName.Replace(".dll", ""), new Version("3.7.1.6"));
+                var assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, imageName, moduleParameters);
                 resolver.Register(assemblyDefinition);
                 Assemblies.Add(assemblyDefinition);
                 var moduleDefinition = assemblyDefinition.MainModule;

@@ -691,7 +691,6 @@ namespace Il2CppDumper
                     Directory.Delete("DummyDll", true);
                 Directory.CreateDirectory("DummyDll");
                 Directory.SetCurrentDirectory("DummyDll");
-                File.WriteAllBytes("Il2CppDummyDll.dll", Resource1.Il2CppDummyDll);
                 var dummy = new DummyAssemblyCreator(metadata, il2cpp);
                 foreach (var assembly in dummy.Assemblies)
                 {

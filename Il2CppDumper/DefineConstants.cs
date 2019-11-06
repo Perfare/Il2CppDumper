@@ -90,15 +90,15 @@ namespace Il2CppDumper
             {13,"double"},
             {14,"string"},
             {19,"T"},
-            {22,"System.TypedReference"},
+            {22,"TypedReference"},
             {24,"IntPtr"},
             {25,"UIntPtr"},
             {28,"object"},
             {30,"T"},
         };
 
-        public static Version Unity20183 = new Version(2018, 3);
-        public static Version Unity20191 = new Version(2019, 1);
+        public static readonly Version Unity20183 = new Version(2018, 3);
+        public static readonly Version Unity20191 = new Version(2019, 1);
     }
 
     static class ElfConstants

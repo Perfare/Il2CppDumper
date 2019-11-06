@@ -18,9 +18,9 @@ namespace Il2CppDumper
         private static Dictionary<Il2CppMethodDefinition, string> methodModifiers = new Dictionary<Il2CppMethodDefinition, string>();
         private static Dictionary<Il2CppTypeDefinition, int> typeDefImageIndices = new Dictionary<Il2CppTypeDefinition, int>();
 
-        static void ShowHelp(string programName)
+        static void ShowHelp()
         {
-            Console.WriteLine($"usage: {programName} path/to/global-metadata.dat path/to/libil2cpp.so");
+            Console.WriteLine($"usage: {AppDomain.CurrentDomain.FriendlyName} <executable-file> <global-metadata> [unityVersion] [mode]");
             Application.ExitThread();
         }
 
@@ -29,23 +29,31 @@ namespace Il2CppDumper
         {
             byte[] il2cppBytes = null;
             byte[] metadataBytes = null;
+            string stringVersion = null;
+            int mode = 0;
 
             if (args.Length == 1)
             {
                 if (args[0] == "-h" || args[0] == "--help" || args[0] == "/?" || args[0] == "/h")
                 {
-                    ShowHelp(AppDomain.CurrentDomain.FriendlyName);
+                    ShowHelp();
                     return;
                 }
             }
-
-            if (args.Length > 2)
+            if (args.Length > 4)
             {
-                ShowHelp(AppDomain.CurrentDomain.FriendlyName);
+                ShowHelp();
                 return;
             }
-
-            if (args.Length == 2)
+            if (args.Length > 3)
+            {
+                mode = int.Parse(args[3]);
+            }
+            if (args.Length > 2)
+            {
+                stringVersion = args[2];
+            }
+            if (args.Length > 1)
             {
                 var file1 = File.ReadAllBytes(args[0]);
                 var file2 = File.ReadAllBytes(args[1]);
@@ -84,7 +92,7 @@ namespace Il2CppDumper
             }
             try
             {
-                if (Init(il2cppBytes, metadataBytes))
+                if (Init(il2cppBytes, metadataBytes, stringVersion, mode))
                 {
                     Dump();
                 }
@@ -97,7 +105,7 @@ namespace Il2CppDumper
             Console.ReadKey(true);
         }
 
-        private static bool Init(byte[] il2cppBytes, byte[] metadataBytes)
+        private static bool Init(byte[] il2cppBytes, byte[] metadataBytes, string stringVersion, int mode)
         {
             var sanity = BitConverter.ToUInt32(metadataBytes, 0);
             if (sanity != 0xFAB11BAF)
@@ -108,8 +116,11 @@ namespace Il2CppDumper
             var metadataVersion = BitConverter.ToInt32(metadataBytes, 4);
             if (metadataVersion == 24)
             {
-                Console.WriteLine("Input Unity version: ");
-                var stringVersion = Console.ReadLine();
+                if (stringVersion == null)
+                {
+                    Console.WriteLine("Input Unity version: ");
+                    stringVersion = Console.ReadLine();
+                }
                 try
                 {
                     var versionSplit = Array.ConvertAll(Regex.Replace(stringVersion, @"\D", ".").Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries), int.Parse);
@@ -187,8 +198,6 @@ namespace Il2CppDumper
                     break;
             }
 
-            Console.WriteLine("Select Mode: 1.Manual 2.Auto 3.Auto(Plus) 4.Auto(Symbol)");
-            var modeKey = Console.ReadKey(true);
             var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.version;
             Console.WriteLine("Initializing il2cpp file...");
             if (isNSO)
@@ -211,16 +220,23 @@ namespace Il2CppDumper
                 il2cpp = new Macho64(new MemoryStream(il2cppBytes), version, metadata.maxMetadataUsages);
             else
                 il2cpp = new Macho(new MemoryStream(il2cppBytes), version, metadata.maxMetadataUsages);
-            if (modeKey.KeyChar != '1')
+
+            if (mode == 0)
+            {
+                Console.WriteLine("Select Mode: 1.Manual 2.Auto 3.Auto(Plus) 4.Auto(Symbol)");
+                var modeKey = Console.ReadKey(true);
+                mode = int.Parse(modeKey.KeyChar.ToString());
+            }
+            if (mode != 1)
             {
                 Console.WriteLine("Searching...");
             }
             try
             {
                 bool flag;
-                switch (modeKey.KeyChar)
+                switch (mode)
                 {
-                    case '1': //Manual
+                    case 1: //Manual
                         Console.Write("Input CodeRegistration: ");
                         var codeRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
                         Console.Write("Input MetadataRegistration: ");
@@ -228,13 +244,13 @@ namespace Il2CppDumper
                         il2cpp.Init(codeRegistration, metadataRegistration);
                         flag = true;
                         break;
-                    case '2': //Auto
+                    case 2: //Auto
                         flag = il2cpp.Search();
                         break;
-                    case '3': //Auto(Plus)
+                    case 3: //Auto(Plus)
                         flag = il2cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length);
                         break;
-                    case '4': //Auto(Symbol)
+                    case 4: //Auto(Symbol)
                         flag = il2cpp.SymbolSearch();
                         break;
                     default:

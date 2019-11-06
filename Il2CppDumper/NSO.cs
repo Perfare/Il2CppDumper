@@ -97,6 +97,7 @@ namespace Il2CppDumper
             return uiAddr - segment.MemoryOffset + segment.FileOffset;
         }
 
+        [Obsolete]
         public override bool Search()
         {
             return false;

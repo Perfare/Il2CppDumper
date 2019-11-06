@@ -16,24 +16,13 @@ namespace Il2CppDumper
         private bool isDumped;
         private uint dumpAddr;
 
-
-        //默认编译器
         /*
-         * LDR R1, [R1,R2]
-         * ADD R0, R12, R2
-         * ADD R2, R3, R2
-         */
-        private static readonly byte[] ARMFeatureBytesv21 = { 0x02, 0x10, 0x91, 0xE7, 0x02, 0x00, 0x8C, 0xE0, 0x02, 0x20, 0x83, 0xE0 };
-        /*
-         * LDR R1, [PC,R1]
-         * ADD R0, PC, R0
-         * ADD R2, PC, R2
-         */
-        private static readonly byte[] ARMFeatureBytesv24 = { 0x01, 0x10, 0x9F, 0xE7, 0x00, 0x00, 0x8F, 0xE0, 0x02, 0x20, 0x8F, 0xE0 };
-        //TODO
-        private static readonly byte[] X86FeatureBytesv21 = { 0x02, 0x10, 0x91, 0xE7, 0x02, 0x00, 0x8C, 0xE0, 0x02, 0x20, 0x83, 0xE0 };
-        //TODO
-        private static readonly byte[] X86FeatureBytesv24 = { 0x01, 0x10, 0x9F, 0xE7, 0x00, 0x00, 0x8F, 0xE0, 0x02, 0x20, 0x8F, 0xE0 };
+        * LDR R1, [X]
+        * ADD R0, X, X
+        * ADD R2, X, X
+        */
+        private static readonly string ARMFeatureBytes = "? 0x10 ? 0xE7 ? 0x00 ? 0xE0 ? 0x20 ? 0xE0";
+        private static readonly string X86FeatureBytes = "? 0x10 ? 0xE7 ? 0x00 ? 0xE0 ? 0x20 ? 0xE0";
 
         public Elf(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
@@ -113,25 +102,18 @@ namespace Il2CppDumper
             return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
         }
 
+        [Obsolete]
         public override bool Search()
         {
             var _GLOBAL_OFFSET_TABLE_ = dynamic_table.First(x => x.d_tag == DT_PLTGOT).d_un;
             var execs = program_table.Where(x => x.p_type == 1u && (x.p_flags & 1) == 1).ToArray();
             var resultList = new List<int>();
-            byte[] featureBytes = null;
-            if (version < 24f)
-            {
-                featureBytes = elf_header.e_machine == 40 ? ARMFeatureBytesv21 : X86FeatureBytesv21;
-            }
-            else if (version >= 24f)
-            {
-                featureBytes = elf_header.e_machine == 40 ? ARMFeatureBytesv24 : X86FeatureBytesv24;
-            }
+            var featureBytes = elf_header.e_machine == 40 ? ARMFeatureBytes : X86FeatureBytes;
             foreach (var exec in execs)
             {
                 Position = exec.p_offset;
                 var buff = ReadBytes((int)exec.p_filesz);
-                resultList.AddRange(buff.IndicesOf(featureBytes));
+                resultList.AddRange(buff.Search(featureBytes));
             }
             if (resultList.Count == 1)
             {

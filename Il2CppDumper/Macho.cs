@@ -62,6 +62,7 @@ namespace Il2CppDumper
             return uiAddr - (section.addr - section.offset);
         }
 
+        [Obsolete]
         public override bool Search()
         {
             if (version < 21)

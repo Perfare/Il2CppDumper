@@ -91,6 +91,7 @@ namespace Il2CppDumper
             return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
         }
 
+        [Obsolete]
         public override bool Search()
         {
             return false;

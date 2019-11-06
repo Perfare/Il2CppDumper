@@ -201,7 +201,7 @@ namespace Il2CppDumper
                     }
                     return -1;
                 }
-                return 0;
+                return -1;
             }
             return fieldOffsets[fieldIndex];
         }

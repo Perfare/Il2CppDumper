@@ -15,7 +15,7 @@ namespace Il2CppDumper
         public ulong[] customAttributeGenerators;
         public ulong[] reversePInvokeWrappers;
         public ulong[] unresolvedVirtualCallPointers;
-        private long[] fieldOffsets;
+        private ulong[] fieldOffsets;
         public Il2CppType[] types;
         private Dictionary<ulong, Il2CppType> typesdic = new Dictionary<ulong, Il2CppType>();
         public ulong[] metadataUsages;
@@ -71,7 +71,7 @@ namespace Il2CppDumper
             if (is32Bit)
             {
                 genericInsts = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.genericInsts, pMetadataRegistration.genericInstsCount), x => MapVATR<Il2CppGenericInst>(x));
-                fieldOffsets = Array.ConvertAll(MapVATR<int>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount), x => (long)x);
+                fieldOffsets = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount), x => (ulong)x);
                 //在21版本中存在两种FieldOffset，通过判断前5个数值是否为0确认是指针还是int
                 isNew21 = version > 21 || (version == 21 && fieldOffsets.ToList().FindIndex(x => x > 0) == 5);
                 var pTypes = MapVATR<uint>(pMetadataRegistration.types, pMetadataRegistration.typesCount);
@@ -111,11 +111,11 @@ namespace Il2CppDumper
             else
             {
                 genericInsts = Array.ConvertAll(MapVATR<ulong>(pMetadataRegistration.genericInsts, pMetadataRegistration.genericInstsCount), x => MapVATR<Il2CppGenericInst>(x));
-                fieldOffsets = MapVATR<long>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount);
+                fieldOffsets = MapVATR<ulong>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount);
                 //在21版本中存在两种FieldOffset，通过判断前5个数值是否为0确认是指针还是int
                 isNew21 = version > 21 || (version == 21 && fieldOffsets.ToList().FindIndex(x => x > 0) == 5);
                 if (!isNew21)
-                    fieldOffsets = Array.ConvertAll(MapVATR<int>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount), x => (long)x);
+                    fieldOffsets = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount), x => (ulong)x);
                 var pTypes = MapVATR<ulong>(pMetadataRegistration.types, pMetadataRegistration.typesCount);
                 types = new Il2CppType[pMetadataRegistration.typesCount];
                 for (var i = 0; i < pMetadataRegistration.typesCount; ++i)
@@ -183,28 +183,39 @@ namespace Il2CppDumper
             return ReadClass<T>(MapVATR(addr));
         }
 
-        public long GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex)
+        public int GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex)
         {
-            if (isNew21)
+            try
             {
-                var ptr = fieldOffsets[typeIndex];
-                if (ptr >= 0)
+                if (isNew21)
                 {
-                    dynamic pos;
-                    if (is32Bit)
-                        pos = MapVATR((uint)ptr) + 4 * fieldIndexInType;
-                    else
-                        pos = MapVATR((ulong)ptr) + 4ul * (ulong)fieldIndexInType;
-                    if ((long)pos <= BaseStream.Length - 4)
+                    var ptr = fieldOffsets[typeIndex];
+                    if (ptr > 0)
                     {
-                        Position = pos;
+                        if (is32Bit)
+                        {
+                            Position = MapVATR((uint)ptr) + 4 * fieldIndexInType;
+                        }
+                        else
+                        {
+                            Position = MapVATR(ptr) + 4ul * (ulong)fieldIndexInType;
+                        }
                         return ReadInt32();
                     }
-                    return -1;
+                    else
+                    {
+                        return -1;
+                    }
                 }
+                else
+                {
+                    return (int)fieldOffsets[fieldIndex];
+                }
+            }
+            catch
+            {
                 return -1;
             }
-            return fieldOffsets[fieldIndex];
         }
 
         public Il2CppType GetIl2CppType(ulong pointer)

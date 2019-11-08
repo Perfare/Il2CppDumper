@@ -138,10 +138,10 @@ namespace Il2CppDumper
                     {
                         var result = (uint)resultList[0];
                         Position = result + 0x14;
-                        codeRegistration = ReadUInt32() + result + 0xcu;
+                        codeRegistration = ReadUInt32() + result + 0xcu + dumpAddr;
                         Position = result + 0x10;
                         var ptr = ReadUInt32() + result + 0x8;
-                        Position = MapVATR(ptr);
+                        Position = MapVATR(ptr + dumpAddr);
                         metadataRegistration = ReadUInt32();
                     }
                 }

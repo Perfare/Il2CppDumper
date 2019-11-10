@@ -5,7 +5,7 @@ namespace Il2CppDumper
     public class Il2CppCodeRegistration
     {
         [Version(Max = 24.1f)]
-        public ulong methodPointersCount;
+        public long methodPointersCount;
         [Version(Max = 24.1f)]
         public ulong methodPointers;
         [Version(Max = 21)]
@@ -13,7 +13,7 @@ namespace Il2CppDumper
         [Version(Max = 21)]
         public ulong delegateWrappersFromNativeToManaged; // note the double indirection to handle different calling conventions
         [Version(Min = 22)]
-        public ulong reversePInvokeWrapperCount;
+        public long reversePInvokeWrapperCount;
         [Version(Min = 22)]
         public ulong reversePInvokeWrappers;
         [Version(Max = 22)]
@@ -28,9 +28,9 @@ namespace Il2CppDumper
         public ulong ccwMarshalingFunctionsCount;
         [Version(Min = 21, Max = 22)]
         public ulong ccwMarshalingFunctions;
-        public ulong genericMethodPointersCount;
+        public long genericMethodPointersCount;
         public ulong genericMethodPointers;
-        public ulong invokerPointersCount;
+        public long invokerPointersCount;
         public ulong invokerPointers;
         public long customAttributeCount;
         public ulong customAttributeGenerators;
@@ -39,7 +39,7 @@ namespace Il2CppDumper
         [Version(Min = 21, Max = 22)]
         public ulong guids; // Il2CppGuid
         [Version(Min = 22)]
-        public ulong unresolvedVirtualCallCount;
+        public long unresolvedVirtualCallCount;
         [Version(Min = 22)]
         public ulong unresolvedVirtualCallPointers;
         [Version(Min = 23)]
@@ -47,7 +47,7 @@ namespace Il2CppDumper
         [Version(Min = 23)]
         public ulong interopData;
         [Version(Min = 24.2f)]
-        public ulong codeGenModulesCount;
+        public long codeGenModulesCount;
         [Version(Min = 24.2f)]
         public ulong codeGenModules;
     }
@@ -146,10 +146,25 @@ namespace Il2CppDumper
         public class Union
         {
             public ulong dummy;
+            /// <summary>
+            /// for VALUETYPE and CLASS
+            /// </summary>
             public long klassIndex => (long)dummy;
+            /// <summary>
+            /// for PTR and SZARRAY
+            /// </summary>
             public ulong type => dummy;
+            /// <summary>
+            /// for ARRAY
+            /// </summary>
             public ulong array => dummy;
+            /// <summary>
+            /// for VAR and MVAR
+            /// </summary>
             public long genericParameterIndex => (long)dummy;
+            /// <summary>
+            /// for GENERICINST
+            /// </summary>
             public ulong generic_class => dummy;
         }
     }
@@ -171,7 +186,7 @@ namespace Il2CppDumper
 
     public class Il2CppGenericInst
     {
-        public ulong type_argc;
+        public long type_argc;
         public ulong type_argv;
     }
 
@@ -207,7 +222,7 @@ namespace Il2CppDumper
     public class Il2CppCodeGenModule
     {
         public ulong moduleName;
-        public ulong methodPointerCount;
+        public long methodPointerCount;
         public ulong methodPointers;
         public ulong invokerIndices;
         public ulong reversePInvokeWrapperCount;

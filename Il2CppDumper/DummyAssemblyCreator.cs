@@ -403,7 +403,7 @@ namespace Il2CppDumper
                         var typeDefinition = typeDefinitionDic[genericClass.typeDefinitionIndex];
                         var genericInstanceType = new GenericInstanceType(moduleDefinition.ImportReference(typeDefinition));
                         var genericInst = il2cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
-                        var pointers = il2cpp.GetPointers(genericInst.type_argv, (long)genericInst.type_argc);
+                        var pointers = il2cpp.ReadPointers(genericInst.type_argv, genericInst.type_argc);
                         foreach (var pointer in pointers)
                         {
                             var oriType = il2cpp.GetIl2CppType(pointer);
@@ -526,7 +526,7 @@ namespace Il2CppDumper
                         ret = metadata.GetStringFromIndex(typeDef.nameIndex);
                         var typeNames = new List<string>();
                         var genericInst = il2cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
-                        var pointers = il2cpp.GetPointers(genericInst.type_argv, (long)genericInst.type_argc);
+                        var pointers = il2cpp.ReadPointers(genericInst.type_argv, genericInst.type_argc);
                         for (uint i = 0; i < genericInst.type_argc; ++i)
                         {
                             var oriType = il2cpp.GetIl2CppType(pointers[i]);

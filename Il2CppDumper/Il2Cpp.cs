@@ -84,7 +84,7 @@ namespace Il2CppDumper
                 }
                 if (version >= 24.2f)
                 {
-                    var pCodeGenModules = MapVATR<uint>(pCodeRegistration.codeGenModules, (long)pCodeRegistration.codeGenModulesCount);
+                    var pCodeGenModules = MapVATR<uint>(pCodeRegistration.codeGenModules, pCodeRegistration.codeGenModulesCount);
                     codeGenModules = new Il2CppCodeGenModule[pCodeGenModules.Length];
                     codeGenModuleMethodPointers = new ulong[pCodeGenModules.Length][];
                     for (int i = 0; i < pCodeGenModules.Length; i++)
@@ -126,7 +126,7 @@ namespace Il2CppDumper
                 }
                 if (version >= 24.2f)
                 {
-                    var pCodeGenModules = MapVATR<ulong>(pCodeRegistration.codeGenModules, (long)pCodeRegistration.codeGenModulesCount);
+                    var pCodeGenModules = MapVATR<ulong>(pCodeRegistration.codeGenModules, pCodeRegistration.codeGenModulesCount);
                     codeGenModules = new Il2CppCodeGenModule[pCodeGenModules.Length];
                     codeGenModuleMethodPointers = new ulong[pCodeGenModules.Length][];
                     for (int i = 0; i < pCodeGenModules.Length; i++)
@@ -135,7 +135,7 @@ namespace Il2CppDumper
                         codeGenModules[i] = codeGenModule;
                         try
                         {
-                            codeGenModuleMethodPointers[i] = MapVATR<ulong>(codeGenModule.methodPointers, (long)codeGenModule.methodPointerCount);
+                            codeGenModuleMethodPointers[i] = MapVATR<ulong>(codeGenModule.methodPointers, codeGenModule.methodPointerCount);
                         }
                         catch
                         {
@@ -147,7 +147,7 @@ namespace Il2CppDumper
                 }
                 else
                 {
-                    methodPointers = MapVATR<ulong>(pCodeRegistration.methodPointers, (long)pCodeRegistration.methodPointersCount);
+                    methodPointers = MapVATR<ulong>(pCodeRegistration.methodPointers, pCodeRegistration.methodPointersCount);
                 }
             }
             //处理泛型
@@ -164,13 +164,13 @@ namespace Il2CppDumper
             }
         }
 
-        private ulong[] ReadPointers(ulong addr, dynamic count)
+        public ulong[] ReadPointers(ulong addr, long count)
         {
             if (is32Bit)
             {
-                return Array.ConvertAll(MapVATR<uint>(addr, (long)count), x => (ulong)x);
+                return Array.ConvertAll(MapVATR<uint>(addr, count), x => (ulong)x);
             }
-            return MapVATR<ulong>(addr, (long)count);
+            return MapVATR<ulong>(addr, count);
         }
 
         public T[] MapVATR<T>(dynamic addr, long count) where T : new()
@@ -221,13 +221,6 @@ namespace Il2CppDumper
         public Il2CppType GetIl2CppType(ulong pointer)
         {
             return typesdic[pointer];
-        }
-
-        public ulong[] GetPointers(ulong pointer, long count)
-        {
-            if (is32Bit)
-                return Array.ConvertAll(MapVATR<uint>(pointer, count), x => (ulong)x);
-            return MapVATR<ulong>(pointer, count);
         }
 
         public ulong GetMethodPointer(int methodIndex, int methodDefinitionIndex, int imageIndex, uint methodToken)

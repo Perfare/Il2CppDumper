@@ -145,11 +145,10 @@ namespace Il2CppDumper
                     for (var i = typeDef.methodStart; i < methodEnd; ++i)
                     {
                         var methodDef = metadata.methodDefs[i];
-                        var methodReturnType = il2cpp.types[methodDef.returnType];
                         var methodName = metadata.GetStringFromIndex(methodDef.nameIndex);
                         var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition.Module.ImportReference(typeof(void)));
                         typeDefinition.Methods.Add(methodDefinition);
-                        methodDefinition.ReturnType = GetTypeReference(methodDefinition, methodReturnType);
+                        methodDefinition.ReturnType = GetTypeReference(methodDefinition, methodDef.returnType);
                         if (methodDefinition.HasBody && typeDefinition.BaseType?.FullName != "System.MulticastDelegate")
                         {
                             var ilprocessor = methodDefinition.Body.GetILProcessor();
@@ -162,7 +161,7 @@ namespace Il2CppDumper
                             var parameterDef = metadata.parameterDefs[methodDef.parameterStart + j];
                             var parameterName = metadata.GetStringFromIndex(parameterDef.nameIndex);
                             var parameterType = il2cpp.types[parameterDef.typeIndex];
-                            var parameterTypeRef = GetTypeReference(methodDefinition, parameterType);
+                            var parameterTypeRef = GetTypeReference(methodDefinition, parameterDef.typeIndex);
                             var parameterDefinition = new ParameterDefinition(parameterName, (ParameterAttributes)parameterType.attrs, parameterTypeRef);
                             methodDefinition.Parameters.Add(parameterDefinition);
                             //ParameterDefault
@@ -344,6 +343,42 @@ namespace Il2CppDumper
             }
         }
 
+        private TypeReference GetTypeReference(MemberReference memberReference, int typeIndex)
+        {
+            var il2CppType = il2cpp.types[typeIndex];
+            var typeReference = GetTypeReference(memberReference, il2CppType);
+            switch (il2CppType.type)
+            {
+                case Il2CppTypeEnum.IL2CPP_TYPE_BOOLEAN:
+                case Il2CppTypeEnum.IL2CPP_TYPE_CHAR:
+                case Il2CppTypeEnum.IL2CPP_TYPE_I1:
+                case Il2CppTypeEnum.IL2CPP_TYPE_U1:
+                case Il2CppTypeEnum.IL2CPP_TYPE_I2:
+                case Il2CppTypeEnum.IL2CPP_TYPE_U2:
+                case Il2CppTypeEnum.IL2CPP_TYPE_I4:
+                case Il2CppTypeEnum.IL2CPP_TYPE_U4:
+                case Il2CppTypeEnum.IL2CPP_TYPE_I8:
+                case Il2CppTypeEnum.IL2CPP_TYPE_U8:
+                case Il2CppTypeEnum.IL2CPP_TYPE_R4:
+                case Il2CppTypeEnum.IL2CPP_TYPE_R8:
+                case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
+                case Il2CppTypeEnum.IL2CPP_TYPE_I:
+                case Il2CppTypeEnum.IL2CPP_TYPE_U:
+                case Il2CppTypeEnum.IL2CPP_TYPE_TYPEDBYREF:
+                    var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
+                    if (typeDef.byrefTypeIndex == typeIndex)
+                    {
+                        return new ByReferenceType(typeReference);
+                    }
+                    else
+                    {
+                        return typeReference;
+                    }
+                default:
+                    return typeReference;
+            }
+        }
+
         private TypeReference GetTypeReference(MemberReference memberReference, Il2CppType il2CppType)
         {
             var moduleDefinition = memberReference.Module;
@@ -457,7 +492,7 @@ namespace Il2CppDumper
                         return new PointerType(GetTypeReference(memberReference, oriType));
                     }
                 default:
-                    return moduleDefinition.ImportReference(typeof(object));
+                    throw new ArgumentOutOfRangeException();
             }
         }
 

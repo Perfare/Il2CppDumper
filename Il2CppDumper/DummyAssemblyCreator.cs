@@ -615,8 +615,14 @@ namespace Il2CppDumper
             var param = metadata.genericParameters[genericParameterIndex];
             var genericName = metadata.GetStringFromIndex(param.nameIndex);
             var genericParameter = new GenericParameter(genericName, iGenericParameterProvider);
+            genericParameter.Attributes = (GenericParameterAttributes)param.flags;
             iGenericParameterProvider.GenericParameters.Add(genericParameter);
             genericParameterDic.Add(genericParameterIndex, genericParameter);
+            for (int i = 0; i < param.constraintsCount; ++i)
+            {
+                var il2CppType = il2cpp.types[metadata.constraintIndices[param.constraintsStart + i]];
+                genericParameter.Constraints.Add(new GenericParameterConstraint(GetTypeReference((MemberReference)iGenericParameterProvider, il2CppType)));
+            }
             return genericParameter;
         }
     }

@@ -30,6 +30,7 @@ namespace Il2CppDumper
         public Il2CppGenericContainer[] genericContainers;
         public Il2CppFieldRef[] fieldRefs;
         public Il2CppGenericParameter[] genericParameters;
+        public int[] constraintIndices;
 
         public Metadata(Stream stream, float version) : base(stream)
         {
@@ -65,6 +66,7 @@ namespace Il2CppDumper
             eventDefs = ReadMetadataClassArray<Il2CppEventDefinition>(metadataHeader.eventsOffset, metadataHeader.eventsCount);
             genericContainers = ReadMetadataClassArray<Il2CppGenericContainer>(metadataHeader.genericContainersOffset, metadataHeader.genericContainersCount);
             genericParameters = ReadMetadataClassArray<Il2CppGenericParameter>(metadataHeader.genericParametersOffset, metadataHeader.genericParametersCount);
+            constraintIndices = ReadClassArray<int>(metadataHeader.genericParameterConstraintsOffset, metadataHeader.genericParameterConstraintsCount / 4);
             if (version > 16)
             {
                 stringLiterals = ReadMetadataClassArray<Il2CppStringLiteral>(metadataHeader.stringLiteralOffset, metadataHeader.stringLiteralCount);

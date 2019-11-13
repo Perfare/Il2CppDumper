@@ -535,6 +535,8 @@ namespace Il2CppDumper
                                     var parameterTypeName = GetTypeName(parameterType);
                                     if ((parameterType.attrs & PARAM_ATTRIBUTE_OPTIONAL) != 0)
                                         parameterStr += "optional ";
+                                    if ((parameterType.attrs & PARAM_ATTRIBUTE_IN) != 0)
+                                        parameterStr += "in ";
                                     if ((parameterType.attrs & PARAM_ATTRIBUTE_OUT) != 0)
                                         parameterStr += "out ";
                                     parameterStr += $"{parameterTypeName} {parameterName}";

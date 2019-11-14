@@ -518,7 +518,21 @@ namespace Il2CppDumper
         {
             var attributeNames = new[]
             {
+                "System.Runtime.CompilerServices.CompilerGeneratedAttribute",
+                "System.Runtime.CompilerServices.ExtensionAttribute",
+                "System.Runtime.CompilerServices.NullableAttribute",
+                "System.Runtime.CompilerServices.NullableContextAttribute",
                 "System.Runtime.CompilerServices.IsReadOnlyAttribute", //in关键字
+                "System.Diagnostics.DebuggerHiddenAttribute",
+                "System.Diagnostics.DebuggerStepThroughAttribute",
+                // Type attributes:
+                "System.FlagsAttribute",
+                "System.Runtime.CompilerServices.IsByRefLikeAttribute",
+                // Field attributes:
+                "System.NonSerializedAttribute",
+                // Type parameter attributes:
+                "System.Runtime.CompilerServices.IsUnmanagedAttribute",
+                // Unity
                 "UnityEngine.SerializeField" //MonoBehaviour的反序列化
             };
             foreach (var attributeName in attributeNames)

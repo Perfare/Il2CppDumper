@@ -183,20 +183,20 @@ namespace Il2CppDumper
             foreach (var section in data)
             {
                 il2Cpp.Position = section.offset;
-                while ((ulong)il2Cpp.Position < section.offsetEnd)
+                while (il2Cpp.Position < section.offsetEnd)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadUInt32() == methodCount)
                     {
                         try
                         {
-                            uint pointer = il2Cpp.MapVATR(il2Cpp.ReadUInt32());
+                            var pointer = il2Cpp.MapVATR(il2Cpp.ReadUInt32());
                             if (CheckPointerRangeDataRa(pointer))
                             {
                                 var pointers = il2Cpp.ReadClassArray<uint>(pointer, methodCount);
                                 if (CheckPointerRangeExecVa(pointers))
                                 {
-                                    return (ulong)addr - section.offset + section.address;
+                                    return addr - section.offset + section.address;
                                 }
                             }
                         }
@@ -217,7 +217,7 @@ namespace Il2CppDumper
             foreach (var section in data)
             {
                 il2Cpp.Position = section.offset;
-                while ((ulong)il2Cpp.Position < section.offsetEnd)
+                while (il2Cpp.Position < section.offsetEnd)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadInt64() == methodCount)
@@ -230,7 +230,7 @@ namespace Il2CppDumper
                                 var pointers = il2Cpp.ReadClassArray<ulong>(pointer, methodCount);
                                 if (CheckPointerRangeExecVa(pointers))
                                 {
-                                    return (ulong)addr - section.offset + section.address;
+                                    return addr - section.offset + section.address;
                                 }
                             }
                         }
@@ -251,7 +251,7 @@ namespace Il2CppDumper
             foreach (var section in data)
             {
                 il2Cpp.Position = section.offset;
-                while ((ulong)il2Cpp.Position < section.offsetEnd)
+                while (il2Cpp.Position < section.offsetEnd)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadInt32() == typeDefinitionsCount)
@@ -259,13 +259,13 @@ namespace Il2CppDumper
                         try
                         {
                             il2Cpp.Position += 8;
-                            uint pointer = il2Cpp.MapVATR(il2Cpp.ReadUInt32());
+                            var pointer = il2Cpp.MapVATR(il2Cpp.ReadUInt32());
                             if (CheckPointerRangeDataRa(pointer))
                             {
                                 var pointers = il2Cpp.ReadClassArray<uint>(pointer, maxMetadataUsages);
                                 if (CheckPointerRangeBssVa(pointers))
                                 {
-                                    return (ulong)addr - 48ul - section.offset + section.address;
+                                    return addr - 48ul - section.offset + section.address;
                                 }
                             }
                         }
@@ -286,7 +286,7 @@ namespace Il2CppDumper
             foreach (var section in data)
             {
                 il2Cpp.Position = section.offset;
-                while ((ulong)il2Cpp.Position < section.offsetEnd)
+                while (il2Cpp.Position < section.offsetEnd)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadInt64() == typeDefinitionsCount)
@@ -300,7 +300,7 @@ namespace Il2CppDumper
                                 var pointers = il2Cpp.ReadClassArray<ulong>(pointer, maxMetadataUsages);
                                 if (CheckPointerRangeBssVa(pointers))
                                 {
-                                    return (ulong)addr - 96ul - section.offset + section.address;
+                                    return addr - 96ul - section.offset + section.address;
                                 }
                             }
                         }
@@ -356,30 +356,30 @@ namespace Il2CppDumper
                     foreach (var dataSec in data)
                     {
                         il2Cpp.Position = dataSec.offset;
-                        while ((ulong)il2Cpp.Position < dataSec.offsetEnd)
+                        while (il2Cpp.Position < dataSec.offsetEnd)
                         {
                             var offset = il2Cpp.Position;
                             if (il2Cpp.ReadUInt32() == va)
                             {
-                                var va2 = (ulong)offset - dataSec.offset + dataSec.address;
+                                var va2 = offset - dataSec.offset + dataSec.address;
                                 foreach (var dataSec2 in data)
                                 {
                                     il2Cpp.Position = dataSec2.offset;
-                                    while ((ulong)il2Cpp.Position < dataSec2.offsetEnd)
+                                    while (il2Cpp.Position < dataSec2.offsetEnd)
                                     {
                                         var offset2 = il2Cpp.Position;
                                         if (il2Cpp.ReadUInt32() == va2)
                                         {
-                                            var va3 = (ulong)offset2 - dataSec2.offset + dataSec2.address;
+                                            var va3 = offset2 - dataSec2.offset + dataSec2.address;
                                             foreach (var dataSec3 in data)
                                             {
                                                 il2Cpp.Position = dataSec3.offset;
-                                                while ((ulong)il2Cpp.Position < dataSec3.offsetEnd)
+                                                while (il2Cpp.Position < dataSec3.offsetEnd)
                                                 {
                                                     var offset3 = il2Cpp.Position;
                                                     if (il2Cpp.ReadUInt32() == va3)
                                                     {
-                                                        return (ulong)offset3 - dataSec3.offset + dataSec3.address - 52ul;
+                                                        return offset3 - dataSec3.offset + dataSec3.address - 52ul;
                                                     }
                                                 }
                                             }
@@ -410,30 +410,30 @@ namespace Il2CppDumper
                     foreach (var dataSec in data)
                     {
                         il2Cpp.Position = dataSec.offset;
-                        while ((ulong)il2Cpp.Position < dataSec.offsetEnd)
+                        while (il2Cpp.Position < dataSec.offsetEnd)
                         {
                             var offset = il2Cpp.Position;
                             if (il2Cpp.ReadUInt64() == va)
                             {
-                                var va2 = (ulong)offset - dataSec.offset + dataSec.address;
+                                var va2 = offset - dataSec.offset + dataSec.address;
                                 foreach (var dataSec2 in data)
                                 {
                                     il2Cpp.Position = dataSec2.offset;
-                                    while ((ulong)il2Cpp.Position < dataSec2.offsetEnd)
+                                    while (il2Cpp.Position < dataSec2.offsetEnd)
                                     {
                                         var offset2 = il2Cpp.Position;
                                         if (il2Cpp.ReadUInt64() == va2)
                                         {
-                                            var va3 = (ulong)offset2 - dataSec2.offset + dataSec2.address;
+                                            var va3 = offset2 - dataSec2.offset + dataSec2.address;
                                             foreach (var dataSec3 in data)
                                             {
                                                 il2Cpp.Position = dataSec3.offset;
-                                                while ((ulong)il2Cpp.Position < dataSec3.offsetEnd)
+                                                while (il2Cpp.Position < dataSec3.offsetEnd)
                                                 {
                                                     var offset3 = il2Cpp.Position;
                                                     if (il2Cpp.ReadUInt64() == va3)
                                                     {
-                                                        return (ulong)offset3 - dataSec3.offset + dataSec3.address - 104ul;
+                                                        return offset3 - dataSec3.offset + dataSec3.address - 104ul;
                                                     }
                                                 }
                                             }

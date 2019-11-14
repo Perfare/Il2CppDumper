@@ -56,9 +56,9 @@ namespace Il2CppDumper
             }
         }
 
-        public override dynamic MapVATR(dynamic uiAddr)
+        public override ulong MapVATR(ulong uiAddr)
         {
-            uint addr = (uint)(uiAddr - imageBase);
+            var addr = uiAddr - imageBase;
             var section = sections.First(x => addr >= x.VirtualAddress && addr <= x.VirtualAddress + x.VirtualSize);
             return addr - (section.VirtualAddress - section.PointerToRawData);
         }

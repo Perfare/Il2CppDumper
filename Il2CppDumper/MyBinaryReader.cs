@@ -12,7 +12,6 @@ namespace Il2CppDumper
         public bool is32Bit;
         private MethodInfo readClass;
 
-
         public MyBinaryReader(Stream stream) : base(stream)
         {
             readClass = GetType().GetMethod("ReadClass", Type.EmptyTypes);
@@ -46,13 +45,13 @@ namespace Il2CppDumper
             }
         }
 
-        public dynamic Position
+        public ulong Position
         {
-            get => BaseStream.Position;
+            get => (ulong)BaseStream.Position;
             set => BaseStream.Position = (long)value;
         }
 
-        public T ReadClass<T>(dynamic addr) where T : new()
+        public T ReadClass<T>(ulong addr) where T : new()
         {
             Position = addr;
             return ReadClass<T>();
@@ -102,13 +101,13 @@ namespace Il2CppDumper
             return t;
         }
 
-        public T[] ReadClassArray<T>(dynamic addr, long count) where T : new()
+        public T[] ReadClassArray<T>(ulong addr, long count) where T : new()
         {
             Position = addr;
             return ReadClassArray<T>(count);
         }
 
-        public string ReadStringToNull(dynamic addr)
+        public string ReadStringToNull(ulong addr)
         {
             Position = addr;
             var bytes = new List<byte>();

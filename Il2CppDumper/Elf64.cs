@@ -85,7 +85,7 @@ namespace Il2CppDumper
             return true;
         }
 
-        public override dynamic MapVATR(dynamic uiAddr)
+        public override ulong MapVATR(ulong uiAddr)
         {
             var program_header_table = program_table.First(x => uiAddr >= x.p_vaddr && uiAddr <= x.p_vaddr + x.p_memsz);
             return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);

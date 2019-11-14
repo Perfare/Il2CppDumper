@@ -28,7 +28,7 @@ namespace Il2CppDumper
         private Il2CppCodeGenModule[] codeGenModules;
         public ulong[][] codeGenModuleMethodPointers;
 
-        public abstract dynamic MapVATR(dynamic uiAddr);
+        public abstract ulong MapVATR(ulong uiAddr);
         public abstract bool Search();
         public abstract bool PlusSearch(int methodCount, int typeDefinitionsCount);
         public abstract bool SymbolSearch();
@@ -72,7 +72,7 @@ namespace Il2CppDumper
                 genericInsts = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.genericInsts, pMetadataRegistration.genericInstsCount), x => MapVATR<Il2CppGenericInst>(x));
                 fieldOffsets = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount), x => (ulong)x);
                 //在21版本中存在两种FieldOffset，通过判断前5个数值是否为0确认是指针还是int
-                isNew21 = version > 21 || (version == 21 && fieldOffsets.ToList().FindIndex(x => x > 0) == 5);
+                isNew21 = version > 21 || version == 21 && fieldOffsets.ToList().FindIndex(x => x > 0) == 5;
                 var pTypes = MapVATR<uint>(pMetadataRegistration.types, pMetadataRegistration.typesCount);
                 types = new Il2CppType[pMetadataRegistration.typesCount];
                 for (var i = 0; i < pMetadataRegistration.typesCount; ++i)
@@ -112,7 +112,7 @@ namespace Il2CppDumper
                 genericInsts = Array.ConvertAll(MapVATR<ulong>(pMetadataRegistration.genericInsts, pMetadataRegistration.genericInstsCount), x => MapVATR<Il2CppGenericInst>(x));
                 fieldOffsets = MapVATR<ulong>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount);
                 //在21版本中存在两种FieldOffset，通过判断前5个数值是否为0确认是指针还是int
-                isNew21 = version > 21 || (version == 21 && fieldOffsets.ToList().FindIndex(x => x > 0) == 5);
+                isNew21 = version > 21 || version == 21 && fieldOffsets.ToList().FindIndex(x => x > 0) == 5;
                 if (!isNew21)
                     fieldOffsets = Array.ConvertAll(MapVATR<uint>(pMetadataRegistration.fieldOffsets, pMetadataRegistration.fieldOffsetsCount), x => (ulong)x);
                 var pTypes = MapVATR<ulong>(pMetadataRegistration.types, pMetadataRegistration.typesCount);
@@ -172,12 +172,12 @@ namespace Il2CppDumper
             return MapVATR<ulong>(addr, count);
         }
 
-        public T[] MapVATR<T>(dynamic addr, long count) where T : new()
+        public T[] MapVATR<T>(ulong addr, long count) where T : new()
         {
             return ReadClassArray<T>(MapVATR(addr), count);
         }
 
-        public T MapVATR<T>(dynamic addr) where T : new()
+        public T MapVATR<T>(ulong addr) where T : new()
         {
             return ReadClass<T>(MapVATR(addr));
         }
@@ -191,14 +191,7 @@ namespace Il2CppDumper
                     var ptr = fieldOffsets[typeIndex];
                     if (ptr > 0)
                     {
-                        if (is32Bit)
-                        {
-                            Position = MapVATR((uint)ptr) + 4 * fieldIndexInType;
-                        }
-                        else
-                        {
-                            Position = MapVATR(ptr) + 4ul * (ulong)fieldIndexInType;
-                        }
+                        Position = MapVATR(ptr) + 4ul * (ulong)fieldIndexInType;
                         return ReadInt32();
                     }
                     else

@@ -56,7 +56,7 @@ namespace Il2CppDumper
             customAttributeGenerators = customAttributeGenerators.Select(x => x - 1).ToArray();
         }
 
-        public override dynamic MapVATR(dynamic uiAddr)
+        public override ulong MapVATR(ulong uiAddr)
         {
             var section = sections.First(x => uiAddr >= x.addr && uiAddr <= x.end);
             return uiAddr - (section.addr - section.offset);

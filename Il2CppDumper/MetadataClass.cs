@@ -6,64 +6,64 @@ namespace Il2CppDumper
     {
         public uint sanity;
         public int version;
-        public int stringLiteralOffset; // string data for managed code
+        public uint stringLiteralOffset; // string data for managed code
         public int stringLiteralCount;
-        public int stringLiteralDataOffset;
+        public uint stringLiteralDataOffset;
         public int stringLiteralDataCount;
-        public int stringOffset; // string data for metadata
+        public uint stringOffset; // string data for metadata
         public int stringCount;
-        public int eventsOffset; // Il2CppEventDefinition
+        public uint eventsOffset; // Il2CppEventDefinition
         public int eventsCount;
-        public int propertiesOffset; // Il2CppPropertyDefinition
+        public uint propertiesOffset; // Il2CppPropertyDefinition
         public int propertiesCount;
-        public int methodsOffset; // Il2CppMethodDefinition
+        public uint methodsOffset; // Il2CppMethodDefinition
         public int methodsCount;
-        public int parameterDefaultValuesOffset; // Il2CppParameterDefaultValue
+        public uint parameterDefaultValuesOffset; // Il2CppParameterDefaultValue
         public int parameterDefaultValuesCount;
-        public int fieldDefaultValuesOffset; // Il2CppFieldDefaultValue
+        public uint fieldDefaultValuesOffset; // Il2CppFieldDefaultValue
         public int fieldDefaultValuesCount;
-        public int fieldAndParameterDefaultValueDataOffset; // uint8_t
+        public uint fieldAndParameterDefaultValueDataOffset; // uint8_t
         public int fieldAndParameterDefaultValueDataCount;
         public int fieldMarshaledSizesOffset; // Il2CppFieldMarshaledSize
         public int fieldMarshaledSizesCount;
-        public int parametersOffset; // Il2CppParameterDefinition
+        public uint parametersOffset; // Il2CppParameterDefinition
         public int parametersCount;
-        public int fieldsOffset; // Il2CppFieldDefinition
+        public uint fieldsOffset; // Il2CppFieldDefinition
         public int fieldsCount;
-        public int genericParametersOffset; // Il2CppGenericParameter
+        public uint genericParametersOffset; // Il2CppGenericParameter
         public int genericParametersCount;
-        public int genericParameterConstraintsOffset; // TypeIndex
+        public uint genericParameterConstraintsOffset; // TypeIndex
         public int genericParameterConstraintsCount;
-        public int genericContainersOffset; // Il2CppGenericContainer
+        public uint genericContainersOffset; // Il2CppGenericContainer
         public int genericContainersCount;
-        public int nestedTypesOffset; // TypeDefinitionIndex
+        public uint nestedTypesOffset; // TypeDefinitionIndex
         public int nestedTypesCount;
-        public int interfacesOffset; // TypeIndex
+        public uint interfacesOffset; // TypeIndex
         public int interfacesCount;
         public int vtableMethodsOffset; // EncodedMethodIndex
         public int vtableMethodsCount;
         public int interfaceOffsetsOffset; // Il2CppInterfaceOffsetPair
         public int interfaceOffsetsCount;
-        public int typeDefinitionsOffset; // Il2CppTypeDefinition
+        public uint typeDefinitionsOffset; // Il2CppTypeDefinition
         public int typeDefinitionsCount;
         [Version(Max = 24.1f)]
         public int rgctxEntriesOffset; // Il2CppRGCTXDefinition
         [Version(Max = 24.1f)]
         public int rgctxEntriesCount;
-        public int imagesOffset; // Il2CppImageDefinition
+        public uint imagesOffset; // Il2CppImageDefinition
         public int imagesCount;
         public int assembliesOffset; // Il2CppAssemblyDefinition
         public int assembliesCount;
         [Version(Min = 19)]
-        public int metadataUsageListsOffset; // Il2CppMetadataUsageList
+        public uint metadataUsageListsOffset; // Il2CppMetadataUsageList
         [Version(Min = 19)]
         public int metadataUsageListsCount;
         [Version(Min = 19)]
-        public int metadataUsagePairsOffset; // Il2CppMetadataUsagePair
+        public uint metadataUsagePairsOffset; // Il2CppMetadataUsagePair
         [Version(Min = 19)]
         public int metadataUsagePairsCount;
         [Version(Min = 19)]
-        public int fieldRefsOffset; // Il2CppFieldRef
+        public uint fieldRefsOffset; // Il2CppFieldRef
         [Version(Min = 19)]
         public int fieldRefsCount;
         [Version(Min = 19)]
@@ -71,11 +71,11 @@ namespace Il2CppDumper
         [Version(Min = 19)]
         public int referencedAssembliesCount;
         [Version(Min = 21)]
-        public int attributesInfoOffset; // Il2CppCustomAttributeTypeRange
+        public uint attributesInfoOffset; // Il2CppCustomAttributeTypeRange
         [Version(Min = 21)]
         public int attributesInfoCount;
         [Version(Min = 21)]
-        public int attributeTypesOffset; // TypeIndex
+        public uint attributeTypesOffset; // TypeIndex
         [Version(Min = 21)]
         public int attributeTypesCount;
         [Version(Min = 22)]
@@ -98,7 +98,7 @@ namespace Il2CppDumper
 
     public class Il2CppImageDefinition
     {
-        public int nameIndex;
+        public uint nameIndex;
         public int assemblyIndex;
 
         public int typeStart;
@@ -121,8 +121,8 @@ namespace Il2CppDumper
 
     public class Il2CppTypeDefinition
     {
-        public int nameIndex;
-        public int namespaceIndex;
+        public uint nameIndex;
+        public uint namespaceIndex;
         [Version(Max = 24)]
         public int customAttributeIndex;
         public int byvalTypeIndex;
@@ -183,7 +183,7 @@ namespace Il2CppDumper
 
     public class Il2CppMethodDefinition
     {
-        public int nameIndex;
+        public uint nameIndex;
         public int declaringType;
         public int returnType;
         public int parameterStart;
@@ -209,7 +209,7 @@ namespace Il2CppDumper
 
     public class Il2CppParameterDefinition
     {
-        public int nameIndex;
+        public uint nameIndex;
         public uint token;
         [Version(Max = 24)]
         public int customAttributeIndex;
@@ -218,7 +218,7 @@ namespace Il2CppDumper
 
     public class Il2CppFieldDefinition
     {
-        public int nameIndex;
+        public uint nameIndex;
         public int typeIndex;
         [Version(Max = 24)]
         public int customAttributeIndex;
@@ -235,7 +235,7 @@ namespace Il2CppDumper
 
     public class Il2CppPropertyDefinition
     {
-        public int nameIndex;
+        public uint nameIndex;
         public int get;
         public int set;
         public uint attrs;
@@ -280,7 +280,7 @@ namespace Il2CppDumper
 
     public class Il2CppEventDefinition
     {
-        public int nameIndex;
+        public uint nameIndex;
         public int typeIndex;
         public int add;
         public int remove;
@@ -311,7 +311,7 @@ namespace Il2CppDumper
     public class Il2CppGenericParameter
     {
         public int ownerIndex;  /* Type or method this parameter was defined in. */
-        public int nameIndex;
+        public uint nameIndex;
         public short constraintsStart;
         public short constraintsCount;
         public ushort num;

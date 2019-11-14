@@ -84,7 +84,7 @@ namespace Il2CppDumper
             }
         }
 
-        private T[] ReadMetadataClassArray<T>(int addr, int count) where T : new()
+        private T[] ReadMetadataClassArray<T>(uint addr, int count) where T : new()
         {
             return ReadClassArray<T>(addr, count / MySizeOf(typeof(T)));
         }
@@ -99,12 +99,12 @@ namespace Il2CppDumper
             return parameterDefaultValues.FirstOrDefault(x => x.parameterIndex == index);
         }
 
-        public int GetDefaultValueFromIndex(int index)
+        public uint GetDefaultValueFromIndex(int index)
         {
-            return metadataHeader.fieldAndParameterDefaultValueDataOffset + index;
+            return (uint)(metadataHeader.fieldAndParameterDefaultValueDataOffset + index);
         }
 
-        public string GetStringFromIndex(int index)
+        public string GetStringFromIndex(uint index)
         {
             return ReadStringToNull(metadataHeader.stringOffset + index);
         }
@@ -132,7 +132,7 @@ namespace Il2CppDumper
         public string GetStringLiteralFromIndex(uint index)
         {
             var stringLiteral = stringLiterals[index];
-            Position = metadataHeader.stringLiteralDataOffset + stringLiteral.dataIndex;
+            Position = (uint)(metadataHeader.stringLiteralDataOffset + stringLiteral.dataIndex);
             return Encoding.UTF8.GetString(ReadBytes((int)stringLiteral.length));
         }
 

@@ -78,7 +78,7 @@ namespace Il2CppDumper
             if (!isCompressed)
             {
                 Position = header.TextSegment.FileOffset + 4;
-                var modOffset = ReadInt32();
+                var modOffset = ReadUInt32();
                 Position = header.TextSegment.FileOffset + modOffset + 8;
                 var bssStart = ReadUInt32();
                 var bssEnd = ReadUInt32();
@@ -91,7 +91,7 @@ namespace Il2CppDumper
             }
         }
 
-        public override dynamic MapVATR(dynamic uiAddr)
+        public override ulong MapVATR(ulong uiAddr)
         {
             var segment = segments.First(x => uiAddr >= x.MemoryOffset && uiAddr <= x.MemoryOffset + x.DecompressedSize);
             return uiAddr - segment.MemoryOffset + segment.FileOffset;

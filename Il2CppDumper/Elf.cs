@@ -102,7 +102,6 @@ namespace Il2CppDumper
             return uiAddr - (program_header_table.p_vaddr - program_header_table.p_offset);
         }
 
-        [Obsolete]
         public override bool Search()
         {
             var _GLOBAL_OFFSET_TABLE_ = dynamic_table.First(x => x.d_tag == DT_PLTGOT).d_un;

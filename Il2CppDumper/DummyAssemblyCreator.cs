@@ -530,6 +530,13 @@ namespace Il2CppDumper
                 "System.Runtime.CompilerServices.IsByRefLikeAttribute",
                 // Field attributes:
                 "System.NonSerializedAttribute",
+                // Method attributes:
+                "System.Runtime.InteropServices.PreserveSigAttribute",
+                // Parameter attributes:
+                "System.ParamArrayAttribute",
+                "System.Runtime.CompilerServices.CallerMemberNameAttribute",
+                "System.Runtime.CompilerServices.CallerFilePathAttribute",
+                "System.Runtime.CompilerServices.CallerLineNumberAttribute",
                 // Type parameter attributes:
                 "System.Runtime.CompilerServices.IsUnmanagedAttribute",
                 // Unity

@@ -177,68 +177,67 @@ namespace Il2CppDumper
                                 if (fieldDefaultValue != null && fieldDefaultValue.dataIndex != -1)
                                 {
                                     var pointer = metadata.GetDefaultValueFromIndex(fieldDefaultValue.dataIndex);
-                                    if (pointer > 0)
+                                    var fieldDefaultValueType = il2Cpp.types[fieldDefaultValue.typeIndex];
+                                    metadata.Position = pointer;
+                                    object val = null;
+                                    switch (fieldDefaultValueType.type)
                                     {
-                                        var fieldDefaultValueType = il2Cpp.types[fieldDefaultValue.typeIndex];
-                                        metadata.Position = pointer;
-                                        object val = null;
-                                        switch (fieldDefaultValueType.type)
-                                        {
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_BOOLEAN:
-                                                val = metadata.ReadBoolean();
-                                                break;
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_U1:
-                                                val = metadata.ReadByte();
-                                                break;
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_I1:
-                                                val = metadata.ReadSByte();
-                                                break;
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_CHAR:
-                                                val = BitConverter.ToChar(metadata.ReadBytes(2), 0);
-                                                break;
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_U2:
-                                                val = metadata.ReadUInt16();
-                                                break;
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_I2:
-                                                val = metadata.ReadInt16();
-                                                break;
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_U4:
-                                                val = metadata.ReadUInt32();
-                                                break;
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_I4:
-                                                val = metadata.ReadInt32();
-                                                break;
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_U8:
-                                                val = metadata.ReadUInt64();
-                                                break;
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_I8:
-                                                val = metadata.ReadInt64();
-                                                break;
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_R4:
-                                                val = metadata.ReadSingle();
-                                                break;
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_R8:
-                                                val = metadata.ReadDouble();
-                                                break;
-                                            case Il2CppTypeEnum.IL2CPP_TYPE_STRING:
-                                                var len = metadata.ReadInt32();
-                                                val = Encoding.UTF8.GetString(metadata.ReadBytes(len));
-                                                break;
-                                            default:
-                                                writer.Write($" /*Default value offset 0x{pointer:X}*/");
-                                                break;
-                                        }
-                                        if (val is string str)
-                                        {
-                                            writer.Write($" = \"{ToEscapedString(str)}\"");
-                                        }
-                                        else if (val is char c)
-                                        {
-                                            var v = (int)c;
-                                            writer.Write($" = '\\x{v:x}'");
-                                        }
-                                        else if (val != null)
-                                            writer.Write($" = {val}");
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_BOOLEAN:
+                                            val = metadata.ReadBoolean();
+                                            break;
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_U1:
+                                            val = metadata.ReadByte();
+                                            break;
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_I1:
+                                            val = metadata.ReadSByte();
+                                            break;
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_CHAR:
+                                            val = BitConverter.ToChar(metadata.ReadBytes(2), 0);
+                                            break;
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_U2:
+                                            val = metadata.ReadUInt16();
+                                            break;
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_I2:
+                                            val = metadata.ReadInt16();
+                                            break;
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_U4:
+                                            val = metadata.ReadUInt32();
+                                            break;
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_I4:
+                                            val = metadata.ReadInt32();
+                                            break;
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_U8:
+                                            val = metadata.ReadUInt64();
+                                            break;
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_I8:
+                                            val = metadata.ReadInt64();
+                                            break;
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_R4:
+                                            val = metadata.ReadSingle();
+                                            break;
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_R8:
+                                            val = metadata.ReadDouble();
+                                            break;
+                                        case Il2CppTypeEnum.IL2CPP_TYPE_STRING:
+                                            var len = metadata.ReadInt32();
+                                            val = Encoding.UTF8.GetString(metadata.ReadBytes(len));
+                                            break;
+                                        default:
+                                            writer.Write($" /*Metadata offset 0x{pointer:X}*/");
+                                            break;
+                                    }
+                                    if (val is string str)
+                                    {
+                                        writer.Write($" = \"{ToEscapedString(str)}\"");
+                                    }
+                                    else if (val is char c)
+                                    {
+                                        var v = (int)c;
+                                        writer.Write($" = '\\x{v:x}'");
+                                    }
+                                    else if (val != null)
+                                    {
+                                        writer.Write($" = {val}");
                                     }
                                 }
                                 if (config.DumpFieldOffset)
@@ -299,6 +298,10 @@ namespace Il2CppDumper
                                 writer.Write(GetModifiers(methodDef));
                                 var methodReturnType = il2Cpp.types[methodDef.returnType];
                                 var methodName = metadata.GetStringFromIndex(methodDef.nameIndex);
+                                if (methodReturnType.byref == 1)
+                                {
+                                    writer.Write("ref ");
+                                }
                                 writer.Write($"{GetTypeName(methodReturnType)} {methodName}(");
                                 var parameterStrs = new List<string>();
                                 for (var j = 0; j < methodDef.parameterCount; ++j)
@@ -308,32 +311,71 @@ namespace Il2CppDumper
                                     var parameterName = metadata.GetStringFromIndex(parameterDef.nameIndex);
                                     var parameterType = il2Cpp.types[parameterDef.typeIndex];
                                     var parameterTypeName = GetTypeName(parameterType);
-                                    if ((parameterType.attrs & PARAM_ATTRIBUTE_OPTIONAL) != 0)
-                                        parameterStr += "optional ";
-                                    if ((parameterType.attrs & PARAM_ATTRIBUTE_IN) != 0)
-                                        parameterStr += "in ";
-                                    if ((parameterType.attrs & PARAM_ATTRIBUTE_OUT) != 0)
-                                        parameterStr += "out ";
+                                    if (parameterType.byref == 1)
+                                    {
+                                        if ((parameterType.attrs & PARAM_ATTRIBUTE_OUT) != 0 && (parameterType.attrs & PARAM_ATTRIBUTE_IN) == 0)
+                                        {
+                                            parameterStr += "out ";
+                                        }
+                                        else if ((parameterType.attrs & PARAM_ATTRIBUTE_OUT) == 0 && (parameterType.attrs & PARAM_ATTRIBUTE_IN) != 0)
+                                        {
+                                            parameterStr += "in ";
+                                        }
+                                        else
+                                        {
+                                            parameterStr += "ref ";
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if ((parameterType.attrs & PARAM_ATTRIBUTE_IN) != 0)
+                                        {
+                                            parameterStr += "[In] ";
+                                        }
+                                        if ((parameterType.attrs & PARAM_ATTRIBUTE_OUT) != 0)
+                                        {
+                                            parameterStr += "[Out] ";
+                                        }
+                                    }
                                     parameterStr += $"{parameterTypeName} {parameterName}";
+                                    var parameterDefault = metadata.GetParameterDefaultValueFromIndex(methodDef.parameterStart + j);
+                                    if (parameterDefault != null && parameterDefault.dataIndex != -1)
+                                    {
+                                        var value = GetDefaultValue(parameterDefault.typeIndex, parameterDefault.dataIndex);
+                                        if (value is string str)
+                                        {
+                                            parameterStr += $" = \"{ToEscapedString(str)}\"";
+                                        }
+                                        else if (value is char c)
+                                        {
+                                            var v = (int)c;
+                                            parameterStr += $" = '\\x{v:x}'";
+                                        }
+                                        else if (value != null)
+                                        {
+                                            parameterStr += $" = {value}";
+                                        }
+                                    }
                                     parameterStrs.Add(parameterStr);
                                 }
                                 writer.Write(string.Join(", ", parameterStrs));
+                                writer.Write(") { }");
                                 if (config.DumpMethodOffset)
                                 {
                                     var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, i, imageIndex, methodDef.token);
                                     if (methodPointer > 0)
                                     {
                                         var fixedMethodPointer = il2Cpp.FixPointer(methodPointer);
-                                        writer.Write("); // RVA: 0x{0:X} Offset: 0x{1:X}\n", fixedMethodPointer, il2Cpp.MapVATR(methodPointer));
+                                        writer.Write(" // RVA: 0x{0:X} Offset: 0x{1:X}\n", fixedMethodPointer, il2Cpp.MapVATR(methodPointer));
                                     }
                                     else
                                     {
-                                        writer.Write("); // -1\n");
+                                        writer.Write(" // -1\n");
                                     }
                                 }
                                 else
                                 {
-                                    writer.Write("); \n");
+                                    writer.Write("\n");
                                 }
                             }
                         }
@@ -503,6 +545,45 @@ namespace Il2CppDumper
                 str += "extern ";
             methodModifiers.Add(methodDef, str);
             return str;
+        }
+
+        private object GetDefaultValue(int typeIndex, int dataIndex)
+        {
+            var pointer = metadata.GetDefaultValueFromIndex(dataIndex);
+            var defaultValueType = il2Cpp.types[typeIndex];
+            metadata.Position = pointer;
+            switch (defaultValueType.type)
+            {
+                case Il2CppTypeEnum.IL2CPP_TYPE_BOOLEAN:
+                    return metadata.ReadBoolean();
+                case Il2CppTypeEnum.IL2CPP_TYPE_U1:
+                    return metadata.ReadByte();
+                case Il2CppTypeEnum.IL2CPP_TYPE_I1:
+                    return metadata.ReadSByte();
+                case Il2CppTypeEnum.IL2CPP_TYPE_CHAR:
+                    return BitConverter.ToChar(metadata.ReadBytes(2), 0);
+                case Il2CppTypeEnum.IL2CPP_TYPE_U2:
+                    return metadata.ReadUInt16();
+                case Il2CppTypeEnum.IL2CPP_TYPE_I2:
+                    return metadata.ReadInt16();
+                case Il2CppTypeEnum.IL2CPP_TYPE_U4:
+                    return metadata.ReadUInt32();
+                case Il2CppTypeEnum.IL2CPP_TYPE_I4:
+                    return metadata.ReadInt32();
+                case Il2CppTypeEnum.IL2CPP_TYPE_U8:
+                    return metadata.ReadUInt64();
+                case Il2CppTypeEnum.IL2CPP_TYPE_I8:
+                    return metadata.ReadInt64();
+                case Il2CppTypeEnum.IL2CPP_TYPE_R4:
+                    return metadata.ReadSingle();
+                case Il2CppTypeEnum.IL2CPP_TYPE_R8:
+                    return metadata.ReadDouble();
+                case Il2CppTypeEnum.IL2CPP_TYPE_STRING:
+                    var len = metadata.ReadInt32();
+                    return Encoding.UTF8.GetString(metadata.ReadBytes(len));
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         public string ToEscapedString(string s)

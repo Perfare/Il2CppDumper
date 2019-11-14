@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    class Config
+    public class Config
     {
         public bool DumpMethod = true;
         public bool DumpField = true;

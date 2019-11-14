@@ -97,7 +97,7 @@ namespace Il2CppDumper
                         catch
                         {
                             //当整个DLL只有泛型函数时就会出现这种情况
-                            Console.WriteLine($"WARNING: Unable to get function pointers for {ReadStringToNull(MapVATR(codeGenModule.moduleName))}");
+                            //Console.WriteLine($"WARNING: Unable to get function pointers for {ReadStringToNull(MapVATR(codeGenModule.moduleName))}");
                             codeGenModuleMethodPointers[i] = new ulong[codeGenModule.methodPointerCount];
                         }
                     }
@@ -139,7 +139,7 @@ namespace Il2CppDumper
                         catch
                         {
                             //当整个DLL只有泛型函数时就会出现这种情况
-                            Console.WriteLine($"WARNING: Unable to get function pointers for {ReadStringToNull(MapVATR(codeGenModule.moduleName))}");
+                            //Console.WriteLine($"WARNING: Unable to get function pointers for {ReadStringToNull(MapVATR(codeGenModule.moduleName))}");
                             codeGenModuleMethodPointers[i] = new ulong[codeGenModule.methodPointerCount];
                         }
                     }

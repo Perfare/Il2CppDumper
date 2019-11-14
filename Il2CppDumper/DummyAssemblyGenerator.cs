@@ -8,22 +8,22 @@ using Mono.Collections.Generic;
 
 namespace Il2CppDumper
 {
-    public class DummyAssemblyCreator
+    public class DummyAssemblyGenerator
     {
         public List<AssemblyDefinition> Assemblies = new List<AssemblyDefinition>();
 
         private Metadata metadata;
-        private Il2Cpp il2cpp;
+        private Il2Cpp il2Cpp;
         private Dictionary<long, TypeDefinition> typeDefinitionDic = new Dictionary<long, TypeDefinition>();
         private Dictionary<long, GenericParameter> genericParameterDic = new Dictionary<long, GenericParameter>();
         private MethodDefinition attributeAttribute;
         private TypeReference stringType;
         private Dictionary<string, MethodDefinition> knownAttributes = new Dictionary<string, MethodDefinition>();
 
-        public DummyAssemblyCreator(Metadata metadata, Il2Cpp il2cpp)
+        public DummyAssemblyGenerator(Metadata metadata, Il2Cpp il2Cpp)
         {
             this.metadata = metadata;
-            this.il2cpp = il2cpp;
+            this.il2Cpp = il2Cpp;
 
             //Il2CppDummyDll
             var il2CppDummyDll = Il2CppDummyDll.Create();
@@ -93,14 +93,14 @@ namespace Il2CppDumper
                 //parent
                 if (typeDef.parentIndex >= 0)
                 {
-                    var parentType = il2cpp.types[typeDef.parentIndex];
+                    var parentType = il2Cpp.types[typeDef.parentIndex];
                     var parentTypeRef = GetTypeReference(typeDefinition, parentType);
                     typeDefinition.BaseType = parentTypeRef;
                 }
                 //interfaces
                 for (int i = 0; i < typeDef.interfaces_count; i++)
                 {
-                    var interfaceType = il2cpp.types[metadata.interfaceIndices[typeDef.interfacesStart + i]];
+                    var interfaceType = il2Cpp.types[metadata.interfaceIndices[typeDef.interfacesStart + i]];
                     var interfaceTypeRef = GetTypeReference(typeDefinition, interfaceType);
                     typeDefinition.Interfaces.Add(new InterfaceImplementation(interfaceTypeRef));
                 }
@@ -120,7 +120,7 @@ namespace Il2CppDumper
                     for (var i = typeDef.fieldStart; i < fieldEnd; ++i)
                     {
                         var fieldDef = metadata.fieldDefs[i];
-                        var fieldType = il2cpp.types[fieldDef.typeIndex];
+                        var fieldType = il2Cpp.types[fieldDef.typeIndex];
                         var fieldName = metadata.GetStringFromIndex(fieldDef.nameIndex);
                         var fieldTypeRef = GetTypeReference(typeDefinition, fieldType);
                         var fieldDefinition = new FieldDefinition(fieldName, (FieldAttributes)fieldType.attrs, fieldTypeRef);
@@ -136,7 +136,7 @@ namespace Il2CppDumper
                             }
                         }
                         //fieldOffset
-                        var fieldOffset = il2cpp.GetFieldOffsetFromIndex(index, i - typeDef.fieldStart, i);
+                        var fieldOffset = il2Cpp.GetFieldOffsetFromIndex(index, i - typeDef.fieldStart, i);
                         if (fieldOffset >= 0)
                         {
                             var customAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(fieldOffsetAttribute));
@@ -154,7 +154,7 @@ namespace Il2CppDumper
                         var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition.Module.ImportReference(typeof(void)));
                         methodDefinition.ImplAttributes = (MethodImplAttributes)methodDef.iflags;
                         typeDefinition.Methods.Add(methodDefinition);
-                        var methodReturnType = il2cpp.types[methodDef.returnType];
+                        var methodReturnType = il2Cpp.types[methodDef.returnType];
                         methodDefinition.ReturnType = GetTypeReferenceWithByRef(methodDefinition, methodReturnType);
                         if (methodDefinition.HasBody && typeDefinition.BaseType?.FullName != "System.MulticastDelegate")
                         {
@@ -167,7 +167,7 @@ namespace Il2CppDumper
                         {
                             var parameterDef = metadata.parameterDefs[methodDef.parameterStart + j];
                             var parameterName = metadata.GetStringFromIndex(parameterDef.nameIndex);
-                            var parameterType = il2cpp.types[parameterDef.typeIndex];
+                            var parameterType = il2Cpp.types[parameterDef.typeIndex];
                             var parameterTypeRef = GetTypeReferenceWithByRef(methodDefinition, parameterType);
                             var parameterDefinition = new ParameterDefinition(parameterName, (ParameterAttributes)parameterType.attrs, parameterTypeRef);
                             methodDefinition.Parameters.Add(parameterDefinition);
@@ -206,13 +206,13 @@ namespace Il2CppDumper
                             }
                         }
                         //methodAddress
-                        var methodPointer = il2cpp.GetMethodPointer(methodDef.methodIndex, i, imageIndex, methodDef.token);
+                        var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, i, imageIndex, methodDef.token);
                         if (methodPointer > 0)
                         {
                             var customAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(addressAttribute));
-                            var fixedMethodPointer = il2cpp.FixPointer(methodPointer);
+                            var fixedMethodPointer = il2Cpp.FixPointer(methodPointer);
                             var rva = new CustomAttributeNamedArgument("RVA", new CustomAttributeArgument(stringType, $"0x{fixedMethodPointer:X}"));
-                            var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{il2cpp.MapVATR(methodPointer):X}"));
+                            var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{il2Cpp.MapVATR(methodPointer):X}"));
                             customAttribute.Fields.Add(rva);
                             customAttribute.Fields.Add(offset);
                             methodDefinition.CustomAttributes.Add(customAttribute);
@@ -252,7 +252,7 @@ namespace Il2CppDumper
                     {
                         var eventDef = metadata.eventDefs[i];
                         var eventName = metadata.GetStringFromIndex(eventDef.nameIndex);
-                        var eventType = il2cpp.types[eventDef.typeIndex];
+                        var eventType = il2Cpp.types[eventDef.typeIndex];
                         var eventTypeRef = GetTypeReference(typeDefinition, eventType);
                         var eventDefinition = new EventDefinition(eventName, (EventAttributes)eventType.attrs, eventTypeRef);
                         if (eventDef.add >= 0)
@@ -290,7 +290,7 @@ namespace Il2CppDumper
                 }
             }
             //第三遍，添加CustomAttribute
-            if (il2cpp.version > 20)
+            if (il2Cpp.version > 20)
             {
                 PrepareCustomAttribute();
                 foreach (var imageDef in metadata.imageDefs)
@@ -418,27 +418,27 @@ namespace Il2CppDumper
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY:
                     {
-                        var arrayType = il2cpp.MapVATR<Il2CppArrayType>(il2CppType.data.array);
-                        var oriType = il2cpp.GetIl2CppType(arrayType.etype);
+                        var arrayType = il2Cpp.MapVATR<Il2CppArrayType>(il2CppType.data.array);
+                        var oriType = il2Cpp.GetIl2CppType(arrayType.etype);
                         return new ArrayType(GetTypeReference(memberReference, oriType), arrayType.rank);
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
                     {
-                        var genericClass = il2cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
+                        var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
                         var typeDefinition = typeDefinitionDic[genericClass.typeDefinitionIndex];
                         var genericInstanceType = new GenericInstanceType(moduleDefinition.ImportReference(typeDefinition));
-                        var genericInst = il2cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
-                        var pointers = il2cpp.ReadPointers(genericInst.type_argv, genericInst.type_argc);
+                        var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
+                        var pointers = il2Cpp.ReadPointers(genericInst.type_argv, genericInst.type_argc);
                         foreach (var pointer in pointers)
                         {
-                            var oriType = il2cpp.GetIl2CppType(pointer);
+                            var oriType = il2Cpp.GetIl2CppType(pointer);
                             genericInstanceType.GenericArguments.Add(GetTypeReference(memberReference, oriType));
                         }
                         return genericInstanceType;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY:
                     {
-                        var oriType = il2cpp.GetIl2CppType(il2CppType.data.type);
+                        var oriType = il2Cpp.GetIl2CppType(il2CppType.data.type);
                         return new ArrayType(GetTypeReference(memberReference, oriType));
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
@@ -465,7 +465,7 @@ namespace Il2CppDumper
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
                     {
-                        var oriType = il2cpp.GetIl2CppType(il2CppType.data.type);
+                        var oriType = il2Cpp.GetIl2CppType(il2CppType.data.type);
                         return new PointerType(GetTypeReference(memberReference, oriType));
                     }
                 default:
@@ -478,7 +478,7 @@ namespace Il2CppDumper
             var pointer = metadata.GetDefaultValueFromIndex(dataIndex);
             if (pointer > 0)
             {
-                var defaultValueType = il2cpp.types[typeIndex];
+                var defaultValueType = il2Cpp.types[typeIndex];
                 metadata.Position = pointer;
                 switch (defaultValueType.type)
                 {
@@ -565,7 +565,7 @@ namespace Il2CppDumper
                 for (int i = 0; i < attributeTypeRange.count; i++)
                 {
                     var attributeTypeIndex = metadata.attributeTypes[attributeTypeRange.start + i];
-                    var attributeType = il2cpp.types[attributeTypeIndex];
+                    var attributeType = il2Cpp.types[attributeTypeIndex];
                     var typeDefinition = typeDefinitionDic[attributeType.data.klassIndex];
                     if (knownAttributes.TryGetValue(typeDefinition.FullName, out var methodDefinition))
                     {
@@ -574,12 +574,12 @@ namespace Il2CppDumper
                     }
                     else
                     {
-                        var methodPointer = il2cpp.customAttributeGenerators[attributeIndex];
-                        var fixedMethodPointer = il2cpp.FixPointer(methodPointer);
+                        var methodPointer = il2Cpp.customAttributeGenerators[attributeIndex];
+                        var fixedMethodPointer = il2Cpp.FixPointer(methodPointer);
                         var customAttribute = new CustomAttribute(moduleDefinition.ImportReference(attributeAttribute));
                         var name = new CustomAttributeNamedArgument("Name", new CustomAttributeArgument(stringType, typeDefinition.Name));
                         var rva = new CustomAttributeNamedArgument("RVA", new CustomAttributeArgument(stringType, $"0x{fixedMethodPointer:X}"));
-                        var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{il2cpp.MapVATR(methodPointer):X}"));
+                        var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{il2Cpp.MapVATR(methodPointer):X}"));
                         customAttribute.Fields.Add(name);
                         customAttribute.Fields.Add(rva);
                         customAttribute.Fields.Add(offset);
@@ -599,7 +599,7 @@ namespace Il2CppDumper
             genericParameterDic.Add(genericParameterIndex, genericParameter);
             for (int i = 0; i < param.constraintsCount; ++i)
             {
-                var il2CppType = il2cpp.types[metadata.constraintIndices[param.constraintsStart + i]];
+                var il2CppType = il2Cpp.types[metadata.constraintIndices[param.constraintsStart + i]];
                 genericParameter.Constraints.Add(new GenericParameterConstraint(GetTypeReference((MemberReference)iGenericParameterProvider, il2CppType)));
             }
             return genericParameter;

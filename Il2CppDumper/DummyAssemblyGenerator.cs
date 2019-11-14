@@ -518,7 +518,7 @@ namespace Il2CppDumper
         {
             var attributeNames = new[]
             {
-                "System.Runtime.CompilerServices.CompilerGeneratedAttribute",
+                //"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
                 "System.Runtime.CompilerServices.ExtensionAttribute",
                 "System.Runtime.CompilerServices.NullableAttribute",
                 "System.Runtime.CompilerServices.NullableContextAttribute",

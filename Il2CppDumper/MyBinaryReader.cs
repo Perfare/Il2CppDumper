@@ -10,7 +10,10 @@ namespace Il2CppDumper
     {
         public float version;
         public bool is32Bit;
+
         private MethodInfo readClass;
+        private Dictionary<Type, MethodInfo> readClassCache = new Dictionary<Type, MethodInfo>();
+        private Dictionary<FieldInfo, VersionAttribute> attributeCache = new Dictionary<FieldInfo, VersionAttribute>();
 
         public MyBinaryReader(Stream stream) : base(stream)
         {
@@ -69,10 +72,17 @@ namespace Il2CppDumper
                 var t = new T();
                 foreach (var i in t.GetType().GetFields())
                 {
-                    var attr = (VersionAttribute)Attribute.GetCustomAttribute(i, typeof(VersionAttribute));
-                    if (attr != null)
+                    if (!attributeCache.TryGetValue(i, out var versionAttribute))
                     {
-                        if (version < attr.Min || version > attr.Max)
+                        if (Attribute.IsDefined(i, typeof(VersionAttribute)))
+                        {
+                            versionAttribute = (VersionAttribute)Attribute.GetCustomAttribute(i, typeof(VersionAttribute));
+                            attributeCache.Add(i, versionAttribute);
+                        }
+                    }
+                    if (versionAttribute != null)
+                    {
+                        if (version < versionAttribute.Min || version > versionAttribute.Max)
                             continue;
                     }
                     if (i.FieldType.IsPrimitive)
@@ -81,9 +91,13 @@ namespace Il2CppDumper
                     }
                     else
                     {
-                        var gm = readClass.MakeGenericMethod(i.FieldType);
-                        var o = gm.Invoke(this, null);
-                        i.SetValue(t, o);
+                        if (!readClassCache.TryGetValue(i.FieldType, out var methodInfo))
+                        {
+                            methodInfo = readClass.MakeGenericMethod(i.FieldType);
+                            readClassCache.Add(i.FieldType, methodInfo);
+                        }
+                        var value = methodInfo.Invoke(this, null);
+                        i.SetValue(t, value);
                         break;
                     }
                 }

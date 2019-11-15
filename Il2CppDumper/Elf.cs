@@ -153,7 +153,7 @@ namespace Il2CppDumper
         {
             var dataList = new List<Elf32_Phdr>();
             var execList = new List<Elf32_Phdr>();
-            foreach (var phdr in program_table.Where(x => x.p_type == 1u))
+            foreach (var phdr in program_table)
             {
                 if (phdr.p_memsz != 0ul)
                 {

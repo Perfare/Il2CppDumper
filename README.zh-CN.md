@@ -2,17 +2,17 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/anhqw33vcpmp8ofa?svg=true)](https://ci.appveyor.com/project/Perfare/il2cppdumper/branch/master/artifacts)
 
-从il2cpp文件中获取types, methods, fields等等数据
+从Unity il2cpp文件还原DLl（代码除外）
 
 ## 功能
+* 完整还原除代码以外的DLL信息
 * 支持ELF, ELF64, Mach-O, PE和NSO格式
-* 支持Metadata版本16, 19~24
-* 导出包括types, fields, properties, methods, attributes
+* 支持Unity 5.3及更高版本
 * 自动生成IDA脚本
   * 重命名函数
   * 重命名并注释Metadata
   * MakeFunction完善IDA分析
-* 生成DummyDll
+* 支持dump的安卓.so文件以绕过保护
 
 ## 使用说明
 
@@ -27,8 +27,8 @@ Il2CppDumper.exe <executable-file> <global-metadata> [unityVersion] [mode]
 ### 关于模式
 #### Manual
 你需要手动输入`CodeRegistration`和`MetadataRegistration`的指针地址，一般需要依靠反汇编工具来获取地址
-#### Auto - 已弃用
-~~通过函数的特征字节找到`il2cpp_codegen_register`函数并获取传入`il2cpp::vm::MetadataCache::Register`中的参数1（`CodeRegistration`）和参数2（`MetadataRegistration`）。由于不同编译器优化差异，很多情况下无法正常工作。~~
+#### Auto
+通过函数的特征字节找到`il2cpp_codegen_register`函数并获取传入`il2cpp::vm::MetadataCache::Register`中的参数1（`CodeRegistration`）和参数2（`MetadataRegistration`）。由于不同编译器优化差异，很多情况下无法正常工作。
 #### Auto(Plus) - **优先使用此模式**
 以metadata的数据作为依据，指针特征作为判读条件进行搜索。
 
@@ -42,7 +42,7 @@ Il2CppDumper.exe <executable-file> <global-metadata> [unityVersion] [mode]
 ### 输出文件
 
 #### dump.cs
-文本文件，推荐使用有c#语法高亮的编辑器打开
+简单的反编译代码，推荐使用[dnSpy](https://github.com/0xd4d/dnSpy)或者其他工具从DummyDll获取更完善的代码
 
 #### script.py
 需要安装IDA所需的python。在IDA中File-Script file选择script.py运行即可，会重命名methodName，添加stringLiteral注释和MakeFunction
@@ -51,7 +51,7 @@ Il2CppDumper.exe <executable-file> <global-metadata> [unityVersion] [mode]
 包含所有stringLiteral信息
 
 #### DummyDll
-利用Mono.Cecil生成的仿制Dll，可用于MonoBehaviour的反序列化
+文件夹，包含所有还原的DLL文件
 
 ### 关于config.json
 * `DumpMethod`，`DumpField`，`DumpProperty`，`DumpAttribute`，`DumpFieldOffset`, `DumpMethodOffset`, `DumpTypeDefIndex`

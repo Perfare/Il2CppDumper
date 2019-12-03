@@ -5,7 +5,7 @@ namespace Il2CppDumper
 {
     static class BoyerMooreHorspool
     {
-        public static IEnumerable<int> IndicesOf(this byte[] source, byte[] pattern)
+        public static IEnumerable<int> Search(this byte[] source, byte[] pattern)
         {
             if (source == null)
             {

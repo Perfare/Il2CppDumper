@@ -211,7 +211,7 @@ namespace Il2CppDumper
                                     }
                                     if (val is string str)
                                     {
-                                        writer.Write($" = \"{ToEscapedString(str)}\"");
+                                        writer.Write($" = \"{str.ToEscapedString()}\"");
                                     }
                                     else if (val is char c)
                                     {
@@ -327,7 +327,7 @@ namespace Il2CppDumper
                                         var value = GetDefaultValue(parameterDefault.typeIndex, parameterDefault.dataIndex);
                                         if (value is string str)
                                         {
-                                            parameterStr += $" = \"{ToEscapedString(str)}\"";
+                                            parameterStr += $" = \"{str.ToEscapedString()}\"";
                                         }
                                         else if (value is char c)
                                         {
@@ -376,7 +376,7 @@ namespace Il2CppDumper
             writer.Close();
         }
 
-        public string GetTypeName(Il2CppType type, bool fullName = false)
+        public string GetTypeName(Il2CppType type)
         {
             string ret;
             switch (type.type)
@@ -385,16 +385,7 @@ namespace Il2CppDumper
                 case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
                     {
                         var typeDef = metadata.typeDefs[type.data.klassIndex];
-                        ret = string.Empty;
-                        if (fullName)
-                        {
-                            ret = metadata.GetStringFromIndex(typeDef.namespaceIndex);
-                            if (ret != string.Empty)
-                            {
-                                ret += ".";
-                            }
-                        }
-                        ret += GetTypeName(typeDef);
+                        ret = GetTypeName(typeDef);
                         break;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
@@ -567,57 +558,6 @@ namespace Il2CppDumper
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-        }
-
-        public string ToEscapedString(string s)
-        {
-            var re = new StringBuilder(s.Length);
-            foreach (var c in s)
-            {
-                switch (c)
-                {
-                    case '\'':
-                        re.Append(@"\'");
-                        break;
-                    case '"':
-                        re.Append(@"\""");
-                        break;
-                    case '\t':
-                        re.Append(@"\t");
-                        break;
-                    case '\n':
-                        re.Append(@"\n");
-                        break;
-                    case '\r':
-                        re.Append(@"\r");
-                        break;
-                    case '\f':
-                        re.Append(@"\f");
-                        break;
-                    case '\b':
-                        re.Append(@"\b");
-                        break;
-                    case '\\':
-                        re.Append(@"\\");
-                        break;
-                    case '\0':
-                        re.Append(@"\0");
-                        break;
-                    case '\u0085':
-                        re.Append(@"\u0085");
-                        break;
-                    case '\u2028':
-                        re.Append(@"\u2028");
-                        break;
-                    case '\u2029':
-                        re.Append(@"\u2029");
-                        break;
-                    default:
-                        re.Append(c);
-                        break;
-                }
-            }
-            return re.ToString();
         }
     }
 }

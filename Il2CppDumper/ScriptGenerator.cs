@@ -125,7 +125,7 @@ namespace Il2CppDumper
                 File.WriteAllText("stringliteral.json", JsonConvert.SerializeObject(stringLiterals, Formatting.Indented), new UTF8Encoding(false)); //TODO
                 foreach (var stringLiteral in stringLiterals)
                 {
-                    writer.WriteLine($"SetString({stringLiteral.address}, r'{ToEscapedString(stringLiteral.value)}')");
+                    writer.WriteLine($"SetString({stringLiteral.address}, r'{stringLiteral.value.ToEscapedString()}')");
                 }
                 foreach (var i in metadata.metadataUsageDic[6]) //kIl2CppMetadataUsageMethodRef
                 {
@@ -267,57 +267,6 @@ namespace Il2CppDumper
                 typeNames.Add(GetTypeName(oriType));
             }
             return $"<{string.Join(", ", typeNames)}>";
-        }
-
-        public string ToEscapedString(string s)
-        {
-            var re = new StringBuilder(s.Length);
-            foreach (var c in s)
-            {
-                switch (c)
-                {
-                    case '\'':
-                        re.Append(@"\'");
-                        break;
-                    case '"':
-                        re.Append(@"\""");
-                        break;
-                    case '\t':
-                        re.Append(@"\t");
-                        break;
-                    case '\n':
-                        re.Append(@"\n");
-                        break;
-                    case '\r':
-                        re.Append(@"\r");
-                        break;
-                    case '\f':
-                        re.Append(@"\f");
-                        break;
-                    case '\b':
-                        re.Append(@"\b");
-                        break;
-                    case '\\':
-                        re.Append(@"\\");
-                        break;
-                    case '\0':
-                        re.Append(@"\0");
-                        break;
-                    case '\u0085':
-                        re.Append(@"\u0085");
-                        break;
-                    case '\u2028':
-                        re.Append(@"\u2028");
-                        break;
-                    case '\u2029':
-                        re.Append(@"\u2029");
-                        break;
-                    default:
-                        re.Append(c);
-                        break;
-                }
-            }
-            return re.ToString();
         }
     }
 }

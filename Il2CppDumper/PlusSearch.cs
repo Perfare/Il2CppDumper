@@ -350,7 +350,7 @@ namespace Il2CppDumper
             {
                 il2Cpp.Position = sec.offset;
                 var buff = il2Cpp.ReadBytes((int)(sec.offsetEnd - sec.offset));
-                foreach (var index in buff.IndicesOf(featureBytes2019))
+                foreach (var index in buff.Search(featureBytes2019))
                 {
                     var va = (ulong)index + sec.address;
                     foreach (var dataSec in data)
@@ -404,7 +404,7 @@ namespace Il2CppDumper
             {
                 il2Cpp.Position = sec.offset;
                 var buff = il2Cpp.ReadBytes((int)(sec.offsetEnd - sec.offset));
-                foreach (var index in buff.IndicesOf(featureBytes2019))
+                foreach (var index in buff.Search(featureBytes2019))
                 {
                     var va = (ulong)index + sec.address;
                     foreach (var dataSec in data)

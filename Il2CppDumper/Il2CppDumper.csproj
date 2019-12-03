@@ -56,6 +56,7 @@
     <Compile Include="NSOClass.cs" />
     <Compile Include="ScriptGenerator.cs" />
     <Compile Include="SearchSection.cs" />
+    <Compile Include="StringExtensions.cs" />
     <Compile Include="VersionAttribute.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="DummyAssemblyGenerator.cs" />

@@ -165,6 +165,10 @@ namespace Il2CppDumper
 
         public ulong[] ReadPointers(ulong addr, long count)
         {
+            if (addr == 0 || count == 0)
+            {
+                return new ulong[0];
+            }
             if (is32Bit)
             {
                 return Array.ConvertAll(MapVATR<uint>(addr, count), x => (ulong)x);

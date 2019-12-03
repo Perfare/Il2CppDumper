@@ -90,12 +90,10 @@ namespace Il2CppDumper
             {12,"float"},
             {13,"double"},
             {14,"string"},
-            {19,"T"},
             {22,"TypedReference"},
             {24,"IntPtr"},
             {25,"UIntPtr"},
             {28,"object"},
-            {30,"T"},
         };
 
         public static readonly Version Unity20183 = new Version(2018, 3);

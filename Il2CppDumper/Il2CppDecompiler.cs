@@ -341,48 +341,56 @@ namespace Il2CppDumper
             writer.Close();
         }
 
-        public string GetTypeName(Il2CppType type)
+        public string GetTypeName(Il2CppType il2CppType)
         {
             string ret;
-            switch (type.type)
+            switch (il2CppType.type)
             {
                 case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
                 case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
                     {
-                        var typeDef = metadata.typeDefs[type.data.klassIndex];
+                        var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
                         ret = GetTypeName(typeDef);
                         break;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
                     {
-                        var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(type.data.generic_class);
+                        var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
                         var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
                         ret = metadata.GetStringFromIndex(typeDef.nameIndex);
                         var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
+                        ret = ret.Replace($"`{genericInst.type_argc}", "");
                         ret += GetGenericTypeParams(genericInst);
+                        break;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
+                case Il2CppTypeEnum.IL2CPP_TYPE_MVAR:
+                    {
+                        var param = metadata.genericParameters[il2CppType.data.genericParameterIndex];
+                        ret = metadata.GetStringFromIndex(param.nameIndex);
                         break;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY:
                     {
-                        var arrayType = il2Cpp.MapVATR<Il2CppArrayType>(type.data.array);
+                        var arrayType = il2Cpp.MapVATR<Il2CppArrayType>(il2CppType.data.array);
                         var oriType = il2Cpp.GetIl2CppType(arrayType.etype);
                         ret = $"{GetTypeName(oriType)}[{new string(',', arrayType.rank - 1)}]";
                         break;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY:
                     {
-                        var oriType = il2Cpp.GetIl2CppType(type.data.type);
+                        var oriType = il2Cpp.GetIl2CppType(il2CppType.data.type);
                         ret = $"{GetTypeName(oriType)}[]";
                         break;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
                     {
-                        var oriType = il2Cpp.GetIl2CppType(type.data.type);
+                        var oriType = il2Cpp.GetIl2CppType(il2CppType.data.type);
                         ret = $"{GetTypeName(oriType)}*";
                         break;
                     }
                 default:
-                    ret = TypeString[(int)type.type];
+                    ret = TypeString[(int)il2CppType.type];
                     break;
             }
 
@@ -397,6 +405,19 @@ namespace Il2CppDumper
                 ret += GetTypeName(il2Cpp.types[typeDef.declaringTypeIndex]) + ".";
             }
             ret += metadata.GetStringFromIndex(typeDef.nameIndex);
+            var names = new List<string>();
+            if (typeDef.genericContainerIndex >= 0)
+            {
+                var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
+                for (int i = 0; i < genericContainer.type_argc; i++)
+                {
+                    var genericParameterIndex = genericContainer.genericParameterStart + i;
+                    var param = metadata.genericParameters[genericParameterIndex];
+                    names.Add(metadata.GetStringFromIndex(param.nameIndex));
+                }
+                ret = ret.Replace($"`{genericContainer.type_argc}", "");
+                ret += $"<{string.Join(", ", names)}>";
+            }
             return ret;
         }
 

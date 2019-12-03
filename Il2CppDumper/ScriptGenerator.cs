@@ -216,7 +216,15 @@ namespace Il2CppDumper
                         var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
                         ret = metadata.GetStringFromIndex(typeDef.nameIndex);
                         var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
+                        ret = ret.Replace($"`{genericInst.type_argc}", "");
                         ret += GetGenericTypeParams(genericInst);
+                        break;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
+                case Il2CppTypeEnum.IL2CPP_TYPE_MVAR:
+                    {
+                        var param = metadata.genericParameters[type.data.genericParameterIndex];
+                        ret = metadata.GetStringFromIndex(param.nameIndex);
                         break;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY:
@@ -254,6 +262,19 @@ namespace Il2CppDumper
                 ret += GetTypeName(il2Cpp.types[typeDef.declaringTypeIndex]) + ".";
             }
             ret += metadata.GetStringFromIndex(typeDef.nameIndex);
+            var names = new List<string>();
+            if (typeDef.genericContainerIndex >= 0)
+            {
+                var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
+                for (int i = 0; i < genericContainer.type_argc; i++)
+                {
+                    var genericParameterIndex = genericContainer.genericParameterStart + i;
+                    var param = metadata.genericParameters[genericParameterIndex];
+                    names.Add(metadata.GetStringFromIndex(param.nameIndex));
+                }
+                ret = ret.Replace($"`{genericContainer.type_argc}", "");
+                ret += $"<{string.Join(", ", names)}>";
+            }
             return ret;
         }
 

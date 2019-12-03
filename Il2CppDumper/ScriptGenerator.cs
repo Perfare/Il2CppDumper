@@ -3,17 +3,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using static Il2CppDumper.DefineConstants;
 
 namespace Il2CppDumper
 {
     public class ScriptGenerator
     {
-        private Il2CppDecompiler decompiler;
+        private Metadata metadata;
+        private Il2Cpp il2Cpp;
         private Dictionary<Il2CppTypeDefinition, int> typeDefImageIndices = new Dictionary<Il2CppTypeDefinition, int>();
 
-        public ScriptGenerator(Il2CppDecompiler decompiler)
+        public ScriptGenerator(Metadata metadata, Il2Cpp il2Cpp)
         {
-            this.decompiler = decompiler;
+            this.metadata = metadata;
+            this.il2Cpp = il2Cpp;
         }
 
         public void WriteScript(StreamWriter writer, Config config)
@@ -44,25 +47,25 @@ namespace Il2CppDumper
             writer.WriteLine();
             writer.WriteLine("index = 1");
             writer.WriteLine("print('Making method name...')");
-            for (var imageIndex = 0; imageIndex < decompiler.Images.Length; imageIndex++)
+            for (var imageIndex = 0; imageIndex < metadata.imageDefs.Length; imageIndex++)
             {
-                var imageDef = decompiler.Images[imageIndex];
+                var imageDef = metadata.imageDefs[imageIndex];
                 var typeEnd = imageDef.typeStart + imageDef.typeCount;
                 for (int typeIndex = imageDef.typeStart; typeIndex < typeEnd; typeIndex++)
                 {
-                    var typeDef = decompiler.Types[typeIndex];
-                    var typeName = decompiler.GetTypeName(typeDef);
+                    var typeDef = metadata.typeDefs[typeIndex];
+                    var typeName = GetTypeName(typeDef);
                     typeDefImageIndices.Add(typeDef, imageIndex);
                     var methodEnd = typeDef.methodStart + typeDef.method_count;
                     for (var i = typeDef.methodStart; i < methodEnd; ++i)
                     {
-                        var methodDef = decompiler.Methods[i];
-                        var methodName = decompiler.GetStringFromIndex(methodDef.nameIndex);
-                        var methodPointer = decompiler.GetMethodPointer(methodDef.methodIndex, i, imageIndex, methodDef.token);
+                        var methodDef = metadata.methodDefs[i];
+                        var methodName = metadata.GetStringFromIndex(methodDef.nameIndex);
+                        var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, i, imageIndex, methodDef.token);
                         if (methodPointer > 0)
                         {
-                            var fixedMethodPointer = decompiler.FixPointer(methodPointer);
-                            if (decompiler.IsPE)
+                            var fixedMethodPointer = il2Cpp.FixPointer(methodPointer);
+                            if (il2Cpp is PE)
                             {
                                 writer.WriteLine($"SetName(0x{methodPointer:X}, '{typeName + "$$" + methodName}')");
                             }
@@ -75,83 +78,106 @@ namespace Il2CppDumper
                 }
             }
             writer.WriteLine("print('Make method name done')");
-            if (decompiler.Version > 16)
+            if (il2Cpp.version > 16)
             {
                 writer.WriteLine("print('Setting MetadataUsage...')");
-                foreach (var i in decompiler.MetadataUsageDic[1]) //kIl2CppMetadataUsageTypeInfo
+                foreach (var i in metadata.metadataUsageDic[1]) //kIl2CppMetadataUsageTypeInfo
                 {
-                    var type = decompiler.il2CppTypes[i.Value];
-                    var typeName = decompiler.GetTypeName(type, true);
-                    writer.WriteLine($"SetName(0x{decompiler.MetadataUsages[i.Key]:X}, '{"Class$" + typeName}')");
-                    writer.WriteLine($"idc.set_cmt(0x{decompiler.MetadataUsages[i.Key]:X}, r'{typeName}', 1)");
+                    var type = il2Cpp.types[i.Value];
+                    var typeName = GetTypeName(type, true);
+                    writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Class$" + typeName}')");
+                    writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, r'{typeName}', 1)");
                 }
-                foreach (var i in decompiler.MetadataUsageDic[2]) //kIl2CppMetadataUsageIl2CppType
+                foreach (var i in metadata.metadataUsageDic[2]) //kIl2CppMetadataUsageIl2CppType
                 {
-                    var type = decompiler.il2CppTypes[i.Value];
-                    var typeName = decompiler.GetTypeName(type, true);
-                    writer.WriteLine($"SetName(0x{decompiler.MetadataUsages[i.Key]:X}, '{"Class$" + typeName}')");
-                    writer.WriteLine($"idc.set_cmt(0x{decompiler.MetadataUsages[i.Key]:X}, r'{typeName}', 1)");
+                    var type = il2Cpp.types[i.Value];
+                    var typeName = GetTypeName(type, true);
+                    writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Class$" + typeName}')");
+                    writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, r'{typeName}', 1)");
                 }
-                foreach (var i in decompiler.MetadataUsageDic[3]) //kIl2CppMetadataUsageMethodDef
+                foreach (var i in metadata.metadataUsageDic[3]) //kIl2CppMetadataUsageMethodDef
                 {
-                    var methodDef = decompiler.Methods[i.Value];
-                    var typeDef = decompiler.Types[methodDef.declaringType];
-                    var typeName = decompiler.GetTypeName(typeDef);
-                    var methodName = typeName + "." + decompiler.GetStringFromIndex(methodDef.nameIndex) + "()";
-                    writer.WriteLine($"SetName(0x{decompiler.MetadataUsages[i.Key]:X}, '{"Method$" + methodName}')");
-                    writer.WriteLine($"idc.set_cmt(0x{decompiler.MetadataUsages[i.Key]:X}, '{"Method$" + methodName}', 1)");
+                    var methodDef = metadata.methodDefs[i.Value];
+                    var typeDef = metadata.typeDefs[methodDef.declaringType];
+                    var typeName = GetTypeName(typeDef);
+                    var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex) + "()";
+                    writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}')");
+                    writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}', 1)");
                     var imageIndex = typeDefImageIndices[typeDef];
-                    var methodPointer = decompiler.GetMethodPointer(methodDef.methodIndex, (int)i.Value, imageIndex, methodDef.token);
-                    writer.WriteLine($"idc.set_cmt(0x{decompiler.MetadataUsages[i.Key]:X}, '0x{methodPointer:X}', 0)");
+                    var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, (int)i.Value, imageIndex, methodDef.token);
+                    writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, '0x{methodPointer:X}', 0)");
                 }
-                foreach (var i in decompiler.MetadataUsageDic[4]) //kIl2CppMetadataUsageFieldInfo
+                foreach (var i in metadata.metadataUsageDic[4]) //kIl2CppMetadataUsageFieldInfo
                 {
-                    var fieldRef = decompiler.FieldRefs[i.Value];
-                    var type = decompiler.il2CppTypes[fieldRef.typeIndex];
-                    var typeDef = decompiler.Types[type.data.klassIndex];
-                    var fieldDef = decompiler.Fields[typeDef.fieldStart + fieldRef.fieldIndex];
-                    var fieldName = decompiler.GetTypeName(type, true) + "." + decompiler.GetStringFromIndex(fieldDef.nameIndex);
-                    writer.WriteLine($"SetName(0x{decompiler.MetadataUsages[i.Key]:X}, '{"Field$" + fieldName}')");
-                    writer.WriteLine($"idc.set_cmt(0x{decompiler.MetadataUsages[i.Key]:X}, r'{fieldName}', 1)");
+                    var fieldRef = metadata.fieldRefs[i.Value];
+                    var type = il2Cpp.types[fieldRef.typeIndex];
+                    var typeDef = metadata.typeDefs[type.data.klassIndex];
+                    var fieldDef = metadata.fieldDefs[typeDef.fieldStart + fieldRef.fieldIndex];
+                    var fieldName = GetTypeName(type, true) + "." + metadata.GetStringFromIndex(fieldDef.nameIndex);
+                    writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Field$" + fieldName}')");
+                    writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, r'{fieldName}', 1)");
                 }
-                var stringLiterals = decompiler.MetadataUsageDic[5].Select(x => new //kIl2CppMetadataUsageStringLiteral
+                var stringLiterals = metadata.metadataUsageDic[5].Select(x => new //kIl2CppMetadataUsageStringLiteral
                 {
-                    value = decompiler.GetStringLiteralFromIndex(x.Value),
-                    address = $"0x{decompiler.MetadataUsages[x.Key]:X}"
+                    value = metadata.GetStringLiteralFromIndex(x.Value),
+                    address = $"0x{il2Cpp.metadataUsages[x.Key]:X}"
                 }).ToArray();
                 File.WriteAllText("stringliteral.json", JsonConvert.SerializeObject(stringLiterals, Formatting.Indented), new UTF8Encoding(false)); //TODO
                 foreach (var stringLiteral in stringLiterals)
                 {
-                    writer.WriteLine($"SetString({stringLiteral.address}, r'{decompiler.ToEscapedString(stringLiteral.value)}')");
+                    writer.WriteLine($"SetString({stringLiteral.address}, r'{ToEscapedString(stringLiteral.value)}')");
                 }
-                foreach (var i in decompiler.MetadataUsageDic[6]) //kIl2CppMetadataUsageMethodRef
+                foreach (var i in metadata.metadataUsageDic[6]) //kIl2CppMetadataUsageMethodRef
                 {
-                    var methodSpec = decompiler.MethodSpecs[i.Value];
-                    var methodDef = decompiler.Methods[methodSpec.methodDefinitionIndex];
-                    var typeDef = decompiler.Types[methodDef.declaringType];
-                    var typeName = decompiler.GetTypeName(typeDef);
+                    var methodSpec = il2Cpp.methodSpecs[i.Value];
+                    var methodDef = metadata.methodDefs[methodSpec.methodDefinitionIndex];
+                    var typeDef = metadata.typeDefs[methodDef.declaringType];
+                    var typeName = GetTypeName(typeDef);
                     if (methodSpec.classIndexIndex != -1)
                     {
-                        var classInst = decompiler.GenericInsts[methodSpec.classIndexIndex];
-                        typeName += decompiler.GetGenericTypeParams(classInst);
+                        var classInst = il2Cpp.genericInsts[methodSpec.classIndexIndex];
+                        typeName += GetGenericTypeParams(classInst);
                     }
-                    var methodName = typeName + "." + decompiler.GetStringFromIndex(methodDef.nameIndex) + "()";
+                    var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex) + "()";
                     if (methodSpec.methodIndexIndex != -1)
                     {
-                        var methodInst = decompiler.GenericInsts[methodSpec.methodIndexIndex];
-                        methodName += decompiler.GetGenericTypeParams(methodInst);
+                        var methodInst = il2Cpp.genericInsts[methodSpec.methodIndexIndex];
+                        methodName += GetGenericTypeParams(methodInst);
                     }
-                    writer.WriteLine($"SetName(0x{decompiler.MetadataUsages[i.Key]:X}, '{"Method$" + methodName}')");
-                    writer.WriteLine($"idc.set_cmt(0x{decompiler.MetadataUsages[i.Key]:X}, '{"Method$" + methodName}', 1)");
+                    writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}')");
+                    writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}', 1)");
                     var imageIndex = typeDefImageIndices[typeDef];
-                    var methodPointer = decompiler.GetMethodPointer(methodDef.methodIndex, methodSpec.methodDefinitionIndex, imageIndex, methodDef.token);
-                    writer.WriteLine($"idc.set_cmt(0x{decompiler.MetadataUsages[i.Key]:X}, '0x{methodPointer:X}', 0)");
+                    var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, methodSpec.methodDefinitionIndex, imageIndex, methodDef.token);
+                    writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, '0x{methodPointer:X}', 0)");
                 }
                 writer.WriteLine("print('Set MetadataUsage done')");
             }
             if (config.MakeFunction)
             {
-                var orderedPointers = decompiler.GenerateOrderedPointers();
+                List<ulong> orderedPointers;
+                if (il2Cpp.version >= 24.2f)
+                {
+                    orderedPointers = new List<ulong>();
+                    foreach (var methodPointers in il2Cpp.codeGenModuleMethodPointers)
+                    {
+                        orderedPointers.AddRange(methodPointers);
+                    }
+                }
+                else
+                {
+                    orderedPointers = il2Cpp.methodPointers.ToList();
+                }
+                orderedPointers.AddRange(il2Cpp.genericMethodPointers);
+                orderedPointers.AddRange(il2Cpp.invokerPointers);
+                orderedPointers.AddRange(il2Cpp.customAttributeGenerators);
+                if (il2Cpp.version >= 22)
+                {
+                    orderedPointers.AddRange(il2Cpp.reversePInvokeWrappers);
+                    orderedPointers.AddRange(il2Cpp.unresolvedVirtualCallPointers);
+                }
+                //TODO interopData内也包含函数
+                orderedPointers = orderedPointers.Distinct().OrderBy(x => x).ToList();
+                orderedPointers.Remove(0);
                 writer.WriteLine("print('Making function...')");
                 for (int i = 0; i < orderedPointers.Count - 1; i++)
                 {
@@ -161,6 +187,137 @@ namespace Il2CppDumper
             }
             writer.WriteLine("print('Script finished!')");
             writer.Close();
+        }
+
+        public string GetTypeName(Il2CppType type, bool fullName = false)
+        {
+            string ret;
+            switch (type.type)
+            {
+                case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
+                case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
+                    {
+                        var typeDef = metadata.typeDefs[type.data.klassIndex];
+                        ret = string.Empty;
+                        if (fullName)
+                        {
+                            ret = metadata.GetStringFromIndex(typeDef.namespaceIndex);
+                            if (ret != string.Empty)
+                            {
+                                ret += ".";
+                            }
+                        }
+                        ret += GetTypeName(typeDef);
+                        break;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
+                    {
+                        var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(type.data.generic_class);
+                        var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
+                        ret = metadata.GetStringFromIndex(typeDef.nameIndex);
+                        var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
+                        ret += GetGenericTypeParams(genericInst);
+                        break;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY:
+                    {
+                        var arrayType = il2Cpp.MapVATR<Il2CppArrayType>(type.data.array);
+                        var oriType = il2Cpp.GetIl2CppType(arrayType.etype);
+                        ret = $"{GetTypeName(oriType)}[{new string(',', arrayType.rank - 1)}]";
+                        break;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY:
+                    {
+                        var oriType = il2Cpp.GetIl2CppType(type.data.type);
+                        ret = $"{GetTypeName(oriType)}[]";
+                        break;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
+                    {
+                        var oriType = il2Cpp.GetIl2CppType(type.data.type);
+                        ret = $"{GetTypeName(oriType)}*";
+                        break;
+                    }
+                default:
+                    ret = TypeString[(int)type.type];
+                    break;
+            }
+
+            return ret;
+        }
+
+        public string GetTypeName(Il2CppTypeDefinition typeDef)
+        {
+            var ret = string.Empty;
+            if (typeDef.declaringTypeIndex != -1)
+            {
+                ret += GetTypeName(il2Cpp.types[typeDef.declaringTypeIndex]) + ".";
+            }
+            ret += metadata.GetStringFromIndex(typeDef.nameIndex);
+            return ret;
+        }
+
+        public string GetGenericTypeParams(Il2CppGenericInst genericInst)
+        {
+            var typeNames = new List<string>();
+            var pointers = il2Cpp.ReadPointers(genericInst.type_argv, genericInst.type_argc);
+            for (uint i = 0; i < genericInst.type_argc; ++i)
+            {
+                var oriType = il2Cpp.GetIl2CppType(pointers[i]);
+                typeNames.Add(GetTypeName(oriType));
+            }
+            return $"<{string.Join(", ", typeNames)}>";
+        }
+
+        public string ToEscapedString(string s)
+        {
+            var re = new StringBuilder(s.Length);
+            foreach (var c in s)
+            {
+                switch (c)
+                {
+                    case '\'':
+                        re.Append(@"\'");
+                        break;
+                    case '"':
+                        re.Append(@"\""");
+                        break;
+                    case '\t':
+                        re.Append(@"\t");
+                        break;
+                    case '\n':
+                        re.Append(@"\n");
+                        break;
+                    case '\r':
+                        re.Append(@"\r");
+                        break;
+                    case '\f':
+                        re.Append(@"\f");
+                        break;
+                    case '\b':
+                        re.Append(@"\b");
+                        break;
+                    case '\\':
+                        re.Append(@"\\");
+                        break;
+                    case '\0':
+                        re.Append(@"\0");
+                        break;
+                    case '\u0085':
+                        re.Append(@"\u0085");
+                        break;
+                    case '\u2028':
+                        re.Append(@"\u2028");
+                        break;
+                    case '\u2029':
+                        re.Append(@"\u2029");
+                        break;
+                    default:
+                        re.Append(c);
+                        break;
+                }
+            }
+            return re.ToString();
         }
     }
 }

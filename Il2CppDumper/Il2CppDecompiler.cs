@@ -13,23 +13,6 @@ namespace Il2CppDumper
         private Il2Cpp il2Cpp;
         private Dictionary<Il2CppMethodDefinition, string> methodModifiers = new Dictionary<Il2CppMethodDefinition, string>();
 
-        public float Version => il2Cpp.version;
-        public Il2CppImageDefinition[] Images => metadata.imageDefs;
-        public Il2CppTypeDefinition[] Types => metadata.typeDefs;
-        public Il2CppMethodDefinition[] Methods => metadata.methodDefs;
-        public Il2CppParameterDefinition[] Parameters => metadata.parameterDefs;
-        public Il2CppFieldDefinition[] Fields => metadata.fieldDefs;
-        public Il2CppPropertyDefinition[] Properties => metadata.propertyDefs;
-        public Il2CppEventDefinition[] Events => metadata.eventDefs;
-        public Il2CppGenericContainer[] GenericContainers => metadata.genericContainers;
-        public Il2CppGenericParameter[] GenericParameters => metadata.genericParameters;
-        public Il2CppFieldRef[] FieldRefs => metadata.fieldRefs;
-        public Dictionary<uint, SortedDictionary<uint, uint>> MetadataUsageDic => metadata.metadataUsageDic;
-        public Il2CppType[] il2CppTypes => il2Cpp.types;
-        public ulong[] MetadataUsages => il2Cpp.metadataUsages;
-        public Il2CppGenericInst[] GenericInsts => il2Cpp.genericInsts;
-        public Il2CppMethodSpec[] MethodSpecs => il2Cpp.methodSpecs;
-
         public Il2CppDecompiler(Metadata metadata, Il2Cpp il2Cpp)
         {
             this.metadata = metadata;
@@ -636,42 +619,5 @@ namespace Il2CppDumper
             }
             return re.ToString();
         }
-
-        public List<ulong> GenerateOrderedPointers()
-        {
-            List<ulong> orderedPointers;
-            if (il2Cpp.version >= 24.2f)
-            {
-                orderedPointers = new List<ulong>();
-                foreach (var methodPointers in il2Cpp.codeGenModuleMethodPointers)
-                {
-                    orderedPointers.AddRange(methodPointers);
-                }
-            }
-            else
-            {
-                orderedPointers = il2Cpp.methodPointers.ToList();
-            }
-            orderedPointers.AddRange(il2Cpp.genericMethodPointers);
-            orderedPointers.AddRange(il2Cpp.invokerPointers);
-            orderedPointers.AddRange(il2Cpp.customAttributeGenerators);
-            if (il2Cpp.version >= 22)
-            {
-                orderedPointers.AddRange(il2Cpp.reversePInvokeWrappers);
-                orderedPointers.AddRange(il2Cpp.unresolvedVirtualCallPointers);
-            }
-            //TODO interopData内也包含函数
-            orderedPointers = orderedPointers.Distinct().OrderBy(x => x).ToList();
-            orderedPointers.Remove(0);
-            return orderedPointers;
-        }
-
-        //TODO
-        public string GetStringFromIndex(uint index) => metadata.GetStringFromIndex(index);
-        public string GetStringLiteralFromIndex(uint index) => metadata.GetStringLiteralFromIndex(index);
-        public bool IsPE => il2Cpp is PE;
-        public ulong GetMethodPointer(int methodIndex, int methodDefinitionIndex, int imageIndex, uint methodToken)
-            => il2Cpp.GetMethodPointer(methodIndex, methodDefinitionIndex, imageIndex, methodToken);
-        public ulong FixPointer(ulong pointer) => il2Cpp.FixPointer(pointer);
     }
 }

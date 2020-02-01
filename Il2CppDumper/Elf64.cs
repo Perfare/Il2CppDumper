@@ -75,8 +75,8 @@ namespace Il2CppDumper
                 for (int i = 0; i < elf_header.e_shnum; i++)
                 {
                     var section = ReadClass<Elf64_Shdr>(elf_header.e_shoff + elf_header.e_shentsize * (ulong)i);
-                    string key = ReadStringToNull(section_name_block_off + section.sh_name);
-                    if(!sectionWithName.ContainsKey(key))
+                    var key = ReadStringToNull(section_name_block_off + section.sh_name);
+                    if (!sectionWithName.ContainsKey(key))
                     {
                         sectionWithName.Add(key, section);
                     }

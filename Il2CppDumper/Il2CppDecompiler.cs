@@ -102,7 +102,7 @@ namespace Il2CppDumper
                             writer.Write("enum ");
                         else
                             writer.Write("class ");
-                        var typeName = GetTypeName(typeDef);
+                        var typeName = GetTypeDefName(typeDef);
                         writer.Write($"{typeName}");
                         if (extends.Count > 0)
                             writer.Write($" : {string.Join(", ", extends)}");
@@ -350,7 +350,7 @@ namespace Il2CppDumper
                 case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
                     {
                         var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
-                        ret = GetTypeName(typeDef);
+                        ret = GetTypeDefName(typeDef);
                         break;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
@@ -397,7 +397,7 @@ namespace Il2CppDumper
             return ret;
         }
 
-        public string GetTypeName(Il2CppTypeDefinition typeDef)
+        public string GetTypeDefName(Il2CppTypeDefinition typeDef)
         {
             var ret = string.Empty;
             if (typeDef.declaringTypeIndex != -1)

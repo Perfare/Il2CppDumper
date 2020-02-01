@@ -54,7 +54,7 @@ namespace Il2CppDumper
                 for (int typeIndex = imageDef.typeStart; typeIndex < typeEnd; typeIndex++)
                 {
                     var typeDef = metadata.typeDefs[typeIndex];
-                    var typeName = GetTypeName(typeDef);
+                    var typeName = GetTypeDefName(typeDef);
                     typeDefImageIndices.Add(typeDef, imageIndex);
                     var methodEnd = typeDef.methodStart + typeDef.method_count;
                     for (var i = typeDef.methodStart; i < methodEnd; ++i)
@@ -99,7 +99,7 @@ namespace Il2CppDumper
                 {
                     var methodDef = metadata.methodDefs[i.Value];
                     var typeDef = metadata.typeDefs[methodDef.declaringType];
-                    var typeName = GetTypeName(typeDef);
+                    var typeName = GetTypeDefName(typeDef);
                     var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex) + "()";
                     writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}')");
                     writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}', 1)");
@@ -132,7 +132,7 @@ namespace Il2CppDumper
                     var methodSpec = il2Cpp.methodSpecs[i.Value];
                     var methodDef = metadata.methodDefs[methodSpec.methodDefinitionIndex];
                     var typeDef = metadata.typeDefs[methodDef.declaringType];
-                    var typeName = GetTypeName(typeDef);
+                    var typeName = GetTypeDefName(typeDef, false);
                     if (methodSpec.classIndexIndex != -1)
                     {
                         var classInst = il2Cpp.genericInsts[methodSpec.classIndexIndex];
@@ -207,7 +207,7 @@ namespace Il2CppDumper
                                 ret += ".";
                             }
                         }
-                        ret += GetTypeName(typeDef);
+                        ret += GetTypeDefName(typeDef);
                         break;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
@@ -254,7 +254,7 @@ namespace Il2CppDumper
             return ret;
         }
 
-        public string GetTypeName(Il2CppTypeDefinition typeDef)
+        private string GetTypeDefName(Il2CppTypeDefinition typeDef, bool generic = true)
         {
             var ret = string.Empty;
             if (typeDef.declaringTypeIndex != -1)
@@ -263,7 +263,7 @@ namespace Il2CppDumper
             }
             ret += metadata.GetStringFromIndex(typeDef.nameIndex);
             var names = new List<string>();
-            if (typeDef.genericContainerIndex >= 0)
+            if (generic && typeDef.genericContainerIndex >= 0)
             {
                 var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
                 for (int i = 0; i < genericContainer.type_argc; i++)

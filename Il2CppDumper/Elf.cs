@@ -22,7 +22,7 @@ namespace Il2CppDumper
         * ADD R2, X, X
         */
         private static readonly string ARMFeatureBytes = "? 0x10 ? 0xE7 ? 0x00 ? 0xE0 ? 0x20 ? 0xE0";
-        private static readonly string X86FeatureBytes = "? 0x10 ? 0xE7 ? 0x00 ? 0xE0 ? 0x20 ? 0xE0";
+        private static readonly string X86FeatureBytes = "? 0x10 ? 0xE7 ? 0x00 ? 0xE0 ? 0x20 ? 0xE0"; //TODO
 
         public Elf(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
@@ -116,17 +116,24 @@ namespace Il2CppDumper
             {
                 Position = exec.p_offset;
                 var buff = ReadBytes((int)exec.p_filesz);
-                resultList.AddRange(buff.Search(featureBytes));
+                foreach (var temp in buff.Search(featureBytes))
+                {
+                    var bin = buff[temp + 2].HexToBin();
+                    if (bin[3] == '1') //LDR
+                    {
+                        resultList.Add(temp);
+                    }
+                }
             }
             if (resultList.Count == 1)
             {
                 uint codeRegistration = 0;
                 uint metadataRegistration = 0;
+                var result = (uint)resultList[0];
                 if (version < 24f)
                 {
                     if (elf_header.e_machine == 40)
                     {
-                        var result = (uint)resultList[0];
                         Position = result + 0x14;
                         codeRegistration = ReadUInt32() + _GLOBAL_OFFSET_TABLE_;
                         Position = result + 0x18;
@@ -139,7 +146,6 @@ namespace Il2CppDumper
                 {
                     if (elf_header.e_machine == 40)
                     {
-                        var result = (uint)resultList[0];
                         Position = result + 0x14;
                         codeRegistration = ReadUInt32() + result + 0xcu + dumpAddr;
                         Position = result + 0x10;

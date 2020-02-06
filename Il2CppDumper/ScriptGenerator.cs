@@ -11,24 +11,23 @@ namespace Il2CppDumper
     {
         private Metadata metadata;
         private Il2Cpp il2Cpp;
-        private StreamWriter writer;
         private Dictionary<Il2CppTypeDefinition, int> typeDefImageIndices = new Dictionary<Il2CppTypeDefinition, int>();
 
         public ScriptGenerator(Metadata metadata, Il2Cpp il2Cpp)
         {
-            writer = new StreamWriter(new FileStream("ida.py", FileMode.Create), new UTF8Encoding(false));
             this.metadata = metadata;
             this.il2Cpp = il2Cpp;
         }
 
         public void WriteScript(Config config)
         {
-            writer.WriteLine("#encoding: utf-8");
+            var writer = new StreamWriter(new FileStream("ida.py", FileMode.Create), new UTF8Encoding(false));
+            writer.WriteLine("# -*- coding: utf-8 -*-");
             writer.WriteLine("import idaapi");
             writer.WriteLine();
             writer.WriteLine("def SetString(addr, comm):");
             writer.WriteLine("\tglobal index");
-            writer.WriteLine("\tname = \"StringLiteral_\" + str(index);");
+            writer.WriteLine("\tname = \"StringLiteral_\" + str(index)");
             writer.WriteLine("\tret = idc.set_name(addr, name, SN_NOWARN)");
             writer.WriteLine("\tidc.set_cmt(addr, comm, 1)");
             writer.WriteLine("\tindex += 1");

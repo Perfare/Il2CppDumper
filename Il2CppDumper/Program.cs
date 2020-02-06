@@ -266,14 +266,12 @@ namespace Il2CppDumper
         private static void Dump(Metadata metadata, Il2Cpp il2Cpp)
         {
             Console.WriteLine("Dumping...");
-            var writer = new StreamWriter(new FileStream("dump.cs", FileMode.Create), new UTF8Encoding(false));
             var decompiler = new Il2CppDecompiler(metadata, il2Cpp);
-            decompiler.Decompile(writer, config);
+            decompiler.Decompile(config);
             Console.WriteLine("Done!");
             Console.WriteLine("Generate script...");
-            var scriptwriter = new StreamWriter(new FileStream("script.py", FileMode.Create), new UTF8Encoding(false));
             var scriptGenerator = new ScriptGenerator(metadata, il2Cpp);
-            scriptGenerator.WriteScript(scriptwriter, config);
+            scriptGenerator.WriteScript(config);
             Console.WriteLine("Done!");
             if (config.DummyDll)
             {

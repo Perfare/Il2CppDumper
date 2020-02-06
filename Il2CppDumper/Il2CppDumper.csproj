@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BoyerMooreHorspool.cs" />
+    <Compile Include="ElfConstants.cs" />
     <Compile Include="Il2CppDecompiler.cs" />
     <Compile Include="Il2CppDummyDll.cs" />
     <Compile Include="Lz4DecoderStream.cs" />

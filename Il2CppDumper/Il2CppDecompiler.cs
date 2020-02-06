@@ -11,15 +11,17 @@ namespace Il2CppDumper
     {
         private Metadata metadata;
         private Il2Cpp il2Cpp;
+        private StreamWriter writer;
         private Dictionary<Il2CppMethodDefinition, string> methodModifiers = new Dictionary<Il2CppMethodDefinition, string>();
 
         public Il2CppDecompiler(Metadata metadata, Il2Cpp il2Cpp)
         {
+            writer = new StreamWriter(new FileStream("dump.cs", FileMode.Create), new UTF8Encoding(false));
             this.metadata = metadata;
             this.il2Cpp = il2Cpp;
         }
 
-        public void Decompile(StreamWriter writer, Config config)
+        public void Decompile(Config config)
         {
             //dump image
             for (var imageIndex = 0; imageIndex < metadata.imageDefs.Length; imageIndex++)
@@ -399,12 +401,12 @@ namespace Il2CppDumper
 
         public string GetTypeDefName(Il2CppTypeDefinition typeDef)
         {
-            var ret = string.Empty;
+            var prefix = string.Empty;
             if (typeDef.declaringTypeIndex != -1)
             {
-                ret += GetTypeName(il2Cpp.types[typeDef.declaringTypeIndex]) + ".";
+                prefix = GetTypeName(il2Cpp.types[typeDef.declaringTypeIndex]) + ".";
             }
-            ret += metadata.GetStringFromIndex(typeDef.nameIndex);
+            var typeName = metadata.GetStringFromIndex(typeDef.nameIndex);
             var names = new List<string>();
             if (typeDef.genericContainerIndex >= 0)
             {
@@ -415,10 +417,10 @@ namespace Il2CppDumper
                     var param = metadata.genericParameters[genericParameterIndex];
                     names.Add(metadata.GetStringFromIndex(param.nameIndex));
                 }
-                ret = ret.Replace($"`{genericContainer.type_argc}", "");
-                ret += $"<{string.Join(", ", names)}>";
+                typeName = typeName.Replace($"`{genericContainer.type_argc}", "");
+                typeName += $"<{string.Join(", ", names)}>";
             }
-            return ret;
+            return prefix + typeName;
         }
 
         public string GetGenericTypeParams(Il2CppGenericInst genericInst)

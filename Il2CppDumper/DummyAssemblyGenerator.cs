@@ -516,33 +516,7 @@ namespace Il2CppDumper
 
         private void PrepareCustomAttribute()
         {
-            var attributeNames = new[]
-            {
-                //"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
-                "System.Runtime.CompilerServices.ExtensionAttribute",
-                "System.Runtime.CompilerServices.NullableAttribute",
-                "System.Runtime.CompilerServices.NullableContextAttribute",
-                "System.Runtime.CompilerServices.IsReadOnlyAttribute", //in关键字
-                "System.Diagnostics.DebuggerHiddenAttribute",
-                "System.Diagnostics.DebuggerStepThroughAttribute",
-                // Type attributes:
-                "System.FlagsAttribute",
-                "System.Runtime.CompilerServices.IsByRefLikeAttribute",
-                // Field attributes:
-                "System.NonSerializedAttribute",
-                // Method attributes:
-                "System.Runtime.InteropServices.PreserveSigAttribute",
-                // Parameter attributes:
-                "System.ParamArrayAttribute",
-                "System.Runtime.CompilerServices.CallerMemberNameAttribute",
-                "System.Runtime.CompilerServices.CallerFilePathAttribute",
-                "System.Runtime.CompilerServices.CallerLineNumberAttribute",
-                // Type parameter attributes:
-                "System.Runtime.CompilerServices.IsUnmanagedAttribute",
-                // Unity
-                "UnityEngine.SerializeField" //MonoBehaviour的反序列化
-            };
-            foreach (var attributeName in attributeNames)
+            foreach (var attributeName in knownAttributeNames)
             {
                 foreach (var assemblyDefinition in Assemblies)
                 {
@@ -604,5 +578,32 @@ namespace Il2CppDumper
             }
             return genericParameter;
         }
+
+        private static readonly string[] knownAttributeNames = new[]
+        {
+            //"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
+            "System.Runtime.CompilerServices.ExtensionAttribute",
+            "System.Runtime.CompilerServices.NullableAttribute",
+            "System.Runtime.CompilerServices.NullableContextAttribute",
+            "System.Runtime.CompilerServices.IsReadOnlyAttribute", //in关键字
+            "System.Diagnostics.DebuggerHiddenAttribute",
+            "System.Diagnostics.DebuggerStepThroughAttribute",
+            // Type attributes:
+            "System.FlagsAttribute",
+            "System.Runtime.CompilerServices.IsByRefLikeAttribute",
+            // Field attributes:
+            "System.NonSerializedAttribute",
+            // Method attributes:
+            "System.Runtime.InteropServices.PreserveSigAttribute",
+            // Parameter attributes:
+            "System.ParamArrayAttribute",
+            "System.Runtime.CompilerServices.CallerMemberNameAttribute",
+            "System.Runtime.CompilerServices.CallerFilePathAttribute",
+            "System.Runtime.CompilerServices.CallerLineNumberAttribute",
+            // Type parameter attributes:
+            "System.Runtime.CompilerServices.IsUnmanagedAttribute",
+            // Unity
+            "UnityEngine.SerializeField" //MonoBehaviour的反序列化
+        };
     }
 }

@@ -26,6 +26,8 @@
         public const int DT_FINI_ARRAY = 26;
         public const int DT_INIT_ARRAYSZ = 27;
 
+        public const uint SHT_LOUSER = 0x80000000;
+
         public const int R_ARM_ABS32 = 2;
 
         public const int R_386_32 = 1;

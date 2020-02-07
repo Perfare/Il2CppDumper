@@ -12,7 +12,7 @@ namespace Il2CppDumper
         private Elf64_Phdr[] programSegment;
         private Elf64_Dyn[] dynamicSection;
         private Elf64_Sym[] symbolTable;
-        private Dictionary<string, Elf64_Shdr> sectionWithName = new Dictionary<string, Elf64_Shdr>();
+        private Elf64_Shdr[] sectionTable;
         private bool isDumped;
         private ulong dumpAddr;
 
@@ -40,7 +40,11 @@ namespace Il2CppDumper
             elfHeader.e_shnum = ReadUInt16();
             elfHeader.e_shtrndx = ReadUInt16();
             programSegment = ReadClassArray<Elf64_Phdr>(elfHeader.e_phoff, elfHeader.e_phnum);
-            if (!GetSectionWithName())
+            try
+            {
+                sectionTable = ReadClassArray<Elf64_Shdr>(elfHeader.e_shoff, elfHeader.e_shnum);
+            }
+            catch
             {
                 Console.WriteLine("Detected this may be a dump file. If not, it must be protected.");
                 isDumped = true;
@@ -63,30 +67,6 @@ namespace Il2CppDumper
                     Console.WriteLine("ERROR: This file is protected.");
                 }
             }
-        }
-
-        private bool GetSectionWithName()
-        {
-            try
-            {
-                var section_name_off = elfHeader.e_shoff + (ulong)elfHeader.e_shentsize * elfHeader.e_shtrndx;
-                Position = section_name_off + 2 * 4 + 8 + 8;//2 * sizeof(Elf64_Word) + sizeof(Elf64_Xword) + sizeof(Elf64_Addr)
-                var section_name_block_off = ReadUInt32();
-                for (int i = 0; i < elfHeader.e_shnum; i++)
-                {
-                    var section = ReadClass<Elf64_Shdr>(elfHeader.e_shoff + elfHeader.e_shentsize * (ulong)i);
-                    var key = ReadStringToNull(section_name_block_off + section.sh_name);
-                    if (!sectionWithName.ContainsKey(key))
-                    {
-                        sectionWithName.Add(key, section);
-                    }
-                }
-            }
-            catch
-            {
-                return false;
-            }
-            return true;
         }
 
         public override ulong MapVATR(ulong addr)
@@ -208,7 +188,6 @@ namespace Il2CppDumper
 
         private bool CheckProtection()
         {
-            //简单的加壳检测，检测是否含有init function或者JNI_OnLoad
             //.init_proc
             if (dynamicSection.FirstOrDefault(x => x.d_tag == DT_INIT) != null)
             {
@@ -226,6 +205,11 @@ namespace Il2CppDumper
                         Console.WriteLine("WARNING: find JNI_OnLoad");
                         return true;
                 }
+            }
+            if (sectionTable.Any(x => x.sh_type == SHT_LOUSER))
+            {
+                Console.WriteLine("WARNING: find SHT_LOUSER section");
+                return true;
             }
             return false;
         }

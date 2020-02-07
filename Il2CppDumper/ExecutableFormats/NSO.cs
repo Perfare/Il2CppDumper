@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Lz4;
 
 namespace Il2CppDumper
 {

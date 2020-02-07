@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Il2CppDumper
 {
-    static class DefineConstants
+    class Il2CppConstants
     {
         /*
          * Field Attributes (21.1.5).
@@ -73,7 +76,6 @@ namespace Il2CppDumper
         public const int PARAM_ATTRIBUTE_OUT = 0x0002;
         public const int PARAM_ATTRIBUTE_OPTIONAL = 0x0010;
 
-
         public static readonly Dictionary<int, string> TypeString = new Dictionary<int, string>
         {
             {1,"void"},
@@ -95,8 +97,5 @@ namespace Il2CppDumper
             {25,"UIntPtr"},
             {28,"object"},
         };
-
-        public static readonly Version Unity20183 = new Version(2018, 3);
-        public static readonly Version Unity20191 = new Version(2019, 1);
     }
 }

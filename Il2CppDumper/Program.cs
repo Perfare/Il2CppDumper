@@ -1,17 +1,17 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Newtonsoft.Json;
-using static Il2CppDumper.DefineConstants;
 
 namespace Il2CppDumper
 {
     class Program
     {
         private static Config config;
+        private static readonly Version Unity20183 = new Version(2018, 3);
+        private static readonly Version Unity20191 = new Version(2019, 1);
 
         [STAThread]
         static void Main(string[] args)
@@ -277,19 +277,7 @@ namespace Il2CppDumper
             if (config.DummyDll)
             {
                 Console.WriteLine("Generate dummy dll...");
-                if (Directory.Exists("DummyDll"))
-                    Directory.Delete("DummyDll", true);
-                Directory.CreateDirectory("DummyDll");
-                Directory.SetCurrentDirectory("DummyDll");
-                var dummy = new DummyAssemblyGenerator(metadata, il2Cpp);
-                foreach (var assembly in dummy.Assemblies)
-                {
-                    using (var stream = new MemoryStream())
-                    {
-                        assembly.Write(stream);
-                        File.WriteAllBytes(assembly.MainModule.Name, stream.ToArray());
-                    }
-                }
+                DummyAssemblyExporter.Export(metadata, il2Cpp);
                 Console.WriteLine("Done!");
             }
         }

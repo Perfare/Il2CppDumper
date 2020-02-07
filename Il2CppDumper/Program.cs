@@ -196,26 +196,27 @@ namespace Il2CppDumper
 
             var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.version;
             Console.WriteLine("Initializing il2cpp file...");
+            var il2CppMemory = new MemoryStream(il2cppBytes);
             if (isNSO)
             {
-                var nso = new NSO(new MemoryStream(il2cppBytes), version, metadata.maxMetadataUsages);
+                var nso = new NSO(il2CppMemory, version, metadata.maxMetadataUsages);
                 il2Cpp = nso.UnCompress();
             }
             else if (isPE)
             {
-                il2Cpp = new PE(new MemoryStream(il2cppBytes), version, metadata.maxMetadataUsages);
+                il2Cpp = new PE(il2CppMemory, version, metadata.maxMetadataUsages);
             }
             else if (isElf)
             {
                 if (is64bit)
-                    il2Cpp = new Elf64(new MemoryStream(il2cppBytes), version, metadata.maxMetadataUsages);
+                    il2Cpp = new Elf64(il2CppMemory, version, metadata.maxMetadataUsages);
                 else
-                    il2Cpp = new Elf(new MemoryStream(il2cppBytes), version, metadata.maxMetadataUsages);
+                    il2Cpp = new Elf(il2CppMemory, version, metadata.maxMetadataUsages);
             }
             else if (is64bit)
-                il2Cpp = new Macho64(new MemoryStream(il2cppBytes), version, metadata.maxMetadataUsages);
+                il2Cpp = new Macho64(il2CppMemory, version, metadata.maxMetadataUsages);
             else
-                il2Cpp = new Macho(new MemoryStream(il2cppBytes), version, metadata.maxMetadataUsages);
+                il2Cpp = new Macho(il2CppMemory, version, metadata.maxMetadataUsages);
 
             if (mode == 0)
             {

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    public sealed class MachoFat : MyBinaryReader
+    public sealed class MachoFat : BinaryStream
     {
         public Fat[] fats;
 

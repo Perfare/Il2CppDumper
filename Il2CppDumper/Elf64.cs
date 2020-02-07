@@ -178,7 +178,6 @@ namespace Il2CppDumper
                 var relaSize = dynamic_table.First(x => x.d_tag == DT_RELASZ).d_un;
                 dynamic_symbol_table = ReadClassArray<Elf64_Sym>(dynsymOffset, (long)dynsymSize / 24L);
                 var rela_table = ReadClassArray<Elf64_Rela>(relaOffset, (long)relaSize / 24L);
-                var writer = new BinaryWriter(BaseStream);
                 foreach (var rel in rela_table)
                 {
                     var type = rel.r_info & 0xffffffff;
@@ -189,18 +188,17 @@ namespace Il2CppDumper
                             {
                                 var dynamic_symbol = dynamic_symbol_table[sym];
                                 Position = MapVATR(rel.r_offset);
-                                writer.Write(dynamic_symbol.st_value + (ulong)rel.r_addend);
+                                Write(dynamic_symbol.st_value + (ulong)rel.r_addend);
                                 break;
                             }
                         case R_AARCH64_RELATIVE:
                             {
                                 Position = MapVATR(rel.r_offset);
-                                writer.Write(rel.r_addend);
+                                Write(rel.r_addend);
                                 break;
                             }
                     }
                 }
-                writer.Flush();
             }
             catch
             {

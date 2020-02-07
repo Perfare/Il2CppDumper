@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    public sealed class Metadata : MyBinaryReader
+    public sealed class Metadata : BinaryStream
     {
         private Il2CppGlobalMetadataHeader metadataHeader;
         public Il2CppImageDefinition[] imageDefs;
@@ -109,9 +109,8 @@ namespace Il2CppDumper
         {
             if (!stringCache.TryGetValue(index, out var result))
             {
-                var str = ReadStringToNull(metadataHeader.stringOffset + index);
-                stringCache.Add(index, str);
-                return str;
+                result = ReadStringToNull(metadataHeader.stringOffset + index);
+                stringCache.Add(index, result);
             }
             return result;
         }

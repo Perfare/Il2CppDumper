@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Il2CppDumper
 {
-    public abstract class Il2Cpp : MyBinaryReader
+    public abstract class Il2Cpp : BinaryStream
     {
         private Il2CppMetadataRegistration pMetadataRegistration;
         private Il2CppCodeRegistration pCodeRegistration;

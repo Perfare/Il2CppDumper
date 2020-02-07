@@ -6,18 +6,75 @@ using System.Text;
 
 namespace Il2CppDumper
 {
-    public class MyBinaryReader : BinaryReader
+    public class BinaryStream : IDisposable
     {
         public float version;
         public bool is32Bit;
-
+        private Stream stream;
+        private BinaryReader reader;
+        private BinaryWriter writer;
         private MethodInfo readClass;
         private Dictionary<Type, MethodInfo> readClassCache = new Dictionary<Type, MethodInfo>();
         private Dictionary<FieldInfo, VersionAttribute> attributeCache = new Dictionary<FieldInfo, VersionAttribute>();
 
-        public MyBinaryReader(Stream stream) : base(stream)
+        public BinaryStream(Stream input)
         {
+            stream = input;
+            reader = new BinaryReader(stream, Encoding.UTF8, true);
+            writer = new BinaryWriter(stream, Encoding.UTF8, true);
             readClass = GetType().GetMethod("ReadClass", Type.EmptyTypes);
+        }
+
+        public bool ReadBoolean() => reader.ReadBoolean();
+
+        public byte ReadByte() => reader.ReadByte();
+
+        public byte[] ReadBytes(int count) => reader.ReadBytes(count);
+
+        public sbyte ReadSByte() => reader.ReadSByte();
+
+        public short ReadInt16() => reader.ReadInt16();
+
+        public ushort ReadUInt16() => reader.ReadUInt16();
+
+        public int ReadInt32() => reader.ReadInt32();
+
+        public uint ReadUInt32() => reader.ReadUInt32();
+
+        public long ReadInt64() => reader.ReadInt64();
+
+        public ulong ReadUInt64() => reader.ReadUInt64();
+
+        public float ReadSingle() => reader.ReadSingle();
+
+        public double ReadDouble() => reader.ReadDouble();
+
+        public void Write(bool value) => writer.Write(value);
+
+        public void Write(byte value) => writer.Write(value);
+
+        public void Write(sbyte value) => writer.Write(value);
+
+        public void Write(short value) => writer.Write(value);
+
+        public void Write(ushort value) => writer.Write(value);
+
+        public void Write(int value) => writer.Write(value);
+
+        public void Write(uint value) => writer.Write(value);
+
+        public void Write(long value) => writer.Write(value);
+
+        public void Write(ulong value) => writer.Write(value);
+
+        public void Write(float value) => writer.Write(value);
+
+        public void Write(double value) => writer.Write(value);
+
+        public ulong Position
+        {
+            get => (ulong)stream.Position;
+            set => stream.Position = (long)value;
         }
 
         private object ReadPrimitive(Type type)
@@ -46,12 +103,6 @@ namespace Il2CppDumper
                 default:
                     return null;
             }
-        }
-
-        public ulong Position
-        {
-            get => (ulong)BaseStream.Position;
-            set => BaseStream.Position = (long)value;
         }
 
         public T ReadClass<T>(ulong addr) where T : new()
@@ -129,6 +180,21 @@ namespace Il2CppDumper
             while ((b = ReadByte()) != 0)
                 bytes.Add(b);
             return Encoding.UTF8.GetString(bytes.ToArray());
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                reader.Close();
+                writer.Close();
+                stream.Close();
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
         }
     }
 }

@@ -237,7 +237,6 @@ namespace Il2CppDumper
                 var reldynSize = dynamic_table.First(x => x.d_tag == DT_RELSZ).d_un;
                 dynamic_symbol_table = ReadClassArray<Elf32_Sym>(dynsymOffset, (long)dynsymSize / 16);
                 var rel_table = ReadClassArray<Elf32_Rel>(reldynOffset, reldynSize / 8);
-                var writer = new BinaryWriter(BaseStream);
                 var isx86 = elf_header.e_machine == 0x3;
                 foreach (var rel in rel_table)
                 {
@@ -250,12 +249,11 @@ namespace Il2CppDumper
                             {
                                 var dynamic_symbol = dynamic_symbol_table[sym];
                                 Position = MapVATR(rel.r_offset);
-                                writer.Write(dynamic_symbol.st_value);
+                                Write(dynamic_symbol.st_value);
                                 break;
                             }
                     }
                 }
-                writer.Flush();
             }
             catch
             {

@@ -59,6 +59,7 @@ namespace Il2CppDumper
             }
             var pt_dynamic = programSegment.First(x => x.p_type == PT_DYNAMIC);
             dynamicSection = ReadClassArray<Elf64_Dyn>(pt_dynamic.p_offset, (long)pt_dynamic.p_filesz / 16L);
+            ReadSymbol();
             if (!isDumped)
             {
                 RelocationProcessing();
@@ -145,18 +146,21 @@ namespace Il2CppDumper
             return false;
         }
 
+        private void ReadSymbol()
+        {
+            var dynsymOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_SYMTAB).d_un);
+            var dynstrOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_STRTAB).d_un);
+            var dynsymSize = dynstrOffset - dynsymOffset;
+            symbolTable = ReadClassArray<Elf64_Sym>(dynsymOffset, (long)dynsymSize / 24L);
+        }
+
         private void RelocationProcessing()
         {
             Console.WriteLine("Applying relocations...");
-
             try
             {
-                ulong dynsymOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_SYMTAB).d_un);
-                ulong dynstrOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_STRTAB).d_un);
-                var dynsymSize = dynstrOffset - dynsymOffset;
-                ulong relaOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_RELA).d_un);
+                var relaOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_RELA).d_un);
                 var relaSize = dynamicSection.First(x => x.d_tag == DT_RELASZ).d_un;
-                symbolTable = ReadClassArray<Elf64_Sym>(dynsymOffset, (long)dynsymSize / 24L);
                 var relaTable = ReadClassArray<Elf64_Rela>(relaOffset, (long)relaSize / 24L);
                 foreach (var rela in relaTable)
                 {

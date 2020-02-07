@@ -70,6 +70,7 @@ namespace Il2CppDumper
             }
             var pt_dynamic = programSegment.First(x => x.p_type == PT_DYNAMIC);
             dynamicSection = ReadClassArray<Elf32_Dyn>(pt_dynamic.p_offset, pt_dynamic.p_filesz / 8u);
+            ReadSymbol();
             if (!isDumped)
             {
                 RelocationProcessing();
@@ -204,18 +205,21 @@ namespace Il2CppDumper
             return false;
         }
 
+        private void ReadSymbol()
+        {
+            var dynsymOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_SYMTAB).d_un);
+            var dynstrOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_STRTAB).d_un);
+            var dynsymSize = dynstrOffset - dynsymOffset;
+            symbolTable = ReadClassArray<Elf32_Sym>(dynsymOffset, (long)dynsymSize / 16);
+        }
 
         private void RelocationProcessing()
         {
             Console.WriteLine("Applying relocations...");
             try
             {
-                var dynsymOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_SYMTAB).d_un);
-                var dynstrOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_STRTAB).d_un);
-                var dynsymSize = dynstrOffset - dynsymOffset;
                 var reldynOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_REL).d_un);
                 var reldynSize = dynamicSection.First(x => x.d_tag == DT_RELSZ).d_un;
-                symbolTable = ReadClassArray<Elf32_Sym>(dynsymOffset, (long)dynsymSize / 16);
                 var relTable = ReadClassArray<Elf32_Rel>(reldynOffset, reldynSize / 8);
                 var isx86 = elfHeader.e_machine == 0x3;
                 foreach (var rel in relTable)

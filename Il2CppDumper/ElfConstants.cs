@@ -2,6 +2,14 @@
 {
     static class ElfConstants
     {
+        public const int EM_386 = 3;
+        public const int EM_ARM = 40;
+
+        public const int PT_LOAD = 1;
+        public const int PT_DYNAMIC = 2;
+
+        public const int PF_X = 1;
+
         public const int DT_PLTGOT = 3;
         public const int DT_HASH = 4;
         public const int DT_STRTAB = 5;

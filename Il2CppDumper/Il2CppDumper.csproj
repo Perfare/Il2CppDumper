@@ -81,7 +81,7 @@
     <Compile Include="ElfClass.cs" />
     <Compile Include="MachoClass.cs" />
     <Compile Include="MachoFat.cs" />
-    <Compile Include="MyBinaryReader.cs" />
+    <Compile Include="BinaryStream.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Macho64.cs" />

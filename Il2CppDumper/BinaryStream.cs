@@ -93,11 +93,11 @@ namespace Il2CppDumper
                 case "Byte":
                     return ReadByte();
                 case "Int64" when is32Bit:
-                    return ReadInt32();
+                    return (long)ReadInt32();
                 case "Int64":
                     return ReadInt64();
                 case "UInt64" when is32Bit:
-                    return ReadUInt32();
+                    return (ulong)ReadUInt32();
                 case "UInt64":
                     return ReadUInt64();
                 default:

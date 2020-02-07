@@ -286,7 +286,7 @@ namespace Il2CppDumper
         public string GetGenericTypeParams(Il2CppGenericInst genericInst)
         {
             var typeNames = new List<string>();
-            var pointers = il2Cpp.ReadPointers(genericInst.type_argv, genericInst.type_argc);
+            var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
             for (uint i = 0; i < genericInst.type_argc; ++i)
             {
                 var oriType = il2Cpp.GetIl2CppType(pointers[i]);

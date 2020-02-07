@@ -428,7 +428,7 @@ namespace Il2CppDumper
                         var typeDefinition = typeDefinitionDic[genericClass.typeDefinitionIndex];
                         var genericInstanceType = new GenericInstanceType(moduleDefinition.ImportReference(typeDefinition));
                         var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
-                        var pointers = il2Cpp.ReadPointers(genericInst.type_argv, genericInst.type_argc);
+                        var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
                         foreach (var pointer in pointers)
                         {
                             var oriType = il2Cpp.GetIl2CppType(pointer);

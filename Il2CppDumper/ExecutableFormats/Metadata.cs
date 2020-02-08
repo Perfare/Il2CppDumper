@@ -39,7 +39,7 @@ namespace Il2CppDumper
             metadataHeader = ReadClass<Il2CppGlobalMetadataHeader>();
             if (metadataHeader.sanity != 0xFAB11BAF)
             {
-                throw new Exception("ERROR: Metadata file supplied is not valid metadata file.");
+                throw new InvalidDataException("ERROR: Metadata file supplied is not valid metadata file.");
             }
             switch (metadataHeader.version)
             {
@@ -52,7 +52,7 @@ namespace Il2CppDumper
                 case 24:
                     break;
                 default:
-                    throw new Exception($"ERROR: Metadata file supplied is not a supported version[{version}].");
+                    throw new NotSupportedException($"ERROR: Metadata file supplied is not a supported version[{version}].");
             }
             imageDefs = ReadMetadataClassArray<Il2CppImageDefinition>(metadataHeader.imagesOffset, metadataHeader.imagesCount);
             typeDefs = ReadMetadataClassArray<Il2CppTypeDefinition>(metadataHeader.typeDefinitionsOffset, metadataHeader.typeDefinitionsCount);

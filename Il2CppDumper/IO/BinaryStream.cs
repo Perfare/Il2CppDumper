@@ -138,26 +138,27 @@ namespace Il2CppDumper
                         if (version < versionAttribute.Min || version > versionAttribute.Max)
                             continue;
                     }
-                    if (i.FieldType.IsPrimitive)
+                    var fieldType = i.FieldType;
+                    if (fieldType.IsPrimitive)
                     {
-                        i.SetValue(t, ReadPrimitive(i.FieldType));
+                        i.SetValue(t, ReadPrimitive(fieldType));
                     }
-                    else if (i.FieldType.IsArray)
+                    else if (fieldType.IsArray)
                     {
                         var arrayLengthAttribute = i.GetCustomAttribute<ArrayLengthAttribute>();
-                        if (!genericMethodCache.TryGetValue(i.FieldType, out var methodInfo))
+                        if (!genericMethodCache.TryGetValue(fieldType, out var methodInfo))
                         {
-                            methodInfo = readClassArray.MakeGenericMethod(i.FieldType.GetElementType());
-                            genericMethodCache.Add(i.FieldType, methodInfo);
+                            methodInfo = readClassArray.MakeGenericMethod(fieldType.GetElementType());
+                            genericMethodCache.Add(fieldType, methodInfo);
                         }
                         i.SetValue(t, methodInfo.Invoke(this, new object[] { arrayLengthAttribute.Length }));
                     }
                     else
                     {
-                        if (!genericMethodCache.TryGetValue(i.FieldType, out var methodInfo))
+                        if (!genericMethodCache.TryGetValue(fieldType, out var methodInfo))
                         {
-                            methodInfo = readClass.MakeGenericMethod(i.FieldType);
-                            genericMethodCache.Add(i.FieldType, methodInfo);
+                            methodInfo = readClass.MakeGenericMethod(fieldType);
+                            genericMethodCache.Add(fieldType, methodInfo);
                         }
                         i.SetValue(t, methodInfo.Invoke(this, null));
                     }

@@ -45,7 +45,7 @@ namespace Il2CppDumper
                 RelocationProcessing();
                 if (CheckProtection())
                 {
-                    Console.WriteLine("ERROR: This file is protected.");
+                    Console.WriteLine("ERROR: This file may be protected.");
                 }
             }
         }
@@ -128,10 +128,17 @@ namespace Il2CppDumper
 
         private void ReadSymbol()
         {
-            var dynsymOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_SYMTAB).d_un);
-            var dynstrOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_STRTAB).d_un);
-            var dynsymSize = dynstrOffset - dynsymOffset;
-            symbolTable = ReadClassArray<Elf64_Sym>(dynsymOffset, (long)dynsymSize / 24L);
+            try
+            {
+                var dynsymOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_SYMTAB).d_un);
+                var dynstrOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_STRTAB).d_un);
+                var dynsymSize = dynstrOffset - dynsymOffset;
+                symbolTable = ReadClassArray<Elf64_Sym>(dynsymOffset, (long)dynsymSize / 24L);
+            }
+            catch
+            {
+                // ignored
+            }
         }
 
         private void RelocationProcessing()
@@ -190,7 +197,7 @@ namespace Il2CppDumper
                         return true;
                 }
             }
-            if (sectionTable.Any(x => x.sh_type == SHT_LOUSER))
+            if (sectionTable != null && sectionTable.Any(x => x.sh_type == SHT_LOUSER))
             {
                 Console.WriteLine("WARNING: find SHT_LOUSER section");
                 return true;

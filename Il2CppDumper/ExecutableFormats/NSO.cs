@@ -90,10 +90,10 @@ namespace Il2CppDumper
             }
         }
 
-        public override ulong MapVATR(ulong uiAddr)
+        public override ulong MapVATR(ulong addr)
         {
-            var segment = segments.First(x => uiAddr >= x.MemoryOffset && uiAddr <= x.MemoryOffset + x.DecompressedSize);
-            return uiAddr - segment.MemoryOffset + segment.FileOffset;
+            var segment = segments.First(x => addr >= x.MemoryOffset && addr <= x.MemoryOffset + x.DecompressedSize);
+            return addr - segment.MemoryOffset + segment.FileOffset;
         }
 
         public override bool Search()

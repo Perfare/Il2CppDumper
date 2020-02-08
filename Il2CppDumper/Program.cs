@@ -106,7 +106,7 @@ namespace Il2CppDumper
             var sanity = BitConverter.ToUInt32(metadataBytes, 0);
             if (sanity != 0xFAB11BAF)
             {
-                throw new Exception("ERROR: Metadata file supplied is not valid metadata file.");
+                throw new InvalidDataException("ERROR: Metadata file supplied is not valid metadata file.");
             }
             float fixedMetadataVersion;
             var metadataVersion = BitConverter.ToInt32(metadataBytes, 4);
@@ -136,7 +136,7 @@ namespace Il2CppDumper
                 }
                 catch
                 {
-                    throw new Exception("You must enter the correct Unity version number");
+                    throw new InvalidDataException("You must enter the correct Unity version number");
                 }
             }
             else
@@ -154,7 +154,7 @@ namespace Il2CppDumper
             switch (il2cppMagic)
             {
                 default:
-                    throw new Exception("ERROR: il2cpp file not supported.");
+                    throw new NotSupportedException("ERROR: il2cpp file not supported.");
                 case 0x304F534E:
                     isNSO = true;
                     is64bit = true;
@@ -255,11 +255,16 @@ namespace Il2CppDumper
                         return false;
                 }
                 if (!flag)
-                    throw new Exception();
+                {
+                    Console.WriteLine("ERROR: Can't use this mode to process file, try another mode.");
+                    return false;
+                }
             }
-            catch
+            catch (Exception e)
             {
-                throw new Exception("ERROR: Can't use this mode to process file, try another mode.");
+                Console.WriteLine(e);
+                Console.WriteLine("ERROR: An error occurred while processing.");
+                return false;
             }
             return true;
         }

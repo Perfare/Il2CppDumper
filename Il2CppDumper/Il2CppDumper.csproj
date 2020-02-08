@@ -53,7 +53,6 @@
   <ItemGroup>
     <Compile Include="Attributes\ArrayLengthAttribute.cs" />
     <Compile Include="Extensions\BoyerMooreHorspool.cs" />
-    <Compile Include="ExecutableFormats\ElfConstants.cs" />
     <Compile Include="Extensions\HexExtensions.cs" />
     <Compile Include="Outputs\DummyAssemblyExporter.cs" />
     <Compile Include="Outputs\Il2CppDecompiler.cs" />
@@ -70,7 +69,6 @@
     <Compile Include="Utils\DummyAssemblyGenerator.cs" />
     <Compile Include="ExecutableFormats\Elf.cs" />
     <Compile Include="ExecutableFormats\Elf64.cs" />
-    <Compile Include="ExecutableFormats\Elf64Class.cs" />
     <Compile Include="ExecutableFormats\Il2CppClass.cs" />
     <Compile Include="ExecutableFormats\Il2Cpp.cs" />
     <Compile Include="ExecutableFormats\Macho.cs" />

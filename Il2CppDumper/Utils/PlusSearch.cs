@@ -22,7 +22,7 @@ namespace Il2CppDumper
             this.maxMetadataUsages = maxMetadataUsages;
         }
 
-        public void SetSection(SearchSectionType type, params Elf32_Phdr[] sections)
+        public void SetSection(SearchSectionType type, Elf32_Phdr[] sections)
         {
             var secs = new List<SearchSection>();
             foreach (var section in sections)
@@ -41,7 +41,7 @@ namespace Il2CppDumper
             SetSection(type, secs);
         }
 
-        public void SetSection(SearchSectionType type, params Elf64_Phdr[] sections)
+        public void SetSection(SearchSectionType type, Elf64_Phdr[] sections)
         {
             var secs = new List<SearchSection>();
             foreach (var section in sections)
@@ -60,7 +60,7 @@ namespace Il2CppDumper
             SetSection(type, secs);
         }
 
-        public void SetSection(SearchSectionType type, params MachoSection[] sections)
+        public void SetSection(SearchSectionType type, MachoSection[] sections)
         {
             var secs = new List<SearchSection>();
             foreach (var section in sections)
@@ -79,7 +79,7 @@ namespace Il2CppDumper
             SetSection(type, secs);
         }
 
-        public void SetSection(SearchSectionType type, params MachoSection64Bit[] sections)
+        public void SetSection(SearchSectionType type, MachoSection64Bit[] sections)
         {
             var secs = new List<SearchSection>();
             foreach (var section in sections)
@@ -98,7 +98,7 @@ namespace Il2CppDumper
             SetSection(type, secs);
         }
 
-        public void SetSection(SearchSectionType type, ulong imageBase, params SectionHeader[] sections)
+        public void SetSection(SearchSectionType type, ulong imageBase, SectionHeader[] sections)
         {
             var secs = new List<SearchSection>();
             foreach (var section in sections)
@@ -117,22 +117,16 @@ namespace Il2CppDumper
             SetSection(type, secs);
         }
 
-        public void SetSection(SearchSectionType type, params NSOSegmentHeader[] sections)
+        public void SetSection(SearchSectionType type, NSOSegmentHeader section)
         {
             var secs = new List<SearchSection>();
-            foreach (var section in sections)
+            secs.Add(new SearchSection
             {
-                if (section != null)
-                {
-                    secs.Add(new SearchSection
-                    {
-                        offset = section.FileOffset,
-                        offsetEnd = section.FileOffset + section.DecompressedSize,
-                        address = section.MemoryOffset,
-                        addressEnd = section.MemoryOffset + section.DecompressedSize
-                    });
-                }
-            }
+                offset = section.FileOffset,
+                offsetEnd = section.FileOffset + section.DecompressedSize,
+                address = section.MemoryOffset,
+                addressEnd = section.MemoryOffset + section.DecompressedSize
+            });
             SetSection(type, secs);
         }
 

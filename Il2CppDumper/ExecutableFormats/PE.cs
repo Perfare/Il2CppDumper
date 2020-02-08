@@ -13,52 +13,40 @@ namespace Il2CppDumper
 
         public PE(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
-            if (ReadUInt16() != 0x5A4D)//e_magic
-                throw new Exception("ERROR: Invalid PE file");
-            Position = 0x3C;//e_lfanew
-            Position = ReadUInt32();
-            if (ReadUInt32() != 0x00004550)//Signature
-                throw new Exception("ERROR: Invalid PE file");
+            var dosHeader = ReadClass<DosHeader>();
+            if (dosHeader.Magic != 0x5A4D)
+            {
+                throw new InvalidDataException("ERROR: Invalid PE file");
+            }
+            Position = dosHeader.Lfanew;
+            if (ReadUInt32() != 0x4550u) //Signature
+            {
+                throw new InvalidDataException("ERROR: Invalid PE file");
+            }
             var fileHeader = ReadClass<FileHeader>();
-            if (fileHeader.Machine == 0x014c)//Intel 386
+            var pos = Position;
+            if (fileHeader.Machine == 0x14c) //Intel 386
             {
                 is32Bit = true;
                 var optionalHeader = ReadClass<OptionalHeader>();
-                optionalHeader.DataDirectory = ReadClassArray<DataDirectory>(optionalHeader.NumberOfRvaAndSizes);
                 imageBase = optionalHeader.ImageBase;
             }
-            else if (fileHeader.Machine == 0x8664)//AMD64
+            else if (fileHeader.Machine == 0x8664) //AMD64
             {
                 var optionalHeader = ReadClass<OptionalHeader64>();
-                optionalHeader.DataDirectory = ReadClassArray<DataDirectory>(optionalHeader.NumberOfRvaAndSizes);
                 imageBase = optionalHeader.ImageBase;
             }
             else
             {
-                throw new Exception("ERROR: Unsupported machine.");
+                throw new NotSupportedException("ERROR: Unsupported machine.");
             }
-            sections = new SectionHeader[fileHeader.NumberOfSections];
-            for (int i = 0; i < fileHeader.NumberOfSections; i++)
-            {
-                sections[i] = new SectionHeader
-                {
-                    Name = Encoding.UTF8.GetString(ReadBytes(8)).Trim('\0'),
-                    VirtualSize = ReadUInt32(),
-                    VirtualAddress = ReadUInt32(),
-                    SizeOfRawData = ReadUInt32(),
-                    PointerToRawData = ReadUInt32(),
-                    PointerToRelocations = ReadUInt32(),
-                    PointerToLinenumbers = ReadUInt32(),
-                    NumberOfRelocations = ReadUInt16(),
-                    NumberOfLinenumbers = ReadUInt16(),
-                    Characteristics = ReadUInt32()
-                };
-            }
+            Position = pos + fileHeader.SizeOfOptionalHeader;
+            sections = ReadClassArray<SectionHeader>(fileHeader.NumberOfSections);
         }
 
-        public override ulong MapVATR(ulong uiAddr)
+        public override ulong MapVATR(ulong absAddr)
         {
-            var addr = uiAddr - imageBase;
+            var addr = absAddr - imageBase;
             var section = sections.First(x => addr >= x.VirtualAddress && addr <= x.VirtualAddress + x.VirtualSize);
             return addr - (section.VirtualAddress - section.PointerToRawData);
         }

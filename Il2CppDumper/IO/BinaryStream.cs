@@ -14,7 +14,8 @@ namespace Il2CppDumper
         private BinaryReader reader;
         private BinaryWriter writer;
         private MethodInfo readClass;
-        private Dictionary<Type, MethodInfo> readClassCache = new Dictionary<Type, MethodInfo>();
+        private MethodInfo readClassArray;
+        private Dictionary<Type, MethodInfo> genericMethodCache = new Dictionary<Type, MethodInfo>();
         private Dictionary<FieldInfo, VersionAttribute> attributeCache = new Dictionary<FieldInfo, VersionAttribute>();
 
         public BinaryStream(Stream input)
@@ -23,6 +24,7 @@ namespace Il2CppDumper
             reader = new BinaryReader(stream, Encoding.UTF8, true);
             writer = new BinaryWriter(stream, Encoding.UTF8, true);
             readClass = GetType().GetMethod("ReadClass", Type.EmptyTypes);
+            readClassArray = GetType().GetMethod("ReadClassArray", new[] { typeof(long) });
         }
 
         public bool ReadBoolean() => reader.ReadBoolean();
@@ -101,7 +103,7 @@ namespace Il2CppDumper
                 case "UInt64":
                     return ReadUInt64();
                 default:
-                    return null;
+                    throw new NotSupportedException();
             }
         }
 
@@ -127,7 +129,7 @@ namespace Il2CppDumper
                     {
                         if (Attribute.IsDefined(i, typeof(VersionAttribute)))
                         {
-                            versionAttribute = (VersionAttribute)Attribute.GetCustomAttribute(i, typeof(VersionAttribute));
+                            versionAttribute = i.GetCustomAttribute<VersionAttribute>();
                             attributeCache.Add(i, versionAttribute);
                         }
                     }
@@ -140,16 +142,24 @@ namespace Il2CppDumper
                     {
                         i.SetValue(t, ReadPrimitive(i.FieldType));
                     }
+                    else if (i.FieldType.IsArray)
+                    {
+                        var arrayLengthAttribute = i.GetCustomAttribute<ArrayLengthAttribute>();
+                        if (!genericMethodCache.TryGetValue(i.FieldType, out var methodInfo))
+                        {
+                            methodInfo = readClassArray.MakeGenericMethod(i.FieldType.GetElementType());
+                            genericMethodCache.Add(i.FieldType, methodInfo);
+                        }
+                        i.SetValue(t, methodInfo.Invoke(this, new object[] { arrayLengthAttribute.Length }));
+                    }
                     else
                     {
-                        if (!readClassCache.TryGetValue(i.FieldType, out var methodInfo))
+                        if (!genericMethodCache.TryGetValue(i.FieldType, out var methodInfo))
                         {
                             methodInfo = readClass.MakeGenericMethod(i.FieldType);
-                            readClassCache.Add(i.FieldType, methodInfo);
+                            genericMethodCache.Add(i.FieldType, methodInfo);
                         }
-                        var value = methodInfo.Invoke(this, null);
-                        i.SetValue(t, value);
-                        break;
+                        i.SetValue(t, methodInfo.Invoke(this, null));
                     }
                 }
                 return t;

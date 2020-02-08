@@ -514,7 +514,6 @@ namespace Il2CppDumper
             var pointer = metadata.GetDefaultValueFromIndex(dataIndex);
             var defaultValueType = il2Cpp.types[typeIndex];
             metadata.Position = pointer;
-            value = null;
             switch (defaultValueType.type)
             {
                 case Il2CppTypeEnum.IL2CPP_TYPE_BOOLEAN:

@@ -27,29 +27,7 @@ namespace Il2CppDumper
         public Elf(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
             is32Bit = true;
-            elfHeader = new Elf32_Ehdr();
-            elfHeader.ei_mag = ReadUInt32();
-            elfHeader.ei_class = ReadByte();
-            elfHeader.ei_data = ReadByte();
-            elfHeader.ei_version = ReadByte();
-            elfHeader.ei_osabi = ReadByte();
-            elfHeader.ei_abiversion = ReadByte();
-            elfHeader.ei_pad = ReadBytes(7);
-            elfHeader.e_type = ReadUInt16();
-            elfHeader.e_machine = ReadUInt16();
-            if (elfHeader.e_machine != EM_ARM && elfHeader.e_machine != EM_386)
-                throw new Exception("ERROR: Unsupported machines.");
-            elfHeader.e_version = ReadUInt32();
-            elfHeader.e_entry = ReadUInt32();
-            elfHeader.e_phoff = ReadUInt32();
-            elfHeader.e_shoff = ReadUInt32();
-            elfHeader.e_flags = ReadUInt32();
-            elfHeader.e_ehsize = ReadUInt16();
-            elfHeader.e_phentsize = ReadUInt16();
-            elfHeader.e_phnum = ReadUInt16();
-            elfHeader.e_shentsize = ReadUInt16();
-            elfHeader.e_shnum = ReadUInt16();
-            elfHeader.e_shtrndx = ReadUInt16();
+            elfHeader = ReadClass<Elf32_Ehdr>();
             programSegment = ReadClassArray<Elf32_Phdr>(elfHeader.e_phoff, elfHeader.e_phnum);
             try
             {

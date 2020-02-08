@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\ArrayLengthAttribute.cs" />
     <Compile Include="Extensions\BoyerMooreHorspool.cs" />
     <Compile Include="ExecutableFormats\ElfConstants.cs" />
     <Compile Include="Extensions\HexExtensions.cs" />

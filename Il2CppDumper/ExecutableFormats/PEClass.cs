@@ -5,6 +5,31 @@ using System.Text;
 
 namespace Il2CppDumper
 {
+    public class DosHeader
+    {
+        public ushort Magic;
+        public ushort Cblp;
+        public ushort Cp;
+        public ushort Crlc;
+        public ushort Cparhdr;
+        public ushort Minalloc;
+        public ushort Maxalloc;
+        public ushort Ss;
+        public ushort Sp;
+        public ushort Csum;
+        public ushort Ip;
+        public ushort Cs;
+        public ushort Lfarlc;
+        public ushort Ovno;
+        [ArrayLength(Length = 4)]
+        public ushort[] Res;
+        public ushort Oemid;
+        public ushort Oeminfo;
+        [ArrayLength(Length = 10)]
+        public ushort[] Res2;
+        public uint Lfanew;
+    }
+
     public class FileHeader
     {
         public ushort Machine;
@@ -48,7 +73,7 @@ namespace Il2CppDumper
         public uint SizeOfHeapCommit;
         public uint LoaderFlags;
         public uint NumberOfRvaAndSizes;
-        public DataDirectory[] DataDirectory { get; set; }
+        //public DataDirectory[] DataDirectory;
     }
 
     public class OptionalHeader64
@@ -82,18 +107,19 @@ namespace Il2CppDumper
         public ulong SizeOfHeapCommit;
         public uint LoaderFlags;
         public uint NumberOfRvaAndSizes;
-        public DataDirectory[] DataDirectory { get; set; }
+        //public DataDirectory[] DataDirectory;
     }
 
-    public class DataDirectory
+    /*public class DataDirectory
     {
         public uint VirtualAddress;
         public uint Size;
-    }
+    }*/
 
     public class SectionHeader
     {
-        public string Name;
+        [ArrayLength(Length = 8)]
+        public byte[] Name;
         public uint VirtualSize;
         public uint VirtualAddress;
         public uint SizeOfRawData;
@@ -103,5 +129,13 @@ namespace Il2CppDumper
         public ushort NumberOfRelocations;
         public ushort NumberOfLinenumbers;
         public uint Characteristics;
+    }
+
+    [Flags]
+    public enum SectionCharacteristics : uint
+    {
+        IMAGE_SCN_MEM_EXECUTE = 0x20000000,
+        IMAGE_SCN_MEM_READ = 0x40000000,
+        IMAGE_SCN_MEM_WRITE = 0x80000000
     }
 }

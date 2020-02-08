@@ -18,27 +18,7 @@ namespace Il2CppDumper
 
         public Elf64(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
-            elfHeader = new Elf64_Ehdr();
-            elfHeader.ei_mag = ReadUInt32();
-            elfHeader.ei_class = ReadByte();
-            elfHeader.ei_data = ReadByte();
-            elfHeader.ei_version = ReadByte();
-            elfHeader.ei_osabi = ReadByte();
-            elfHeader.ei_abiversion = ReadByte();
-            elfHeader.ei_pad = ReadBytes(7);
-            elfHeader.e_type = ReadUInt16();
-            elfHeader.e_machine = ReadUInt16();
-            elfHeader.e_version = ReadUInt32();
-            elfHeader.e_entry = ReadUInt64();
-            elfHeader.e_phoff = ReadUInt64();
-            elfHeader.e_shoff = ReadUInt64();
-            elfHeader.e_flags = ReadUInt32();
-            elfHeader.e_ehsize = ReadUInt16();
-            elfHeader.e_phentsize = ReadUInt16();
-            elfHeader.e_phnum = ReadUInt16();
-            elfHeader.e_shentsize = ReadUInt16();
-            elfHeader.e_shnum = ReadUInt16();
-            elfHeader.e_shtrndx = ReadUInt16();
+            elfHeader = ReadClass<Elf64_Ehdr>();
             programSegment = ReadClassArray<Elf64_Phdr>(elfHeader.e_phoff, elfHeader.e_phnum);
             try
             {

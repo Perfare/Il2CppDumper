@@ -3,20 +3,21 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using static Il2CppDumper.Il2CppConstants;
 
 namespace Il2CppDumper
 {
     public class ScriptGenerator
     {
+        private Il2CppExecutor executor;
         private Metadata metadata;
         private Il2Cpp il2Cpp;
         private Dictionary<Il2CppTypeDefinition, int> typeDefImageIndices = new Dictionary<Il2CppTypeDefinition, int>();
 
-        public ScriptGenerator(Metadata metadata, Il2Cpp il2Cpp)
+        public ScriptGenerator(Il2CppExecutor il2CppExecutor)
         {
-            this.metadata = metadata;
-            this.il2Cpp = il2Cpp;
+            executor = il2CppExecutor;
+            metadata = il2CppExecutor.metadata;
+            il2Cpp = il2CppExecutor.il2Cpp;
         }
 
         public void WriteScript(Config config)
@@ -55,7 +56,7 @@ namespace Il2CppDumper
                 for (int typeIndex = imageDef.typeStart; typeIndex < typeEnd; typeIndex++)
                 {
                     var typeDef = metadata.typeDefs[typeIndex];
-                    var typeName = GetTypeDefName(typeDef);
+                    var typeName = executor.GetTypeDefName(typeDef);
                     typeDefImageIndices.Add(typeDef, imageIndex);
                     var methodEnd = typeDef.methodStart + typeDef.method_count;
                     for (var i = typeDef.methodStart; i < methodEnd; ++i)
@@ -85,14 +86,14 @@ namespace Il2CppDumper
                 foreach (var i in metadata.metadataUsageDic[1]) //kIl2CppMetadataUsageTypeInfo
                 {
                     var type = il2Cpp.types[i.Value];
-                    var typeName = GetTypeName(type, true);
+                    var typeName = GetNameSpace(type) + executor.GetTypeName(type);
                     writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Class$" + typeName}')");
                     writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, r'{typeName}', 1)");
                 }
                 foreach (var i in metadata.metadataUsageDic[2]) //kIl2CppMetadataUsageIl2CppType
                 {
                     var type = il2Cpp.types[i.Value];
-                    var typeName = GetTypeName(type, true);
+                    var typeName = GetNameSpace(type) + executor.GetTypeName(type);
                     writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Class$" + typeName}')");
                     writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, r'{typeName}', 1)");
                 }
@@ -100,7 +101,7 @@ namespace Il2CppDumper
                 {
                     var methodDef = metadata.methodDefs[i.Value];
                     var typeDef = metadata.typeDefs[methodDef.declaringType];
-                    var typeName = GetTypeDefName(typeDef);
+                    var typeName = executor.GetTypeDefName(typeDef);
                     var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex) + "()";
                     writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}')");
                     writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}', 1)");
@@ -114,7 +115,7 @@ namespace Il2CppDumper
                     var type = il2Cpp.types[fieldRef.typeIndex];
                     var typeDef = metadata.typeDefs[type.data.klassIndex];
                     var fieldDef = metadata.fieldDefs[typeDef.fieldStart + fieldRef.fieldIndex];
-                    var fieldName = GetTypeName(type, true) + "." + metadata.GetStringFromIndex(fieldDef.nameIndex);
+                    var fieldName = GetNameSpace(type) + executor.GetTypeName(type) + "." + metadata.GetStringFromIndex(fieldDef.nameIndex);
                     writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Field$" + fieldName}')");
                     writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, r'{fieldName}', 1)");
                 }
@@ -133,17 +134,17 @@ namespace Il2CppDumper
                     var methodSpec = il2Cpp.methodSpecs[i.Value];
                     var methodDef = metadata.methodDefs[methodSpec.methodDefinitionIndex];
                     var typeDef = metadata.typeDefs[methodDef.declaringType];
-                    var typeName = GetTypeDefName(typeDef, false);
+                    var typeName = executor.GetTypeDefName(typeDef, false);
                     if (methodSpec.classIndexIndex != -1)
                     {
                         var classInst = il2Cpp.genericInsts[methodSpec.classIndexIndex];
-                        typeName += GetGenericTypeParams(classInst);
+                        typeName += executor.GetGenericTypeParams(classInst);
                     }
                     var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex);
                     if (methodSpec.methodIndexIndex != -1)
                     {
                         var methodInst = il2Cpp.genericInsts[methodSpec.methodIndexIndex];
-                        methodName += GetGenericTypeParams(methodInst);
+                        methodName += executor.GetGenericTypeParams(methodInst);
                     }
                     methodName += "()";
                     writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}')");
@@ -191,108 +192,22 @@ namespace Il2CppDumper
             writer.Close();
         }
 
-        public string GetTypeName(Il2CppType type, bool fullName = false)
+        private string GetNameSpace(Il2CppType il2CppType)
         {
-            string ret;
-            switch (type.type)
+            switch (il2CppType.type)
             {
                 case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
                 case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
+                    var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
+                    var ret = metadata.GetStringFromIndex(typeDef.namespaceIndex);
+                    if (ret != string.Empty)
                     {
-                        var typeDef = metadata.typeDefs[type.data.klassIndex];
-                        ret = string.Empty;
-                        if (fullName)
-                        {
-                            ret = metadata.GetStringFromIndex(typeDef.namespaceIndex);
-                            if (ret != string.Empty)
-                            {
-                                ret += ".";
-                            }
-                        }
-                        ret += GetTypeDefName(typeDef);
-                        break;
+                        ret += ".";
                     }
-                case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
-                    {
-                        var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(type.data.generic_class);
-                        var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
-                        ret = metadata.GetStringFromIndex(typeDef.nameIndex);
-                        var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
-                        ret = ret.Replace($"`{genericInst.type_argc}", "");
-                        ret += GetGenericTypeParams(genericInst);
-                        break;
-                    }
-                case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
-                case Il2CppTypeEnum.IL2CPP_TYPE_MVAR:
-                    {
-                        var param = metadata.genericParameters[type.data.genericParameterIndex];
-                        ret = metadata.GetStringFromIndex(param.nameIndex);
-                        break;
-                    }
-                case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY:
-                    {
-                        var arrayType = il2Cpp.MapVATR<Il2CppArrayType>(type.data.array);
-                        var oriType = il2Cpp.GetIl2CppType(arrayType.etype);
-                        ret = $"{GetTypeName(oriType)}[{new string(',', arrayType.rank - 1)}]";
-                        break;
-                    }
-                case Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY:
-                    {
-                        var oriType = il2Cpp.GetIl2CppType(type.data.type);
-                        ret = $"{GetTypeName(oriType)}[]";
-                        break;
-                    }
-                case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
-                    {
-                        var oriType = il2Cpp.GetIl2CppType(type.data.type);
-                        ret = $"{GetTypeName(oriType)}*";
-                        break;
-                    }
+                    return ret;
                 default:
-                    ret = TypeString[(int)type.type];
-                    break;
+                    return string.Empty;
             }
-
-            return ret;
-        }
-
-        private string GetTypeDefName(Il2CppTypeDefinition typeDef, bool generic = true)
-        {
-            var prefix = string.Empty;
-            if (typeDef.declaringTypeIndex != -1)
-            {
-                prefix = GetTypeName(il2Cpp.types[typeDef.declaringTypeIndex]) + ".";
-            }
-            var typeName = metadata.GetStringFromIndex(typeDef.nameIndex);
-            if (typeDef.genericContainerIndex >= 0)
-            {
-                var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
-                typeName = typeName.Replace($"`{genericContainer.type_argc}", "");
-                if (generic)
-                {
-                    var genericParameterNames = new List<string>();
-                    for (int i = 0; i < genericContainer.type_argc; i++)
-                    {
-                        var genericParameterIndex = genericContainer.genericParameterStart + i;
-                        var param = metadata.genericParameters[genericParameterIndex];
-                        genericParameterNames.Add(metadata.GetStringFromIndex(param.nameIndex));
-                    }
-                    typeName += $"<{string.Join(", ", genericParameterNames)}>";
-                }
-            }
-            return prefix + typeName;
-        }
-
-        public string GetGenericTypeParams(Il2CppGenericInst genericInst)
-        {
-            var typeNames = new List<string>();
-            var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
-            for (uint i = 0; i < genericInst.type_argc; ++i)
-            {
-                var oriType = il2Cpp.GetIl2CppType(pointers[i]);
-                typeNames.Add(GetTypeName(oriType));
-            }
-            return $"<{string.Join(", ", typeNames)}>";
         }
     }
 }

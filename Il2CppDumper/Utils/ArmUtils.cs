@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Text;
 
 namespace Il2CppDumper
 {
-    static class ArmHelper
+    static class ArmUtils
     {
         public static uint DecodeMov(byte[] asm)
         {

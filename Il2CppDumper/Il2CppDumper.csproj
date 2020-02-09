@@ -62,6 +62,7 @@
     <Compile Include="ExecutableFormats\NSO.cs" />
     <Compile Include="ExecutableFormats\NSOClass.cs" />
     <Compile Include="Outputs\ScriptGenerator.cs" />
+    <Compile Include="Utils\Il2CppExecutor.cs" />
     <Compile Include="Utils\SearchSection.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Attributes\VersionAttribute.cs" />
@@ -78,7 +79,7 @@
     <Compile Include="ExecutableFormats\PE.cs" />
     <Compile Include="ExecutableFormats\PEClass.cs" />
     <Compile Include="Utils\PlusSearch.cs" />
-    <Compile Include="Utils\ArmHelper.cs" />
+    <Compile Include="Utils\ArmUtils.cs" />
     <Compile Include="ExecutableFormats\ElfClass.cs" />
     <Compile Include="ExecutableFormats\MachoClass.cs" />
     <Compile Include="ExecutableFormats\MachoFat.cs" />

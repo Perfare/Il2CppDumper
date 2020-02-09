@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using static Il2CppDumper.ArmHelper;
+using static Il2CppDumper.ArmUtils;
 
 namespace Il2CppDumper
 {

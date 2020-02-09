@@ -75,27 +75,5 @@ namespace Il2CppDumper
         public const int PARAM_ATTRIBUTE_IN = 0x0001;
         public const int PARAM_ATTRIBUTE_OUT = 0x0002;
         public const int PARAM_ATTRIBUTE_OPTIONAL = 0x0010;
-
-        public static readonly Dictionary<int, string> TypeString = new Dictionary<int, string>
-        {
-            {1,"void"},
-            {2,"bool"},
-            {3,"char"},
-            {4,"sbyte"},
-            {5,"byte"},
-            {6,"short"},
-            {7,"ushort"},
-            {8,"int"},
-            {9,"uint"},
-            {10,"long"},
-            {11,"ulong"},
-            {12,"float"},
-            {13,"double"},
-            {14,"string"},
-            {22,"TypedReference"},
-            {24,"IntPtr"},
-            {25,"UIntPtr"},
-            {28,"object"},
-        };
     }
 }

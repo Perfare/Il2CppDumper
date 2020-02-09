@@ -272,11 +272,12 @@ namespace Il2CppDumper
         private static void Dump(Metadata metadata, Il2Cpp il2Cpp)
         {
             Console.WriteLine("Dumping...");
-            var decompiler = new Il2CppDecompiler(metadata, il2Cpp);
+            var executor = new Il2CppExecutor(metadata, il2Cpp);
+            var decompiler = new Il2CppDecompiler(executor);
             decompiler.Decompile(config);
             Console.WriteLine("Done!");
             Console.WriteLine("Generate script...");
-            var scriptGenerator = new ScriptGenerator(metadata, il2Cpp);
+            var scriptGenerator = new ScriptGenerator(executor);
             scriptGenerator.WriteScript(config);
             Console.WriteLine("Done!");
             if (config.DummyDll)

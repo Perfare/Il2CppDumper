@@ -155,11 +155,29 @@ namespace Il2CppDumper
                         methodDefinition.ImplAttributes = (MethodImplAttributes)methodDef.iflags;
                         typeDefinition.Methods.Add(methodDefinition);
                         var methodReturnType = il2Cpp.types[methodDef.returnType];
-                        methodDefinition.ReturnType = GetTypeReferenceWithByRef(methodDefinition, methodReturnType);
+                        var returnType = GetTypeReferenceWithByRef(methodDefinition, methodReturnType);
+                        methodDefinition.ReturnType = returnType;
                         if (methodDefinition.HasBody && typeDefinition.BaseType?.FullName != "System.MulticastDelegate")
                         {
                             var ilprocessor = methodDefinition.Body.GetILProcessor();
-                            ilprocessor.Append(ilprocessor.Create(OpCodes.Nop));
+                            if (returnType.FullName == "System.Void")
+                            {
+                                ilprocessor.Append(ilprocessor.Create(OpCodes.Ret));
+                            }
+                            else if (returnType.IsValueType)
+                            {
+                                var variable = new VariableDefinition(returnType);
+                                methodDefinition.Body.Variables.Add(variable);
+                                ilprocessor.Append(ilprocessor.Create(OpCodes.Ldloca_S, variable));
+                                ilprocessor.Append(ilprocessor.Create(OpCodes.Initobj, returnType));
+                                ilprocessor.Append(ilprocessor.Create(OpCodes.Ldloc_0));
+                                ilprocessor.Append(ilprocessor.Create(OpCodes.Ret));
+                            }
+                            else
+                            {
+                                ilprocessor.Append(ilprocessor.Create(OpCodes.Ldnull));
+                                ilprocessor.Append(ilprocessor.Create(OpCodes.Ret));
+                            }
                         }
                         methodDefinitionDic.Add(i, methodDefinition);
                         //method parameter

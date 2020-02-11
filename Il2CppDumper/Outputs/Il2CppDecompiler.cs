@@ -249,6 +249,28 @@ namespace Il2CppDumper
                                 {
                                     writer.Write(GetCustomAttribute(imageDef, methodDef.customAttributeIndex, methodDef.token, "\t"));
                                 }
+                                if (config.DumpMethodOffset)
+                                {
+                                    var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, i, imageIndex, methodDef.token);
+                                    if (methodPointer > 0)
+                                    {
+                                        var fixedMethodPointer = il2Cpp.FixPointer(methodPointer);
+                                        writer.Write("\t// RVA: 0x{0:X} Offset: 0x{1:X}", fixedMethodPointer, il2Cpp.MapVATR(methodPointer));
+                                        if (il2Cpp is PE)
+                                        {
+                                            writer.Write(" IDA: 0x{0:X}", methodPointer);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        writer.Write("\t// RVA: -1 Offset: -1");
+                                    }
+                                    if (methodDef.slot != ushort.MaxValue)
+                                    {
+                                        writer.Write(" Slot: {0}", methodDef.slot);
+                                    }
+                                    writer.Write("\n");
+                                }
                                 writer.Write("\t");
                                 writer.Write(GetModifiers(methodDef));
                                 var methodReturnType = il2Cpp.types[methodDef.returnType];
@@ -321,24 +343,7 @@ namespace Il2CppDumper
                                     parameterStrs.Add(parameterStr);
                                 }
                                 writer.Write(string.Join(", ", parameterStrs));
-                                writer.Write(") { }");
-                                if (config.DumpMethodOffset)
-                                {
-                                    var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, i, imageIndex, methodDef.token);
-                                    if (methodPointer > 0)
-                                    {
-                                        var fixedMethodPointer = il2Cpp.FixPointer(methodPointer);
-                                        writer.Write(" // RVA: 0x{0:X} Offset: 0x{1:X}\n", fixedMethodPointer, il2Cpp.MapVATR(methodPointer));
-                                    }
-                                    else
-                                    {
-                                        writer.Write(" // -1\n");
-                                    }
-                                }
-                                else
-                                {
-                                    writer.Write("\n");
-                                }
+                                writer.Write(") { }\n");
                             }
                         }
                         writer.Write("}\n");
@@ -369,7 +374,15 @@ namespace Il2CppDumper
                     var typeIndex = metadata.attributeTypes[attributeTypeRange.start + i];
                     var methodPointer = il2Cpp.customAttributeGenerators[attributeIndex];
                     var fixedMethodPointer = il2Cpp.FixPointer(methodPointer);
-                    sb.AppendFormat("{0}[{1}] // RVA: 0x{2:X} Offset: 0x{3:X}\n", padding, executor.GetTypeName(il2Cpp.types[typeIndex], false, true), fixedMethodPointer, il2Cpp.MapVATR(methodPointer));
+                    sb.AppendFormat("{0}[{1}] // RVA: 0x{2:X} Offset: 0x{3:X}\n",
+                        padding,
+                        executor.GetTypeName(il2Cpp.types[typeIndex], false, true),
+                        fixedMethodPointer,
+                        il2Cpp.MapVATR(methodPointer));
+                    if (il2Cpp is PE)
+                    {
+                        sb.AppendFormat(" IDA: 0x{0:X}", methodPointer);
+                    }
                 }
                 return sb.ToString();
             }

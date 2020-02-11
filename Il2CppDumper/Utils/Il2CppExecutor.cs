@@ -94,11 +94,15 @@ namespace Il2CppDumper
             var prefix = string.Empty;
             if (typeDef.declaringTypeIndex != -1)
             {
-                prefix = GetTypeName(il2Cpp.types[typeDef.declaringTypeIndex], fullName, genericParameter) + ".";
+                prefix = GetTypeName(il2Cpp.types[typeDef.declaringTypeIndex], fullName, true) + ".";
             }
             else if (fullName)
             {
-                prefix = metadata.GetStringFromIndex(typeDef.namespaceIndex) + ".";
+                var @namespace = metadata.GetStringFromIndex(typeDef.namespaceIndex);
+                if (@namespace != "")
+                {
+                    prefix = @namespace + ".";
+                }
             }
             var typeName = metadata.GetStringFromIndex(typeDef.nameIndex);
             if (typeDef.genericContainerIndex >= 0)

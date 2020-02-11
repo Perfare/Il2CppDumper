@@ -136,27 +136,40 @@ namespace Il2CppDumper
             return ReadClassArray<T>(MapVATR(addr), count);
         }
 
-        public int GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex)
+        public int GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex, bool isValueType)
         {
+            //TODO 计算泛型类的偏移
             try
             {
+                var offset = -1;
                 if (fieldOffsetsArePointers)
                 {
                     var ptr = fieldOffsets[typeIndex];
                     if (ptr > 0)
                     {
                         Position = MapVATR(ptr) + 4ul * (ulong)fieldIndexInType;
-                        return ReadInt32();
-                    }
-                    else
-                    {
-                        return -1;
+                        offset = ReadInt32();
                     }
                 }
                 else
                 {
-                    return (int)fieldOffsets[fieldIndex];
+                    offset = (int)fieldOffsets[fieldIndex];
                 }
+                if (offset > 0)
+                {
+                    if (isValueType)
+                    {
+                        if (is32Bit)
+                        {
+                            offset -= 8;
+                        }
+                        else
+                        {
+                            offset -= 16;
+                        }
+                    }
+                }
+                return offset;
             }
             catch
             {

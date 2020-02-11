@@ -39,19 +39,31 @@ namespace Il2CppDumper
                     for (int typeDefIndex = imageDef.typeStart; typeDefIndex < typeEnd; typeDefIndex++)
                     {
                         var typeDef = metadata.typeDefs[typeDefIndex];
-                        var isStruct = false;
+                        var isValueType = false;
                         var isEnum = false;
                         var extends = new List<string>();
                         if (typeDef.parentIndex >= 0)
                         {
                             var parent = il2Cpp.types[typeDef.parentIndex];
-                            var parentName = executor.GetTypeName(parent, false, true);
-                            if (parentName == "ValueType")
-                                isStruct = true;
-                            else if (parentName == "Enum")
+                            var parentFullName = executor.GetTypeName(parent, true, true);
+                            if (parentFullName == "System.ValueType")
+                            {
+                                var typeFullName = executor.GetTypeDefName(typeDef, true, true);
+                                if (typeFullName != "System.Enum")
+                                {
+                                    isValueType = true;
+                                }
+                            }
+                            else if (parentFullName == "System.Enum")
+                            {
+                                isValueType = true;
                                 isEnum = true;
-                            else if (parentName != "object")
+                            }
+                            else if (parentFullName != "object")
+                            {
+                                var parentName = executor.GetTypeName(parent, false, true);
                                 extends.Add(parentName);
+                            }
                         }
                         if (typeDef.interfaces_count > 0)
                         {
@@ -94,14 +106,14 @@ namespace Il2CppDumper
                             writer.Write("static ");
                         else if ((typeDef.flags & TYPE_ATTRIBUTE_INTERFACE) == 0 && (typeDef.flags & TYPE_ATTRIBUTE_ABSTRACT) != 0)
                             writer.Write("abstract ");
-                        else if (!isStruct && !isEnum && (typeDef.flags & TYPE_ATTRIBUTE_SEALED) != 0)
+                        else if (!isValueType && !isEnum && (typeDef.flags & TYPE_ATTRIBUTE_SEALED) != 0)
                             writer.Write("sealed ");
                         if ((typeDef.flags & TYPE_ATTRIBUTE_INTERFACE) != 0)
                             writer.Write("interface ");
-                        else if (isStruct)
-                            writer.Write("struct ");
                         else if (isEnum)
                             writer.Write("enum ");
+                        else if (isValueType)
+                            writer.Write("struct ");
                         else
                             writer.Write("class ");
                         var typeName = executor.GetTypeDefName(typeDef, false, true);
@@ -184,7 +196,7 @@ namespace Il2CppDumper
                                     }
                                 }
                                 if (config.DumpFieldOffset)
-                                    writer.Write("; // 0x{0:X}\n", il2Cpp.GetFieldOffsetFromIndex(typeDefIndex, i - typeDef.fieldStart, i));
+                                    writer.Write("; // 0x{0:X}\n", il2Cpp.GetFieldOffsetFromIndex(typeDefIndex, i - typeDef.fieldStart, i, isValueType));
                                 else
                                     writer.Write(";\n");
                             }

@@ -30,6 +30,7 @@ namespace Il2CppDumper
             var addressAttribute = new TypeDefinition(namespaceName, "AddressAttribute", (TypeAttributes)0x100001, attributeTypeReference);
             addressAttribute.Fields.Add(new FieldDefinition("RVA", FieldAttributes.Public, stringTypeReference));
             addressAttribute.Fields.Add(new FieldDefinition("Offset", FieldAttributes.Public, stringTypeReference));
+            addressAttribute.Fields.Add(new FieldDefinition("Slot", FieldAttributes.Public, stringTypeReference));
             types.Add(addressAttribute);
             CreateDefaultConstructor(addressAttribute);
             var fieldOffsetAttribute = new TypeDefinition(namespaceName, "FieldOffsetAttribute", (TypeAttributes)0x100001, attributeTypeReference);

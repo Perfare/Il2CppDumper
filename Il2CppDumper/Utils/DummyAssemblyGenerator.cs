@@ -233,6 +233,11 @@ namespace Il2CppDumper
                             var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{il2Cpp.MapVATR(methodPointer):X}"));
                             customAttribute.Fields.Add(rva);
                             customAttribute.Fields.Add(offset);
+                            if (methodDef.slot != ushort.MaxValue)
+                            {
+                                var slot = new CustomAttributeNamedArgument("Slot", new CustomAttributeArgument(stringType, methodDef.slot.ToString()));
+                                customAttribute.Fields.Add(slot);
+                            }
                             methodDefinition.CustomAttributes.Add(customAttribute);
                         }
                     }

@@ -56,7 +56,7 @@ namespace Il2CppDumper
                 for (int typeIndex = imageDef.typeStart; typeIndex < typeEnd; typeIndex++)
                 {
                     var typeDef = metadata.typeDefs[typeIndex];
-                    var typeName = executor.GetTypeDefName(typeDef);
+                    var typeName = executor.GetTypeDefName(typeDef, false, true);
                     typeDefImageIndices.Add(typeDef, imageIndex);
                     var methodEnd = typeDef.methodStart + typeDef.method_count;
                     for (var i = typeDef.methodStart; i < methodEnd; ++i)
@@ -86,14 +86,14 @@ namespace Il2CppDumper
                 foreach (var i in metadata.metadataUsageDic[1]) //kIl2CppMetadataUsageTypeInfo
                 {
                     var type = il2Cpp.types[i.Value];
-                    var typeName = GetNameSpace(type) + executor.GetTypeName(type);
+                    var typeName = executor.GetTypeName(type, true, true);
                     writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Class$" + typeName}')");
                     writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, r'{typeName}', 1)");
                 }
                 foreach (var i in metadata.metadataUsageDic[2]) //kIl2CppMetadataUsageIl2CppType
                 {
                     var type = il2Cpp.types[i.Value];
-                    var typeName = GetNameSpace(type) + executor.GetTypeName(type);
+                    var typeName = executor.GetTypeName(type, true, true);
                     writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Class$" + typeName}')");
                     writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, r'{typeName}', 1)");
                 }
@@ -101,7 +101,7 @@ namespace Il2CppDumper
                 {
                     var methodDef = metadata.methodDefs[i.Value];
                     var typeDef = metadata.typeDefs[methodDef.declaringType];
-                    var typeName = executor.GetTypeDefName(typeDef);
+                    var typeName = executor.GetTypeDefName(typeDef, true, true);
                     var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex) + "()";
                     writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}')");
                     writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}', 1)");
@@ -115,7 +115,7 @@ namespace Il2CppDumper
                     var type = il2Cpp.types[fieldRef.typeIndex];
                     var typeDef = metadata.typeDefs[type.data.klassIndex];
                     var fieldDef = metadata.fieldDefs[typeDef.fieldStart + fieldRef.fieldIndex];
-                    var fieldName = GetNameSpace(type) + executor.GetTypeName(type) + "." + metadata.GetStringFromIndex(fieldDef.nameIndex);
+                    var fieldName = executor.GetTypeName(type, true, true) + "." + metadata.GetStringFromIndex(fieldDef.nameIndex);
                     writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Field$" + fieldName}')");
                     writer.WriteLine($"idc.set_cmt(0x{il2Cpp.metadataUsages[i.Key]:X}, r'{fieldName}', 1)");
                 }
@@ -134,17 +134,17 @@ namespace Il2CppDumper
                     var methodSpec = il2Cpp.methodSpecs[i.Value];
                     var methodDef = metadata.methodDefs[methodSpec.methodDefinitionIndex];
                     var typeDef = metadata.typeDefs[methodDef.declaringType];
-                    var typeName = executor.GetTypeDefName(typeDef, false);
+                    var typeName = executor.GetTypeDefName(typeDef, true, false);
                     if (methodSpec.classIndexIndex != -1)
                     {
                         var classInst = il2Cpp.genericInsts[methodSpec.classIndexIndex];
-                        typeName += executor.GetGenericTypeParams(classInst);
+                        typeName += executor.GetGenericInstParams(classInst);
                     }
                     var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex);
                     if (methodSpec.methodIndexIndex != -1)
                     {
                         var methodInst = il2Cpp.genericInsts[methodSpec.methodIndexIndex];
-                        methodName += executor.GetGenericTypeParams(methodInst);
+                        methodName += executor.GetGenericInstParams(methodInst);
                     }
                     methodName += "()";
                     writer.WriteLine($"SetName(0x{il2Cpp.metadataUsages[i.Key]:X}, '{"Method$" + methodName}')");

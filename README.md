@@ -4,70 +4,53 @@
 
 中文说明请戳[这里](README.zh-CN.md)
 
-Restore dll from Unity il2cpp binary file (except code)
+Unity il2cpp reverse engineer
 
 ## Features
 
-* Complete DLL restore (except code)
+* Complete DLL restore (except code), can be used to extract `MonoBehaviour` and `MonoScript`
 * Supports ELF, ELF64, Mach-O, PE and NSO format
-* Supports Unity 5.3 and greater
-* Supports automated IDA script generation
-  * rename method
-  * name and tag metadata
-  * makefunction to improve ida analysis
-* Supports Android dumped .so file to bypass protection
+* Supports Unity 5.3 - 2020
+* Supports generate IDA and Ghidra scripts to help IDA and Ghidra better analyze il2cpp files
+* Supports Android memory dumped `libil2cpp.so` file to bypass 99% protection
 
 ## Usage
+
+Run `Il2CppDumper.exe` and choose the il2cpp executable file and `global-metadata.dat` file, then enter the information as prompted
+
+The program will then generate all the output files in current working directory
+
+### Command-line
 
 ```
 Il2CppDumper.exe <executable-file> <global-metadata> [unityVersion] [mode]
 ```
 
-Or run `Il2CppDumper.exe` and choose the il2cpp executable file and `global-metadata.dat` file, then enter the information as prompted.
+`unityVersion` Open any Unity asset file with a hex editor (Usually exists in the `Data` folder of the game), You can find the Unity version number at the beginning, similar to "5.6", "2017.2"
 
-The program will then generate all the output files in current working directory.
+`mode` 1 - Manual, 2 - Auto
 
-### Extraction Modes
-
-#### Manual
-
-The parameters (`CodeRegistration` and `MetadataRegistration`) that are passed to `il2cpp::vm::MetadataCache::Register()` needs to be manually reverse engineered and passed to the program.
-
-#### Auto
-
-Automatically finds the `il2cpp_codegen_register()` function by signature matching and read out the first (`CodeRegistration`) and second (`MetadataRegistration`) parameter passed to the `il2cpp::vm::MetadataCache::Register()` method that will be invoked in the registration function. May not work well due to compiler optimizations.
-
-#### Auto(Plus) - **Recommended**
-
-Matches possible pointers in the data section with some guidance from global-metadata.
-
-Supports metadata version 20 and up
-
-only `CodeRegistration` address can be found on metadata version 16
-
-#### Auto(Symbol)
-
-Uses symbols in the il2cpp binary to locate `CodeRegistration` and `MetadataRegistration`.
-
-Only supports ELF format file.
-
-### Output files
-
-#### dump.cs
-
-Simple decompilation code. It is recommended to get better code from DummyDll using [dnSpy](https://github.com/0xd4d/dnSpy) or other tools.
-
-#### script.py
-
-Requires IDA and IDAPython. Can be loaded in IDA via `File -> Script file`.
-
-#### stringliteral.json
-
-Contains all stringLiteral information
+### Outputs
 
 #### DummyDll
 
 Folder, containing all restored dll files
+
+Use [dnSpy](https://github.com/0xd4d/dnSpy), [ILSpy](https://github.com/icsharpcode/ILSpy) or other .Net decompiler tools to view
+
+Can be used to extract Unity `MonoBehaviour` and `MonoScript`, for [UtinyRipper](https://github.com/mafaca/UtinyRipper), [UABE](https://7daystodie.com/forums/showthread.php?22675-Unity-Assets-Bundle-Extractor)
+
+#### ida.py
+
+For IDA
+
+#### ghidra.py
+
+For Ghidra
+
+#### stringliteral.json
+
+Contains all stringLiteral information
 
 ### Configuration
 
@@ -91,13 +74,15 @@ Available options:
 
 #### `ERROR: Metadata file supplied is not valid metadata file.`  
 
-The specified `global-metadata.dat` is invalid and the program cannot recognize it. Make sure you choose the correct file. Sometimes games may obfuscate this file for content protection purposes and so on. Deobfuscating of such files is beyond the scope of this program, so please **DO NOT** file an issue regarding to deobfuscating.
+Make sure you choose the correct file. Sometimes games may obfuscate this file for content protection purposes and so on. Deobfuscating of such files is beyond the scope of this program, so please **DO NOT** file an issue regarding to deobfuscating.
 
-#### `ERROR: Can't use this mode to process file, try another mode.`
+#### `ERROR: Can't use auto mode to process file, try manual mode.`
 
-Try other extraction modes.
+Make sure the executable is not protected, you can open a new issue and upload the file, I will try to solve.
 
-If all automated extraction modes failed with this error and you are sure that the files you supplied are not corrupted/obfuscated, please file an issue with the logs and sample files.
+#### `ERROR: This file may be protected.`
+
+Il2CppDumper detected that the executable file has been protected, use `GameGuardian` to dump `libil2cpp.so` from the game memory, then use Il2CppDumper to load and follow the prompts, can bypass 99% protection
 
 ## Credits
 

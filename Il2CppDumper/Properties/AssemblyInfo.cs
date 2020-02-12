@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Il2CppDumper")]
-[assembly: AssemblyCopyright("Copyright © Perfare 2016-2019")]
+[assembly: AssemblyCopyright("Copyright © Perfare 2016-2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

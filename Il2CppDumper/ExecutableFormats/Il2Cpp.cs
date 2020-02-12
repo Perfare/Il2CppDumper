@@ -35,7 +35,7 @@ namespace Il2CppDumper
 
         protected Il2Cpp(Stream stream, float version, long maxMetadataUsages) : base(stream)
         {
-            this.Version = version;
+            Version = version;
             this.maxMetadataUsages = maxMetadataUsages;
         }
 

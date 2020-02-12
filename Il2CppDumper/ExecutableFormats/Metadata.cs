@@ -35,24 +35,15 @@ namespace Il2CppDumper
 
         public Metadata(Stream stream, float version) : base(stream)
         {
-            this.Version = version;
+            Version = version;
             metadataHeader = ReadClass<Il2CppGlobalMetadataHeader>();
             if (metadataHeader.sanity != 0xFAB11BAF)
             {
                 throw new InvalidDataException("ERROR: Metadata file supplied is not valid metadata file.");
             }
-            switch (metadataHeader.version)
+            if (metadataHeader.version < 16 || metadataHeader.version > 24)
             {
-                case 16:
-                case 19:
-                case 20:
-                case 21:
-                case 22:
-                case 23:
-                case 24:
-                    break;
-                default:
-                    throw new NotSupportedException($"ERROR: Metadata file supplied is not a supported version[{version}].");
+                throw new NotSupportedException($"ERROR: Metadata file supplied is not a supported version[{version}].");
             }
             imageDefs = ReadMetadataClassArray<Il2CppImageDefinition>(metadataHeader.imagesOffset, metadataHeader.imagesCount);
             typeDefs = ReadMetadataClassArray<Il2CppTypeDefinition>(metadataHeader.typeDefinitionsOffset, metadataHeader.typeDefinitionsCount);

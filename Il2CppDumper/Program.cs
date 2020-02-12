@@ -225,43 +225,42 @@ namespace Il2CppDumper
 
             if (mode == 0)
             {
-                Console.WriteLine("Select Mode: 1.Manual 2.Auto 3.Auto(Plus) 4.Auto(Symbol)");
+                Console.WriteLine("Select Mode: 1.Manual 2.Auto");
                 var modeKey = Console.ReadKey(true);
                 mode = int.Parse(modeKey.KeyChar.ToString());
             }
-            if (mode != 1)
-            {
-                Console.WriteLine("Searching...");
-            }
             try
             {
-                bool flag;
-                switch (mode)
+                if (mode == 1)
                 {
-                    case 1: //Manual
-                        Console.Write("Input CodeRegistration: ");
-                        var codeRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
-                        Console.Write("Input MetadataRegistration: ");
-                        var metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
-                        il2Cpp.Init(codeRegistration, metadataRegistration);
-                        flag = true;
-                        break;
-                    case 2: //Auto
-                        flag = il2Cpp.Search();
-                        break;
-                    case 3: //Auto(Plus)
-                        flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length);
-                        break;
-                    case 4: //Auto(Symbol)
-                        flag = il2Cpp.SymbolSearch();
-                        break;
-                    default:
-                        Console.WriteLine("ERROR: You have to choose a mode.");
-                        return false;
+                    Console.Write("Input CodeRegistration: ");
+                    var codeRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
+                    Console.Write("Input MetadataRegistration: ");
+                    var metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
+                    il2Cpp.Init(codeRegistration, metadataRegistration);
+                    return true;
                 }
-                if (!flag)
+                else if (mode == 2)
                 {
-                    Console.WriteLine("ERROR: Can't use this mode to process file, try another mode.");
+                    Console.WriteLine("Searching...");
+                    var flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length);
+                    if (!flag)
+                    {
+                        flag = il2Cpp.Search();
+                    }
+                    if (!flag)
+                    {
+                        flag = il2Cpp.SymbolSearch();
+                    }
+                    if (!flag)
+                    {
+                        Console.WriteLine("ERROR: Can't use auto mode to process file, try manual mode.");
+                        return false;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("ERROR: You have to choose a mode.");
                     return false;
                 }
             }

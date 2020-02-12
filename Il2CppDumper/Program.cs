@@ -12,6 +12,7 @@ namespace Il2CppDumper
         private static Config config;
         private static readonly Version Unity20183 = new Version(2018, 3);
         private static readonly Version Unity20191 = new Version(2019, 1);
+        private static readonly Version Unity20201 = new Version(2020, 1);
 
         [STAThread]
         static void Main(string[] args)
@@ -108,7 +109,7 @@ namespace Il2CppDumper
             {
                 throw new InvalidDataException("ERROR: Metadata file supplied is not valid metadata file.");
             }
-            float fixedMetadataVersion;
+            float fixedVersion;
             var metadataVersion = BitConverter.ToInt32(metadataBytes, 4);
             if (metadataVersion == 24)
             {
@@ -121,17 +122,21 @@ namespace Il2CppDumper
                 {
                     var versionSplit = Array.ConvertAll(Regex.Replace(stringVersion, @"\D", ".").Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries), int.Parse);
                     var unityVersion = new Version(versionSplit[0], versionSplit[1]);
-                    if (unityVersion >= Unity20191)
+                    if (unityVersion >= Unity20201)
                     {
-                        fixedMetadataVersion = 24.2f;
+                        fixedVersion = 24.3f;
+                    }
+                    else if (unityVersion >= Unity20191)
+                    {
+                        fixedVersion = 24.2f;
                     }
                     else if (unityVersion >= Unity20183)
                     {
-                        fixedMetadataVersion = 24.1f;
+                        fixedVersion = 24.1f;
                     }
                     else
                     {
-                        fixedMetadataVersion = metadataVersion;
+                        fixedVersion = metadataVersion;
                     }
                 }
                 catch
@@ -141,10 +146,10 @@ namespace Il2CppDumper
             }
             else
             {
-                fixedMetadataVersion = metadataVersion;
+                fixedVersion = metadataVersion;
             }
             Console.WriteLine("Initializing metadata...");
-            metadata = new Metadata(new MemoryStream(metadataBytes), fixedMetadataVersion);
+            metadata = new Metadata(new MemoryStream(metadataBytes), fixedVersion);
             //判断il2cpp的magic
             var il2cppMagic = BitConverter.ToUInt32(il2cppBytes, 0);
             var isElf = false;

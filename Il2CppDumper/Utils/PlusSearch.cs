@@ -373,7 +373,12 @@ namespace Il2CppDumper
                                                     var offset3 = il2Cpp.Position;
                                                     if (il2Cpp.ReadUInt32() == va3)
                                                     {
-                                                        return offset3 - dataSec3.offset + dataSec3.address - 52ul;
+                                                        var offset4 = offset3 - dataSec3.offset + dataSec3.address;
+                                                        if (il2Cpp.Version > 24.2f)
+                                                        {
+                                                            return offset4 - 60ul;
+                                                        }
+                                                        return offset4 - 52ul;
                                                     }
                                                 }
                                             }
@@ -427,7 +432,12 @@ namespace Il2CppDumper
                                                     var offset3 = il2Cpp.Position;
                                                     if (il2Cpp.ReadUInt64() == va3)
                                                     {
-                                                        return offset3 - dataSec3.offset + dataSec3.address - 104ul;
+                                                        var offset4 = offset3 - dataSec3.offset + dataSec3.address;
+                                                        if (il2Cpp.Version > 24.2f)
+                                                        {
+                                                            return offset4 - 120ul;
+                                                        }
+                                                        return offset4 - 104ul;
                                                     }
                                                 }
                                             }

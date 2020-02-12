@@ -56,7 +56,7 @@ namespace Il2CppDumper
 
         public override bool Search()
         {
-            if (version < 23)
+            if (Version < 23)
             {
                 var __mod_init_func = sections.First(x => x.sectname == "__mod_init_func");
                 var addrs = ReadClassArray<ulong>(__mod_init_func.offset, (long)__mod_init_func.size / 8);
@@ -89,7 +89,7 @@ namespace Il2CppDumper
                     }
                 }
             }
-            if (version == 23)
+            if (Version == 23)
             {
                 /* ADRP X0, unk
                  * ADD X0, X0, unk
@@ -130,7 +130,7 @@ namespace Il2CppDumper
                     }
                 }
             }
-            if (version >= 24)
+            if (Version >= 24)
             {
                 /* ADRP X0, unk
                  * ADD X0, X0, unk

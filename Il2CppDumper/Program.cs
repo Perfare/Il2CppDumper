@@ -194,7 +194,7 @@ namespace Il2CppDumper
                     break;
             }
 
-            var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.version;
+            var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.Version;
             Console.WriteLine("Initializing il2cpp file...");
             var il2CppMemory = new MemoryStream(il2cppBytes);
             if (isNSO)

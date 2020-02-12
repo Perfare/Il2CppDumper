@@ -27,7 +27,7 @@ namespace Il2CppDumper
             var pos = Position;
             if (fileHeader.Machine == 0x14c) //Intel 386
             {
-                is32Bit = true;
+                Is32Bit = true;
                 var optionalHeader = ReadClass<OptionalHeader>();
                 imageBase = optionalHeader.ImageBase;
             }

@@ -35,7 +35,7 @@ namespace Il2CppDumper
 
         public Metadata(Stream stream, float version) : base(stream)
         {
-            this.version = version;
+            this.Version = version;
             metadataHeader = ReadClass<Il2CppGlobalMetadataHeader>();
             if (metadataHeader.sanity != 0xFAB11BAF)
             {
@@ -117,7 +117,7 @@ namespace Il2CppDumper
 
         public int GetCustomAttributeIndex(Il2CppImageDefinition imageDef, int customAttributeIndex, uint token)
         {
-            if (version > 24)
+            if (Version > 24)
             {
                 var end = imageDef.customAttributeStart + imageDef.customAttributeCount;
                 for (int i = imageDef.customAttributeStart; i < end; i++)
@@ -181,7 +181,7 @@ namespace Il2CppDumper
                 var attr = (VersionAttribute)Attribute.GetCustomAttribute(i, typeof(VersionAttribute));
                 if (attr != null)
                 {
-                    if (version < attr.Min || version > attr.Max)
+                    if (Version < attr.Min || Version > attr.Max)
                         continue;
                 }
                 switch (i.FieldType.Name)

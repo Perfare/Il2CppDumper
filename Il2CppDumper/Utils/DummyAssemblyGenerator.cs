@@ -313,7 +313,7 @@ namespace Il2CppDumper
                 }
             }
             //第三遍，添加CustomAttribute
-            if (il2Cpp.version > 20)
+            if (il2Cpp.Version > 20)
             {
                 PrepareCustomAttribute();
                 foreach (var imageDef in metadata.imageDefs)

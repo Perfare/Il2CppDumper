@@ -200,7 +200,7 @@ namespace Il2CppDumper
                 }
                 writer.Flush();
                 unCompressedStream.Position = 0;
-                return new NSO(unCompressedStream, version, maxMetadataUsages);
+                return new NSO(unCompressedStream, Version, maxMetadataUsages);
             }
             return this;
         }

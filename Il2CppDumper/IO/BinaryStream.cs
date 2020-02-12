@@ -8,8 +8,8 @@ namespace Il2CppDumper
 {
     public class BinaryStream : IDisposable
     {
-        public float version;
-        public bool is32Bit;
+        public float Version;
+        public bool Is32Bit;
         private Stream stream;
         private BinaryReader reader;
         private BinaryWriter writer;
@@ -94,11 +94,11 @@ namespace Il2CppDumper
                     return ReadUInt16();
                 case "Byte":
                     return ReadByte();
-                case "Int64" when is32Bit:
+                case "Int64" when Is32Bit:
                     return (long)ReadInt32();
                 case "Int64":
                     return ReadInt64();
-                case "UInt64" when is32Bit:
+                case "UInt64" when Is32Bit:
                     return (ulong)ReadUInt32();
                 case "UInt64":
                     return ReadUInt64();
@@ -135,7 +135,7 @@ namespace Il2CppDumper
                     }
                     if (versionAttribute != null)
                     {
-                        if (version < versionAttribute.Min || version > versionAttribute.Max)
+                        if (Version < versionAttribute.Min || Version > versionAttribute.Max)
                             continue;
                     }
                     var fieldType = i.FieldType;

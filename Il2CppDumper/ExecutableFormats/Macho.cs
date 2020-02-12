@@ -16,7 +16,7 @@ namespace Il2CppDumper
 
         public Macho(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
-            is32Bit = true;
+            Is32Bit = true;
             Position += 16; //skip magic, cputype, cpusubtype, filetype
             var ncmds = ReadUInt32();
             Position += 8; //skip sizeofcmds, flags
@@ -64,7 +64,7 @@ namespace Il2CppDumper
 
         public override bool Search()
         {
-            if (version < 21)
+            if (Version < 21)
             {
                 var __mod_init_func = sections.First(x => x.sectname == "__mod_init_func");
                 var addrs = ReadClassArray<uint>(__mod_init_func.offset, __mod_init_func.size / 4u);

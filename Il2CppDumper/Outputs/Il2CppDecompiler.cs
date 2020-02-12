@@ -362,7 +362,7 @@ namespace Il2CppDumper
 
         public string GetCustomAttribute(Il2CppImageDefinition image, int customAttributeIndex, uint token, string padding = "")
         {
-            if (il2Cpp.version < 21)
+            if (il2Cpp.Version < 21)
                 return string.Empty;
             var attributeIndex = metadata.GetCustomAttributeIndex(image, customAttributeIndex, token);
             if (attributeIndex >= 0)

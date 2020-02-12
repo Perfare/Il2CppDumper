@@ -148,15 +148,15 @@ namespace Il2CppDumper
 
         public ulong FindCodeRegistration()
         {
-            if (il2Cpp.is32Bit)
+            if (il2Cpp.Is32Bit)
             {
-                if (il2Cpp.version >= 24.2)
+                if (il2Cpp.Version >= 24.2)
                 {
                     return FindCodeRegistration32Bit2019();
                 }
                 return FindCodeRegistration32Bit();
             }
-            if (il2Cpp.version >= 24.2)
+            if (il2Cpp.Version >= 24.2)
             {
                 return FindCodeRegistration64Bit2019();
             }
@@ -165,7 +165,7 @@ namespace Il2CppDumper
 
         public ulong FindMetadataRegistration()
         {
-            if (il2Cpp.is32Bit)
+            if (il2Cpp.Is32Bit)
             {
                 return FindMetadataRegistration32Bit();
             }

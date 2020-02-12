@@ -80,7 +80,7 @@ namespace Il2CppDumper
                 }
             }
             writer.WriteLine("print('Make method name done')");
-            if (il2Cpp.version > 16)
+            if (il2Cpp.Version > 16)
             {
                 writer.WriteLine("print('Setting MetadataUsage...')");
                 foreach (var i in metadata.metadataUsageDic[1]) //kIl2CppMetadataUsageTypeInfo
@@ -158,7 +158,7 @@ namespace Il2CppDumper
             if (config.MakeFunction)
             {
                 List<ulong> orderedPointers;
-                if (il2Cpp.version >= 24.2f)
+                if (il2Cpp.Version >= 24.2f)
                 {
                     orderedPointers = new List<ulong>();
                     foreach (var methodPointers in il2Cpp.codeGenModuleMethodPointers)
@@ -173,7 +173,7 @@ namespace Il2CppDumper
                 orderedPointers.AddRange(il2Cpp.genericMethodPointers);
                 orderedPointers.AddRange(il2Cpp.invokerPointers);
                 orderedPointers.AddRange(il2Cpp.customAttributeGenerators);
-                if (il2Cpp.version >= 22)
+                if (il2Cpp.Version >= 22)
                 {
                     orderedPointers.AddRange(il2Cpp.reversePInvokeWrappers);
                     orderedPointers.AddRange(il2Cpp.unresolvedVirtualCallPointers);

@@ -27,7 +27,7 @@ namespace Il2CppDumper
 
         public Elf(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
-            is32Bit = true;
+            Is32Bit = true;
             elfHeader = ReadClass<Elf32_Ehdr>();
             programSegment = ReadClassArray<Elf32_Phdr>(elfHeader.e_phoff, elfHeader.e_phnum);
             try
@@ -89,7 +89,7 @@ namespace Il2CppDumper
                 uint codeRegistration = 0;
                 uint metadataRegistration = 0;
                 var result = (uint)resultList[0];
-                if (version < 24f)
+                if (Version < 24f)
                 {
                     if (elfHeader.e_machine == EM_ARM)
                     {
@@ -101,7 +101,7 @@ namespace Il2CppDumper
                         metadataRegistration = ReadUInt32();
                     }
                 }
-                else if (version >= 24f)
+                else if (Version >= 24f)
                 {
                     if (elfHeader.e_machine == EM_ARM)
                     {

@@ -56,6 +56,7 @@
     <Compile Include="Extensions\HexExtensions.cs" />
     <Compile Include="Outputs\DummyAssemblyExporter.cs" />
     <Compile Include="Outputs\Il2CppDecompiler.cs" />
+    <Compile Include="Outputs\ScriptJson.cs" />
     <Compile Include="Utils\Il2CppDummyDll.cs" />
     <Compile Include="Outputs\Il2CppConstants.cs" />
     <Compile Include="IO\Lz4DecoderStream.cs" />
@@ -91,6 +92,9 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="ida.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />

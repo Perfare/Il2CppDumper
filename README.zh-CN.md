@@ -21,10 +21,8 @@ Unity il2cpp逆向工程
 ### 命令行
 
 ```
-Il2CppDumper.exe <executable-file> <global-metadata> [unityVersion] [mode]
+Il2CppDumper.exe <executable-file> <global-metadata> [mode]
 ```
-
-`unityVersion` 用十六进制编辑器打开任意Unity资产文件（一般存在于游戏的`Data`文件夹下），即可在开头找到Unity版本号，类似”5.6“，”2017.2“
 
 `mode` 1 - 手动，2 - 自动
 
@@ -45,6 +43,10 @@ Il2CppDumper.exe <executable-file> <global-metadata> [unityVersion] [mode]
 #### ghidra.py
 
 用于Ghidra
+
+#### script.json
+
+用于IDA和Ghidra脚本
 
 #### stringliteral.json
 

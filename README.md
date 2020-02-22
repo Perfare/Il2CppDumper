@@ -23,10 +23,8 @@ The program will then generate all the output files in current working directory
 ### Command-line
 
 ```
-Il2CppDumper.exe <executable-file> <global-metadata> [unityVersion] [mode]
+Il2CppDumper.exe <executable-file> <global-metadata> [mode]
 ```
-
-`unityVersion` Open any Unity asset file with a hex editor (Usually exists in the `Data` folder of the game), You can find the Unity version number at the beginning, similar to "5.6", "2017.2"
 
 `mode` 1 - Manual, 2 - Auto
 
@@ -47,6 +45,10 @@ For IDA
 #### ghidra.py
 
 For Ghidra
+
+#### script.json
+
+For ida.py and ghidra.py
 
 #### stringliteral.json
 

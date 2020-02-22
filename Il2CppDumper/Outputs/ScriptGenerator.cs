@@ -160,11 +160,17 @@ namespace Il2CppDumper
                 //TODO interopData内也包含函数
                 orderedPointers = orderedPointers.Distinct().OrderBy(x => x).ToList();
                 orderedPointers.Remove(0);
+                var addresses = new List<ulong>(orderedPointers.Count);
                 for (int i = 0; i < orderedPointers.Count; i++)
                 {
-                    orderedPointers[i] = il2Cpp.GetRVA(orderedPointers[i]);
+                    var addr = orderedPointers[i];
+                    if (addr > long.MaxValue)
+                    {
+                        continue;
+                    }
+                    addresses.Add(il2Cpp.GetRVA(addr));
                 }
-                json.Addresses = orderedPointers;
+                json.Addresses = addresses;
             }
             File.WriteAllText("script.json", JsonConvert.SerializeObject(json, Formatting.Indented));
         }

@@ -43,6 +43,10 @@ namespace Il2CppDumper
             attributeAttribute.Fields.Add(new FieldDefinition("Offset", FieldAttributes.Public, stringTypeReference));
             types.Add(attributeAttribute);
             CreateDefaultConstructor(attributeAttribute);
+            var metadataOffsetAttribute = new TypeDefinition(namespaceName, "MetadataOffsetAttribute", (TypeAttributes)0x100001, attributeTypeReference);
+            metadataOffsetAttribute.Fields.Add(new FieldDefinition("Offset", FieldAttributes.Public, stringTypeReference));
+            types.Add(metadataOffsetAttribute);
+            CreateDefaultConstructor(metadataOffsetAttribute);
             return assemblyDefinition;
         }
 

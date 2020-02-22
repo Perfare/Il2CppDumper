@@ -31,6 +31,7 @@ namespace Il2CppDumper
             var addressAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "AddressAttribute").Methods[0];
             var fieldOffsetAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "FieldOffsetAttribute").Methods[0];
             attributeAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "AttributeAttribute").Methods[0];
+            var metadataOffsetAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "MetadataOffsetAttribute").Methods[0];
             stringType = il2CppDummyDll.MainModule.TypeSystem.String;
 
             var resolver = new MyAssemblyResolver();
@@ -127,12 +128,19 @@ namespace Il2CppDumper
                         typeDefinition.Fields.Add(fieldDefinition);
                         fieldDefinitionDic.Add(i, fieldDefinition);
                         //fieldDefault
-                        if (fieldDefinition.HasDefault)
+                        var fieldDefault = metadata.GetFieldDefaultValueFromIndex(i);
+                        if (fieldDefault != null && fieldDefault.dataIndex != -1)
                         {
-                            var fieldDefault = metadata.GetFieldDefaultValueFromIndex(i);
-                            if (fieldDefault != null && fieldDefault.dataIndex != -1)
+                            if (TryGetDefaultValue(fieldDefault.typeIndex, fieldDefault.dataIndex, out var value))
                             {
-                                fieldDefinition.Constant = GetDefaultValue(fieldDefault.dataIndex, fieldDefault.typeIndex);
+                                fieldDefinition.Constant = value;
+                            }
+                            else
+                            {
+                                var customAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(metadataOffsetAttribute));
+                                var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{value:X}"));
+                                customAttribute.Fields.Add(offset);
+                                fieldDefinition.CustomAttributes.Add(customAttribute);
                             }
                         }
                         //fieldOffset
@@ -191,12 +199,19 @@ namespace Il2CppDumper
                             methodDefinition.Parameters.Add(parameterDefinition);
                             parameterDefinitionDic.Add(methodDef.parameterStart + j, parameterDefinition);
                             //ParameterDefault
-                            if (parameterDefinition.HasDefault)
+                            var parameterDefault = metadata.GetParameterDefaultValueFromIndex(methodDef.parameterStart + j);
+                            if (parameterDefault != null && parameterDefault.dataIndex != -1)
                             {
-                                var parameterDefault = metadata.GetParameterDefaultValueFromIndex(methodDef.parameterStart + j);
-                                if (parameterDefault != null && parameterDefault.dataIndex != -1)
+                                if (TryGetDefaultValue(parameterDefault.typeIndex, parameterDefault.dataIndex, out var value))
                                 {
-                                    parameterDefinition.Constant = GetDefaultValue(parameterDefault.dataIndex, parameterDefault.typeIndex);
+                                    parameterDefinition.Constant = value;
+                                }
+                                else
+                                {
+                                    var customAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(metadataOffsetAttribute));
+                                    var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{value:X}"));
+                                    customAttribute.Fields.Add(offset);
+                                    parameterDefinition.CustomAttributes.Add(customAttribute);
                                 }
                             }
                         }
@@ -496,45 +511,57 @@ namespace Il2CppDumper
             }
         }
 
-        private object GetDefaultValue(int dataIndex, int typeIndex)
+        private bool TryGetDefaultValue(int typeIndex, int dataIndex, out object value)
         {
             var pointer = metadata.GetDefaultValueFromIndex(dataIndex);
-            if (pointer > 0)
+            var defaultValueType = il2Cpp.types[typeIndex];
+            metadata.Position = pointer;
+            switch (defaultValueType.type)
             {
-                var defaultValueType = il2Cpp.types[typeIndex];
-                metadata.Position = pointer;
-                switch (defaultValueType.type)
-                {
-                    case Il2CppTypeEnum.IL2CPP_TYPE_BOOLEAN:
-                        return metadata.ReadBoolean();
-                    case Il2CppTypeEnum.IL2CPP_TYPE_U1:
-                        return metadata.ReadByte();
-                    case Il2CppTypeEnum.IL2CPP_TYPE_I1:
-                        return metadata.ReadSByte();
-                    case Il2CppTypeEnum.IL2CPP_TYPE_CHAR:
-                        return BitConverter.ToChar(metadata.ReadBytes(2), 0);
-                    case Il2CppTypeEnum.IL2CPP_TYPE_U2:
-                        return metadata.ReadUInt16();
-                    case Il2CppTypeEnum.IL2CPP_TYPE_I2:
-                        return metadata.ReadInt16();
-                    case Il2CppTypeEnum.IL2CPP_TYPE_U4:
-                        return metadata.ReadUInt32();
-                    case Il2CppTypeEnum.IL2CPP_TYPE_I4:
-                        return metadata.ReadInt32();
-                    case Il2CppTypeEnum.IL2CPP_TYPE_U8:
-                        return metadata.ReadUInt64();
-                    case Il2CppTypeEnum.IL2CPP_TYPE_I8:
-                        return metadata.ReadInt64();
-                    case Il2CppTypeEnum.IL2CPP_TYPE_R4:
-                        return metadata.ReadSingle();
-                    case Il2CppTypeEnum.IL2CPP_TYPE_R8:
-                        return metadata.ReadDouble();
-                    case Il2CppTypeEnum.IL2CPP_TYPE_STRING:
-                        var len = metadata.ReadInt32();
-                        return Encoding.UTF8.GetString(metadata.ReadBytes(len));
-                }
+                case Il2CppTypeEnum.IL2CPP_TYPE_BOOLEAN:
+                    value = metadata.ReadBoolean();
+                    return true;
+                case Il2CppTypeEnum.IL2CPP_TYPE_U1:
+                    value = metadata.ReadByte();
+                    return true;
+                case Il2CppTypeEnum.IL2CPP_TYPE_I1:
+                    value = metadata.ReadSByte();
+                    return true;
+                case Il2CppTypeEnum.IL2CPP_TYPE_CHAR:
+                    value = BitConverter.ToChar(metadata.ReadBytes(2), 0);
+                    return true;
+                case Il2CppTypeEnum.IL2CPP_TYPE_U2:
+                    value = metadata.ReadUInt16();
+                    return true;
+                case Il2CppTypeEnum.IL2CPP_TYPE_I2:
+                    value = metadata.ReadInt16();
+                    return true;
+                case Il2CppTypeEnum.IL2CPP_TYPE_U4:
+                    value = metadata.ReadUInt32();
+                    return true;
+                case Il2CppTypeEnum.IL2CPP_TYPE_I4:
+                    value = metadata.ReadInt32();
+                    return true;
+                case Il2CppTypeEnum.IL2CPP_TYPE_U8:
+                    value = metadata.ReadUInt64();
+                    return true;
+                case Il2CppTypeEnum.IL2CPP_TYPE_I8:
+                    value = metadata.ReadInt64();
+                    return true;
+                case Il2CppTypeEnum.IL2CPP_TYPE_R4:
+                    value = metadata.ReadSingle();
+                    return true;
+                case Il2CppTypeEnum.IL2CPP_TYPE_R8:
+                    value = metadata.ReadDouble();
+                    return true;
+                case Il2CppTypeEnum.IL2CPP_TYPE_STRING:
+                    var len = metadata.ReadInt32();
+                    value = Encoding.UTF8.GetString(metadata.ReadBytes(len));
+                    return true;
+                default:
+                    value = pointer;
+                    return false;
             }
-            return null;
         }
 
         private void PrepareCustomAttribute()

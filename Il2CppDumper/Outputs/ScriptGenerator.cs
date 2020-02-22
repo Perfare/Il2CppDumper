@@ -80,7 +80,14 @@ namespace Il2CppDumper
                     scriptMetadataMethod.Name = "Method$" + methodName;
                     var imageIndex = typeDefImageIndices[typeDef];
                     var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, (int)i.Value, imageIndex, methodDef.token);
-                    scriptMetadataMethod.MethodAddress = il2Cpp.GetRVA(methodPointer);
+                    if (methodPointer == 0)
+                    {
+                        scriptMetadataMethod.MethodAddress = 0;
+                    }
+                    else
+                    {
+                        scriptMetadataMethod.MethodAddress = il2Cpp.GetRVA(methodPointer);
+                    }
                 }
                 foreach (var i in metadata.metadataUsageDic[4]) //kIl2CppMetadataUsageFieldInfo
                 {
@@ -131,7 +138,14 @@ namespace Il2CppDumper
                     scriptMetadataMethod.Name = "Method$" + methodName;
                     var imageIndex = typeDefImageIndices[typeDef];
                     var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, methodSpec.methodDefinitionIndex, imageIndex, methodDef.token);
-                    scriptMetadataMethod.MethodAddress = il2Cpp.GetRVA(methodPointer);
+                    if (methodPointer == 0)
+                    {
+                        scriptMetadataMethod.MethodAddress = 0;
+                    }
+                    else
+                    {
+                        scriptMetadataMethod.MethodAddress = il2Cpp.GetRVA(methodPointer);
+                    }
                 }
             }
             if (config.MakeFunction)
@@ -160,17 +174,11 @@ namespace Il2CppDumper
                 //TODO interopData内也包含函数
                 orderedPointers = orderedPointers.Distinct().OrderBy(x => x).ToList();
                 orderedPointers.Remove(0);
-                var addresses = new List<ulong>(orderedPointers.Count);
                 for (int i = 0; i < orderedPointers.Count; i++)
                 {
-                    var addr = orderedPointers[i];
-                    if (addr > long.MaxValue)
-                    {
-                        continue;
-                    }
-                    addresses.Add(il2Cpp.GetRVA(addr));
+                    orderedPointers[i] = il2Cpp.GetRVA(orderedPointers[i]);
                 }
-                json.Addresses = addresses;
+                json.Addresses = orderedPointers;
             }
             File.WriteAllText("script.json", JsonConvert.SerializeObject(json, Formatting.Indented));
         }

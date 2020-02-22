@@ -193,5 +193,10 @@ namespace Il2CppDumper
         {
             return false;
         }
+
+        public override ulong GetRVA(ulong pointer)
+        {
+            return pointer - 0x100000000ul;
+        }
     }
 }

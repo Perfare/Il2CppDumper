@@ -258,7 +258,7 @@ namespace Il2CppDumper
             return false;
         }
 
-        public override ulong FixPointer(ulong pointer)
+        public override ulong GetRVA(ulong pointer)
         {
             if (isDumped)
             {

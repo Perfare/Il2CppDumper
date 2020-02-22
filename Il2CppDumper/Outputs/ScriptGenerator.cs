@@ -42,7 +42,7 @@ namespace Il2CppDumper
                         {
                             var scriptMethod = new ScriptMethod();
                             json.ScriptMethod.Add(scriptMethod);
-                            scriptMethod.Address = il2Cpp.FixPointer(methodPointer);
+                            scriptMethod.Address = il2Cpp.GetRVA(methodPointer);
                             scriptMethod.Name = typeName + "$$" + methodName;
                         }
                     }
@@ -56,7 +56,7 @@ namespace Il2CppDumper
                     var typeName = executor.GetTypeName(type, true, true);
                     var scriptMetadata = new ScriptMetadata();
                     json.ScriptMetadata.Add(scriptMetadata);
-                    scriptMetadata.Address = il2Cpp.FixPointer(il2Cpp.metadataUsages[i.Key]);
+                    scriptMetadata.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
                     scriptMetadata.Name = "Class$" + typeName;
                 }
                 foreach (var i in metadata.metadataUsageDic[2]) //kIl2CppMetadataUsageIl2CppType
@@ -65,7 +65,7 @@ namespace Il2CppDumper
                     var typeName = executor.GetTypeName(type, true, true);
                     var scriptMetadata = new ScriptMetadata();
                     json.ScriptMetadata.Add(scriptMetadata);
-                    scriptMetadata.Address = il2Cpp.FixPointer(il2Cpp.metadataUsages[i.Key]);
+                    scriptMetadata.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
                     scriptMetadata.Name = "Class$" + typeName;
                 }
                 foreach (var i in metadata.metadataUsageDic[3]) //kIl2CppMetadataUsageMethodDef
@@ -76,11 +76,11 @@ namespace Il2CppDumper
                     var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex) + "()";
                     var scriptMetadataMethod = new ScriptMetadataMethod();
                     json.ScriptMetadataMethod.Add(scriptMetadataMethod);
-                    scriptMetadataMethod.Address = il2Cpp.FixPointer(il2Cpp.metadataUsages[i.Key]);
+                    scriptMetadataMethod.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
                     scriptMetadataMethod.Name = "Method$" + methodName;
                     var imageIndex = typeDefImageIndices[typeDef];
                     var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, (int)i.Value, imageIndex, methodDef.token);
-                    scriptMetadataMethod.MethodAddress = il2Cpp.FixPointer(methodPointer);
+                    scriptMetadataMethod.MethodAddress = il2Cpp.GetRVA(methodPointer);
                 }
                 foreach (var i in metadata.metadataUsageDic[4]) //kIl2CppMetadataUsageFieldInfo
                 {
@@ -91,14 +91,14 @@ namespace Il2CppDumper
                     var fieldName = executor.GetTypeName(type, true, true) + "." + metadata.GetStringFromIndex(fieldDef.nameIndex);
                     var scriptMetadata = new ScriptMetadata();
                     json.ScriptMetadata.Add(scriptMetadata);
-                    scriptMetadata.Address = il2Cpp.FixPointer(il2Cpp.metadataUsages[i.Key]);
+                    scriptMetadata.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
                     scriptMetadata.Name = "Field$" + fieldName;
                 }
                 foreach (var i in metadata.metadataUsageDic[5]) //kIl2CppMetadataUsageStringLiteral
                 {
                     var scriptString = new ScriptString();
                     json.ScriptString.Add(scriptString);
-                    scriptString.Address = il2Cpp.FixPointer(il2Cpp.metadataUsages[i.Key]);
+                    scriptString.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
                     scriptString.Value = metadata.GetStringLiteralFromIndex(i.Value);
                 }
                 var stringLiterals = json.ScriptString.Select(x => new
@@ -127,11 +127,11 @@ namespace Il2CppDumper
                     methodName += "()";
                     var scriptMetadataMethod = new ScriptMetadataMethod();
                     json.ScriptMetadataMethod.Add(scriptMetadataMethod);
-                    scriptMetadataMethod.Address = il2Cpp.FixPointer(il2Cpp.metadataUsages[i.Key]);
+                    scriptMetadataMethod.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
                     scriptMetadataMethod.Name = "Method$" + methodName;
                     var imageIndex = typeDefImageIndices[typeDef];
                     var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, methodSpec.methodDefinitionIndex, imageIndex, methodDef.token);
-                    scriptMetadataMethod.MethodAddress = il2Cpp.FixPointer(methodPointer);
+                    scriptMetadataMethod.MethodAddress = il2Cpp.GetRVA(methodPointer);
                 }
             }
             if (config.MakeFunction)
@@ -162,7 +162,7 @@ namespace Il2CppDumper
                 orderedPointers.Remove(0);
                 for (int i = 0; i < orderedPointers.Count; i++)
                 {
-                    orderedPointers[i] = il2Cpp.FixPointer(orderedPointers[i]);
+                    orderedPointers[i] = il2Cpp.GetRVA(orderedPointers[i]);
                 }
                 json.Addresses = orderedPointers;
             }

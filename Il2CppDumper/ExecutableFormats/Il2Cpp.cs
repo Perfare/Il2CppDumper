@@ -101,6 +101,7 @@ namespace Il2CppDumper
                     codeGenModules[i] = codeGenModule;
                     try
                     {
+                        var name = ReadStringToNull(MapVATR(codeGenModule.moduleName));
                         codeGenModuleMethodPointers[i] = MapVATR<ulong>(codeGenModule.methodPointers, codeGenModule.methodPointerCount);
                     }
                     catch
@@ -208,7 +209,7 @@ namespace Il2CppDumper
             }
         }
 
-        public virtual ulong FixPointer(ulong pointer)
+        public virtual ulong GetRVA(ulong pointer)
         {
             return pointer;
         }

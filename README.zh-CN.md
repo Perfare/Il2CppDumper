@@ -24,8 +24,6 @@ Unity il2cpp逆向工程
 Il2CppDumper.exe <executable-file> <global-metadata> [mode]
 ```
 
-`mode` 1 - 手动，2 - 自动
-
 ### 输出文件
 
 #### DummyDll
@@ -61,7 +59,7 @@ Il2CppDumper.exe <executable-file> <global-metadata> [mode]
   * 是否生成DummyDll
 
 * `MakeFunction`
-  * 是否在script.py中添加MakeFunction代码
+  * 是否在script.json中添加MakeFunction代码
 
 * `ForceIl2CppVersion`，`ForceVersion`  
   * 当ForceIl2CppVersion为true时，程序将根据ForceVersion指定的版本读取il2cpp的可执行文件（Metadata仍然使用header里的版本），在部分低版本的il2cpp中可能会用到（比如安卓20版本下，你可能需要设置ForceVersion为16程序才能正常工作）

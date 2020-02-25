@@ -26,8 +26,6 @@ The program will then generate all the output files in current working directory
 Il2CppDumper.exe <executable-file> <global-metadata> [mode]
 ```
 
-`mode` 1 - Manual, 2 - Auto
-
 ### Outputs
 
 #### DummyDll
@@ -67,7 +65,7 @@ Available options:
   * Whether to generate dummy DLLs
 
 * `MakeFunction`
-  * Whether to add the MakeFunction code in script.py
+  * Whether to add the MakeFunction code in script.json
 
 * `ForceIl2CppVersion`, `ForceVersion`
   * If `ForceIl2CppVersion` is `true`, the program will use the version number specified in `ForceVersion` to choose parser for il2cpp binaries (does not affect the choice of metadata parser). This may be useful on some older il2cpp version (e.g. the program may need to use v16 parser on il2cpp v20 (Android) binaries in order to work properly)

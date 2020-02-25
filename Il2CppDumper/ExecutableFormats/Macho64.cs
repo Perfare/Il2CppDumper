@@ -176,7 +176,7 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
-            var data = sections.Where(x => x.sectname == "__const").ToArray();
+            var data = sections.Where(x => x.sectname == "__const" || x.sectname == "__cstring" || x.sectname == "__data").ToArray();
             var code = sections.Where(x => x.flags == 0x80000400).ToArray();
             var bss = sections.Where(x => x.flags == 1u).ToArray();
 

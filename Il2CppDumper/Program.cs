@@ -17,8 +17,6 @@ namespace Il2CppDumper
             config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(Application.StartupPath + Path.DirectorySeparatorChar + @"config.json"));
             byte[] il2cppBytes = null;
             byte[] metadataBytes = null;
-            string stringVersion = null;
-            int mode = 0;
 
             if (args.Length == 1)
             {
@@ -28,14 +26,10 @@ namespace Il2CppDumper
                     return;
                 }
             }
-            if (args.Length > 3)
+            if (args.Length > 2)
             {
                 ShowHelp();
                 return;
-            }
-            if (args.Length > 2)
-            {
-                mode = int.Parse(args[2]);
             }
             if (args.Length > 1)
             {
@@ -76,7 +70,7 @@ namespace Il2CppDumper
             }
             try
             {
-                if (Init(il2cppBytes, metadataBytes, stringVersion, mode, out var metadata, out var il2Cpp))
+                if (Init(il2cppBytes, metadataBytes, out var metadata, out var il2Cpp))
                 {
                     Dump(metadata, il2Cpp);
                 }
@@ -95,7 +89,7 @@ namespace Il2CppDumper
             Application.ExitThread();
         }
 
-        private static bool Init(byte[] il2cppBytes, byte[] metadataBytes, string stringVersion, int mode, out Metadata metadata, out Il2Cpp il2Cpp)
+        private static bool Init(byte[] il2cppBytes, byte[] metadataBytes, out Metadata metadata, out Il2Cpp il2Cpp)
         {
             var sanity = BitConverter.ToUInt32(metadataBytes, 0);
             if (sanity != 0xFAB11BAF)
@@ -177,46 +171,29 @@ namespace Il2CppDumper
                 il2Cpp = new Macho64(il2CppMemory, version, metadata.maxMetadataUsages);
             else
                 il2Cpp = new Macho(il2CppMemory, version, metadata.maxMetadataUsages);
+            Console.WriteLine($"Il2Cpp Version: {il2Cpp.Version}");
 
-            if (mode == 0)
-            {
-                Console.WriteLine("Select Mode: 1.Manual 2.Auto");
-                var modeKey = Console.ReadKey(true);
-                mode = int.Parse(modeKey.KeyChar.ToString());
-            }
+            Console.WriteLine("Searching...");
             try
             {
-                if (mode == 1)
+                var flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length);
+                if (!flag)
                 {
+                    flag = il2Cpp.Search();
+                }
+                if (!flag)
+                {
+                    flag = il2Cpp.SymbolSearch();
+                }
+                if (!flag)
+                {
+                    Console.WriteLine("ERROR: Can't use auto mode to process file, try manual mode.");
                     Console.Write("Input CodeRegistration: ");
                     var codeRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
                     Console.Write("Input MetadataRegistration: ");
                     var metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
                     il2Cpp.Init(codeRegistration, metadataRegistration);
                     return true;
-                }
-                else if (mode == 2)
-                {
-                    Console.WriteLine("Searching...");
-                    var flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length);
-                    if (!flag)
-                    {
-                        flag = il2Cpp.Search();
-                    }
-                    if (!flag)
-                    {
-                        flag = il2Cpp.SymbolSearch();
-                    }
-                    if (!flag)
-                    {
-                        Console.WriteLine("ERROR: Can't use auto mode to process file, try manual mode.");
-                        return false;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("ERROR: You have to choose a mode.");
-                    return false;
                 }
             }
             catch (Exception e)

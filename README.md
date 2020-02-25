@@ -23,7 +23,7 @@ The program will then generate all the output files in current working directory
 ### Command-line
 
 ```
-Il2CppDumper.exe <executable-file> <global-metadata> [mode]
+Il2CppDumper.exe <executable-file> <global-metadata>
 ```
 
 ### Outputs

@@ -21,7 +21,7 @@ Unity il2cpp逆向工程
 ### 命令行
 
 ```
-Il2CppDumper.exe <executable-file> <global-metadata> [mode]
+Il2CppDumper.exe <executable-file> <global-metadata>
 ```
 
 ### 输出文件

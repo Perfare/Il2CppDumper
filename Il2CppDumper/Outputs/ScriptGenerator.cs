@@ -53,7 +53,7 @@ namespace Il2CppDumper
                 foreach (var i in metadata.metadataUsageDic[1]) //kIl2CppMetadataUsageTypeInfo
                 {
                     var type = il2Cpp.types[i.Value];
-                    var typeName = executor.GetTypeName(type, true, true);
+                    var typeName = executor.GetTypeName(type, true, false);
                     var scriptMetadata = new ScriptMetadata();
                     json.ScriptMetadata.Add(scriptMetadata);
                     scriptMetadata.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
@@ -62,7 +62,7 @@ namespace Il2CppDumper
                 foreach (var i in metadata.metadataUsageDic[2]) //kIl2CppMetadataUsageIl2CppType
                 {
                     var type = il2Cpp.types[i.Value];
-                    var typeName = executor.GetTypeName(type, true, true);
+                    var typeName = executor.GetTypeName(type, true, false);
                     var scriptMetadata = new ScriptMetadata();
                     json.ScriptMetadata.Add(scriptMetadata);
                     scriptMetadata.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
@@ -91,7 +91,7 @@ namespace Il2CppDumper
                     var type = il2Cpp.types[fieldRef.typeIndex];
                     var typeDef = metadata.typeDefs[type.data.klassIndex];
                     var fieldDef = metadata.fieldDefs[typeDef.fieldStart + fieldRef.fieldIndex];
-                    var fieldName = executor.GetTypeName(type, true, true) + "." + metadata.GetStringFromIndex(fieldDef.nameIndex);
+                    var fieldName = executor.GetTypeName(type, true, false) + "." + metadata.GetStringFromIndex(fieldDef.nameIndex);
                     var scriptMetadata = new ScriptMetadata();
                     json.ScriptMetadata.Add(scriptMetadata);
                     scriptMetadata.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);

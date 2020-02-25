@@ -34,69 +34,109 @@ namespace Il2CppDumper
             this.il2Cpp = il2Cpp;
         }
 
-        public string GetTypeName(Il2CppType il2CppType, bool fullName, bool genericParameter)
+        public string GetTypeName(Il2CppType il2CppType, bool addNamespace, bool is_nested)
         {
-            string ret;
             switch (il2CppType.type)
             {
-                case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
-                case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
+                case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY:
                     {
-                        var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
-                        ret = GetTypeDefName(typeDef, fullName, genericParameter);
-                        break;
+                        var arrayType = il2Cpp.MapVATR<Il2CppArrayType>(il2CppType.data.array);
+                        var elementType = il2Cpp.GetIl2CppType(arrayType.etype);
+                        return $"{GetTypeName(elementType, addNamespace, false)}[{new string(',', arrayType.rank - 1)}]";
                     }
-                case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
+                case Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY:
                     {
-                        var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
-                        var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
-                        ret = GetTypeDefName(typeDef, fullName, false);
-                        var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
-                        ret = ret.Replace($"`{genericInst.type_argc}", "");
-                        ret += GetGenericInstParams(genericInst);
-                        break;
+                        var elementType = il2Cpp.GetIl2CppType(il2CppType.data.type);
+                        return $"{GetTypeName(elementType, addNamespace, false)}[]";
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
+                    {
+                        var oriType = il2Cpp.GetIl2CppType(il2CppType.data.type);
+                        return $"{GetTypeName(oriType, addNamespace, false)}*";
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
                 case Il2CppTypeEnum.IL2CPP_TYPE_MVAR:
                     {
                         var param = metadata.genericParameters[il2CppType.data.genericParameterIndex];
-                        ret = metadata.GetStringFromIndex(param.nameIndex);
-                        break;
+                        return metadata.GetStringFromIndex(param.nameIndex);
                     }
-                case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY:
+                case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
+                case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
+                case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
                     {
-                        var arrayType = il2Cpp.MapVATR<Il2CppArrayType>(il2CppType.data.array);
-                        var oriType = il2Cpp.GetIl2CppType(arrayType.etype);
-                        ret = $"{GetTypeName(oriType, fullName, genericParameter)}[{new string(',', arrayType.rank - 1)}]";
-                        break;
-                    }
-                case Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY:
-                    {
-                        var oriType = il2Cpp.GetIl2CppType(il2CppType.data.type);
-                        ret = $"{GetTypeName(oriType, fullName, genericParameter)}[]";
-                        break;
-                    }
-                case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
-                    {
-                        var oriType = il2Cpp.GetIl2CppType(il2CppType.data.type);
-                        ret = $"{GetTypeName(oriType, fullName, genericParameter)}*";
-                        break;
+                        string str = string.Empty;
+                        Il2CppTypeDefinition typeDef;
+                        Il2CppGenericClass genericClass = null;
+                        if (il2CppType.type == Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST)
+                        {
+                            genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
+                            typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
+                        }
+                        else
+                        {
+                            typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
+                        }
+                        if (typeDef.declaringTypeIndex != -1)
+                        {
+                            str += GetTypeName(il2Cpp.types[typeDef.declaringTypeIndex], addNamespace, true);
+                            str += '.';
+                        }
+                        else if (addNamespace)
+                        {
+                            var @namespace = metadata.GetStringFromIndex(typeDef.namespaceIndex);
+                            if (@namespace != "")
+                            {
+                                str += @namespace + ".";
+                            }
+                        }
+
+                        var typeName = metadata.GetStringFromIndex(typeDef.nameIndex);
+                        var index = typeName.IndexOf("`");
+                        if (index != -1)
+                        {
+                            str += typeName.Substring(0, index);
+                        }
+                        else
+                        {
+                            str += typeName;
+                        }
+
+                        if (is_nested)
+                            return str;
+
+                        if (genericClass != null)
+                        {
+                            var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
+                            str += GetGenericInstParams(genericInst);
+                        }
+                        else if (typeDef.genericContainerIndex >= 0)
+                        {
+                            var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
+                            var genericParameterNames = new List<string>();
+                            for (int i = 0; i < genericContainer.type_argc; i++)
+                            {
+                                var genericParameterIndex = genericContainer.genericParameterStart + i;
+                                var param = metadata.genericParameters[genericParameterIndex];
+                                genericParameterNames.Add(metadata.GetStringFromIndex(param.nameIndex));
+                            }
+                            str += $"<{string.Join(", ", genericParameterNames)}>";
+                        }
+
+                        return str;
                     }
                 default:
-                    ret = TypeString[(int)il2CppType.type];
-                    break;
+                    return TypeString[(int)il2CppType.type];
             }
-            return ret;
         }
 
-        public string GetTypeDefName(Il2CppTypeDefinition typeDef, bool fullName, bool genericParameter)
+        public string GetTypeDefName(Il2CppTypeDefinition typeDef, bool addNamespace, bool genericParameter)
         {
             var prefix = string.Empty;
             if (typeDef.declaringTypeIndex != -1)
             {
-                prefix = GetTypeName(il2Cpp.types[typeDef.declaringTypeIndex], fullName, true) + ".";
+                prefix = GetTypeName(il2Cpp.types[typeDef.declaringTypeIndex], addNamespace, true) + ".";
             }
-            else if (fullName)
+            else if (addNamespace)
             {
                 var @namespace = metadata.GetStringFromIndex(typeDef.namespaceIndex);
                 if (@namespace != "")
@@ -107,10 +147,14 @@ namespace Il2CppDumper
             var typeName = metadata.GetStringFromIndex(typeDef.nameIndex);
             if (typeDef.genericContainerIndex >= 0)
             {
-                var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
-                typeName = typeName.Replace($"`{genericContainer.type_argc}", "");
+                var index = typeName.IndexOf("`");
+                if (index != -1)
+                {
+                    typeName = typeName.Substring(0, index);
+                }
                 if (genericParameter)
                 {
+                    var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
                     var genericParameterNames = new List<string>();
                     for (int i = 0; i < genericContainer.type_argc; i++)
                     {
@@ -131,7 +175,7 @@ namespace Il2CppDumper
             for (uint i = 0; i < genericInst.type_argc; ++i)
             {
                 var oriType = il2Cpp.GetIl2CppType(pointers[i]);
-                typeNames.Add(GetTypeName(oriType, false, true));
+                typeNames.Add(GetTypeName(oriType, false, false));
             }
             return $"<{string.Join(", ", typeNames)}>";
         }

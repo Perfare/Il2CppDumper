@@ -435,9 +435,9 @@ namespace Il2CppDumper
             structInfo.TypeName = StructNameDic[typeDef];
             structInfo.IsValueType = typeDef.IsValueType;
             GetFields(typeDef, structInfo.Fields, structInfo.StaticFields, null, false);
+            var dic = new SortedDictionary<int, Il2CppMethodDefinition>();
             for (int i = 0; i < typeDef.vtable_count; i++)
             {
-                var methodInfo = new StructVTableMethodInfo();
                 var vTableIndex = typeDef.vtableStart + i;
                 var encodedMethodIndex = metadata.vtableMethods[vTableIndex];
                 var usage = metadata.GetEncodedIndexType(encodedMethodIndex);
@@ -452,9 +452,14 @@ namespace Il2CppDumper
                 {
                     methodDef = metadata.methodDefs[index];
                 }
-                //TODO
-                methodInfo.MethodName = $"_{methodDef.slot}_{metadata.GetStringFromIndex(methodDef.nameIndex)}";
-                //structInfo.VTableMethod.Add(methodInfo);
+                dic[methodDef.slot] = methodDef;
+            }
+            foreach (var i in dic)
+            {
+                var methodInfo = new StructVTableMethodInfo();
+                structInfo.VTableMethod.Add(methodInfo);
+                var methodDef = i.Value;
+                methodInfo.MethodName = $"_{methodDef.slot}_{FixName(metadata.GetStringFromIndex(methodDef.nameIndex))}";
             }
         }
 

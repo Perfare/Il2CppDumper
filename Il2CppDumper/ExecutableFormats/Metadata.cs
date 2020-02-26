@@ -31,6 +31,7 @@ namespace Il2CppDumper
         public Il2CppFieldRef[] fieldRefs;
         public Il2CppGenericParameter[] genericParameters;
         public int[] constraintIndices;
+        public uint[] vtableMethods;
         private Dictionary<uint, string> stringCache = new Dictionary<uint, string>();
 
         public Metadata(Stream stream) : base(stream)
@@ -77,6 +78,7 @@ namespace Il2CppDumper
             genericContainers = ReadMetadataClassArray<Il2CppGenericContainer>(metadataHeader.genericContainersOffset, metadataHeader.genericContainersCount);
             genericParameters = ReadMetadataClassArray<Il2CppGenericParameter>(metadataHeader.genericParametersOffset, metadataHeader.genericParametersCount);
             constraintIndices = ReadClassArray<int>(metadataHeader.genericParameterConstraintsOffset, metadataHeader.genericParameterConstraintsCount / 4);
+            vtableMethods = ReadClassArray<uint>(metadataHeader.vtableMethodsOffset, metadataHeader.vtableMethodsCount / 4);
             if (Version > 16)
             {
                 stringLiterals = ReadMetadataClassArray<Il2CppStringLiteral>(metadataHeader.stringLiteralOffset, metadataHeader.stringLiteralCount);
@@ -172,12 +174,12 @@ namespace Il2CppDumper
             maxMetadataUsages = metadataUsageDic.Max(x => x.Value.Max(y => y.Key)) + 1;
         }
 
-        private uint GetEncodedIndexType(uint index)
+        public uint GetEncodedIndexType(uint index)
         {
             return (index & 0xE0000000) >> 29;
         }
 
-        private uint GetDecodedMethodIndex(uint index)
+        public uint GetDecodedMethodIndex(uint index)
         {
             return index & 0x1FFFFFFFU;
         }

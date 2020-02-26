@@ -40,7 +40,7 @@ namespace Il2CppDumper
         public int nestedTypesCount;
         public uint interfacesOffset; // TypeIndex
         public int interfacesCount;
-        public int vtableMethodsOffset; // EncodedMethodIndex
+        public uint vtableMethodsOffset; // EncodedMethodIndex
         public int vtableMethodsCount;
         public int interfaceOffsetsOffset; // Il2CppInterfaceOffsetPair
         public int interfaceOffsetsCount;
@@ -179,6 +179,9 @@ namespace Il2CppDumper
         public uint bitfield;
         [Version(Min = 19)]
         public uint token;
+
+        public bool IsValueType => (bitfield & 0x1) == 1;
+        public bool IsEnum => ((bitfield >> 1) & 0x1) == 1;
     }
 
     public class Il2CppMethodDefinition

@@ -63,7 +63,28 @@ namespace Il2CppDumper
                             var scriptMethod = new ScriptMethod();
                             json.ScriptMethod.Add(scriptMethod);
                             scriptMethod.Address = il2Cpp.GetRVA(methodPointer);
-                            scriptMethod.Name = typeName + "$$" + methodName;
+                            var methodFullName = typeName + "$$" + methodName;
+                            scriptMethod.Name = methodFullName;
+
+                            var methodReturnType = il2Cpp.types[methodDef.returnType];
+                            var returnType = ParseType(methodReturnType);
+                            var signature = $"{returnType} {FixName(methodFullName)} (";
+                            var parameterStrs = new List<string>();
+                            if ((methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
+                            {
+                                var thisType = ParseType(il2Cpp.types[typeDef.byrefTypeIndex]);
+                                parameterStrs.Add($"{thisType} this");
+                            }
+                            for (var j = 0; j < methodDef.parameterCount; j++)
+                            {
+                                var parameterDef = metadata.parameterDefs[methodDef.parameterStart + j];
+                                var parameterName = metadata.GetStringFromIndex(parameterDef.nameIndex);
+                                var parameterType = il2Cpp.types[parameterDef.typeIndex];
+                                parameterStrs.Add($"{ParseType(parameterType)} {parameterName}");
+                            }
+                            signature += string.Join(", ", parameterStrs);
+                            signature += ");";
+                            scriptMethod.Signature = signature;
                         }
                     }
                 }

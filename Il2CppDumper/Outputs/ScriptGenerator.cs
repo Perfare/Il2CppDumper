@@ -254,6 +254,14 @@ namespace Il2CppDumper
                         {
                             field.FieldName = "_monitor";
                         }
+                        if (field.FieldName == "register") //hack
+                        {
+                            field.FieldName = "_register";
+                        }
+                        if (field.FieldName == "_cs") //hack
+                        {
+                            field.FieldName = "__cs";
+                        }
                         headerClass.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
                     }
                     headerClass.Append("};\n");
@@ -478,14 +486,6 @@ namespace Il2CppDumper
                     var structFieldInfo = new StructFieldInfo();
                     structFieldInfo.FieldTypeName = ParseType(fieldType, context);
                     var fieldName = FixName(metadata.GetStringFromIndex(fieldDef.nameIndex));
-                    if (isParent)
-                    {
-                        var access = fieldType.attrs & FIELD_ATTRIBUTE_FIELD_ACCESS_MASK;
-                        if (access == FIELD_ATTRIBUTE_PRIVATE)
-                        {
-                            fieldName = $"{FixName(metadata.GetStringFromIndex(typeDef.nameIndex))}_{fieldName}";
-                        }
-                    }
                     structFieldInfo.FieldName = fieldName;
                     if ((fieldType.attrs & FIELD_ATTRIBUTE_STATIC) != 0)
                     {
@@ -496,6 +496,18 @@ namespace Il2CppDumper
                     }
                     else
                     {
+                        if (isParent)
+                        {
+                            var access = fieldType.attrs & FIELD_ATTRIBUTE_FIELD_ACCESS_MASK;
+                            if (access == FIELD_ATTRIBUTE_PRIVATE)
+                            {
+                                structFieldInfo.FieldName = $"{FixName(metadata.GetStringFromIndex(typeDef.nameIndex))}_{fieldName}";
+                            }
+                        }
+                        if (fields.Any(x => x.FieldName == structFieldInfo.FieldName))
+                        {
+                            structFieldInfo.FieldName = "new_" + structFieldInfo.FieldName;
+                        }
                         fields.Add(structFieldInfo);
                     }
                 }

@@ -9,9 +9,7 @@ namespace Il2CppDumper
     public static class HeaderConstants
     {
         public readonly static string HeaderV242 =
-@"#define ALIGN_TYPE(val) __attribute__((aligned(val)))
-
-struct VirtualInvokeData
+@"struct VirtualInvokeData
 {
     uintptr_t methodPtr;
     void* method;
@@ -20,11 +18,7 @@ struct VirtualInvokeData
 struct Il2CppType
 {
     void* data;
-    unsigned int attrs    : 16;
-    unsigned int type     : 8;
-    unsigned int num_mods : 6;
-    unsigned int byref    : 1;
-    unsigned int pinned   : 1;
+    unsigned int bits;
 };
 
 struct Il2CppClass;
@@ -62,7 +56,7 @@ struct Il2CppClass_2
     uint32_t initializationExceptionGCHandle;
     uint32_t cctor_started;
     uint32_t cctor_finished;
-    ALIGN_TYPE(8) size_t cctor_thread;
+    size_t cctor_thread;
     int32_t genericContainerIndex;
     uint32_t instance_size;
     uint32_t actualSize;
@@ -89,20 +83,8 @@ struct Il2CppClass_2
     uint8_t minimumAlignment;
     uint8_t naturalAligment;
     uint8_t packingSize;
-    uint8_t initialized_and_no_error : 1;
-    uint8_t valuetype : 1;
-    uint8_t initialized : 1;
-    uint8_t enumtype : 1;
-    uint8_t is_generic : 1;
-    uint8_t has_references : 1;
-    uint8_t init_pending : 1;
-    uint8_t size_inited : 1;
-    uint8_t has_finalize : 1;
-    uint8_t has_cctor : 1;
-    uint8_t is_blittable : 1;
-    uint8_t is_import_or_windows_runtime : 1;
-    uint8_t is_vtable_initialized : 1;
-    uint8_t has_initialization_error : 1;
+    uint8_t bitflags1;
+    uint8_t bitflags2;
 };
 
 struct Il2CppClass

@@ -33,6 +33,7 @@ namespace Il2CppDumper
     {
         public ulong Address;
         public string Name;
+        public string Signature;
     }
 
     public class ScriptMetadataMethod

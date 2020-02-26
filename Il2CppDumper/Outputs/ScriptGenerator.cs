@@ -50,7 +50,7 @@ namespace Il2CppDumper
                 {
                     var typeDef = metadata.typeDefs[typeIndex];
                     AddStruct(typeDef);
-                    var typeName = executor.GetTypeDefName(typeDef, false, true);
+                    var typeName = executor.GetTypeDefName(typeDef, true, true);
                     typeDefImageIndices.Add(typeDef, imageIndex);
                     var methodEnd = typeDef.methodStart + typeDef.method_count;
                     for (var i = typeDef.methodStart; i < methodEnd; ++i)
@@ -80,7 +80,7 @@ namespace Il2CppDumper
                                 var parameterDef = metadata.parameterDefs[methodDef.parameterStart + j];
                                 var parameterName = metadata.GetStringFromIndex(parameterDef.nameIndex);
                                 var parameterType = il2Cpp.types[parameterDef.typeIndex];
-                                parameterStrs.Add($"{ParseType(parameterType)} {parameterName}");
+                                parameterStrs.Add($"{ParseType(parameterType)} {FixName(parameterName)}");
                             }
                             signature += string.Join(", ", parameterStrs);
                             signature += ");";

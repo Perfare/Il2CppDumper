@@ -27,6 +27,9 @@ for scriptMethod in scriptMethods:
 	addr = get_addr(scriptMethod["Address"])
 	name = scriptMethod["Name"].encode("utf-8")
 	set_name(addr, name)
+	signature = scriptMethod["Signature"].encode("utf-8")
+	if not apply_type(addr, parse_decl(signature, 0), 1):
+		print "apply_type failed:", hex(addr), signature
 index = 1
 scriptStrings = data["ScriptString"]
 for scriptString in scriptStrings:
@@ -55,3 +58,4 @@ for index in range(len(addresses) - 1):
 	start = get_addr(addresses[index])
 	end = get_addr(addresses[index + 1])
 	make_function(start, end)
+print 'Script finished!'

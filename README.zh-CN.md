@@ -38,6 +38,14 @@ Il2CppDumper.exe <executable-file> <global-metadata>
 
 用于IDA
 
+#### ida_with_struct.py
+
+用于IDA, 读取il2cpp.h文件并在IDA中应用结构信息
+
+#### il2cpp.h
+
+包含结构体的头文件
+
 #### ghidra.py
 
 用于Ghidra

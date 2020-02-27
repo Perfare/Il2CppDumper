@@ -40,6 +40,14 @@ Can be used to extract Unity `MonoBehaviour` and `MonoScript`, for [UtinyRipper]
 
 For IDA
 
+#### ida_with_struct.py
+
+For IDA, read il2cpp.h file and apply structure information in IDA
+
+#### il2cpp.h
+
+structure information header file
+
 #### ghidra.py
 
 For Ghidra

@@ -16,6 +16,7 @@ namespace Il2CppDumper
         private Il2Cpp il2Cpp;
         private Dictionary<Il2CppTypeDefinition, int> typeDefImageIndices = new Dictionary<Il2CppTypeDefinition, int>();
         private List<StructInfo> StructInfo = new List<StructInfo>();
+        private Dictionary<string, StructInfo> StructInfoWithStructName = new Dictionary<string, StructInfo>();
         private HashSet<StructInfo> StructCache = new HashSet<StructInfo>();
         private HashSet<string> StructNameHashSet = new HashSet<string>(StringComparer.Ordinal);
         private Dictionary<Il2CppTypeDefinition, string> StructNameDic = new Dictionary<Il2CppTypeDefinition, string>();
@@ -124,7 +125,7 @@ namespace Il2CppDumper
                     }
                     else
                     {
-                        scriptMetadata.Signature = FixName(signature) + "_t*";
+                        scriptMetadata.Signature = FixName(signature) + "_o*";
                     }
                 }
                 foreach (var i in metadata.metadataUsageDic[3]) //kIl2CppMetadataUsageMethodDef
@@ -244,7 +245,11 @@ namespace Il2CppDumper
             var headerClass = new StringBuilder();
             foreach (var info in StructInfo)
             {
-                preHeader.Append($"struct {info.TypeName}_t;\n");
+                StructInfoWithStructName.Add(info.TypeName + "_o", info);
+            }
+            foreach (var info in StructInfo)
+            {
+                preHeader.Append($"struct {info.TypeName}_o;\n");
 
                 if (info.IsValueType)
                 {
@@ -272,7 +277,7 @@ namespace Il2CppDumper
                         $"\tIl2CppClass_2 _2;\n" +
                         $"\t{info.TypeName}_VTable vtable;\n" +
                         $"}};\n");
-                    headerClass.Append($"struct {info.TypeName}_t {{\n" +
+                    headerClass.Append($"struct {info.TypeName}_o {{\n" +
                         $"\t{info.TypeName}_c *klass;\n" +
                         $"\tvoid *monitor;\n");
 
@@ -376,7 +381,7 @@ namespace Il2CppDumper
                 case Il2CppTypeEnum.IL2CPP_TYPE_R8:
                     return "double";
                 case Il2CppTypeEnum.IL2CPP_TYPE_STRING:
-                    return "System_String_t*"; //Il2CppString*
+                    return "System_String_o*";
                 case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
                     {
                         var oriType = il2Cpp.GetIl2CppType(il2CppType.data.type);
@@ -389,12 +394,12 @@ namespace Il2CppDumper
                         {
                             return ParseType(il2Cpp.types[typeDef.elementTypeIndex]);
                         }
-                        return StructNameDic[typeDef] + "_t";
+                        return StructNameDic[typeDef] + "_o";
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
                     {
                         var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
-                        return StructNameDic[typeDef] + "_t*";
+                        return StructNameDic[typeDef] + "_o*";
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
                     {
@@ -429,9 +434,9 @@ namespace Il2CppDumper
                         }
                         if (typeDef.IsValueType)
                         {
-                            return typeStructName + "_t";
+                            return typeStructName + "_o";
                         }
-                        return typeStructName + "_t*";
+                        return typeStructName + "_o*";
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_TYPEDBYREF:
                     return "Il2CppObject*";
@@ -615,17 +620,13 @@ namespace Il2CppDumper
 
             var sb = new StringBuilder();
 
-            sb.Append($"struct {info.TypeName}_t {{\n");
+            sb.Append($"struct {info.TypeName}_o {{\n");
             foreach (var field in info.Fields)
             {
                 if (field.IsValueType)
                 {
-                    var fieldTypeName = field.FieldTypeName.Substring(0, field.FieldTypeName.Length - 2); //hack
-                    var fieldInfo = StructInfo.Find(x => x.TypeName == fieldTypeName);
-                    if (fieldInfo != null)
-                    {
-                        sb.Insert(0, RecursionStructInfo(fieldInfo));
-                    }
+                    var fieldInfo = StructInfoWithStructName[field.FieldTypeName];
+                    sb.Insert(0, RecursionStructInfo(fieldInfo));
                 }
                 sb.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
             }
@@ -636,12 +637,8 @@ namespace Il2CppDumper
             {
                 if (field.IsValueType)
                 {
-                    var fieldTypeName = field.FieldTypeName.Substring(0, field.FieldTypeName.Length - 2); //hack
-                    var fieldInfo = StructInfo.Find(x => x.TypeName == fieldTypeName);
-                    if (fieldInfo != null)
-                    {
-                        sb.Insert(0, RecursionStructInfo(fieldInfo));
-                    }
+                    var fieldInfo = StructInfoWithStructName[field.FieldTypeName];
+                    sb.Insert(0, RecursionStructInfo(fieldInfo));
                 }
                 sb.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
             }

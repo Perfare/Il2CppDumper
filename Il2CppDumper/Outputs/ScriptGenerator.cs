@@ -15,13 +15,13 @@ namespace Il2CppDumper
         private Metadata metadata;
         private Il2Cpp il2Cpp;
         private Dictionary<Il2CppTypeDefinition, int> typeDefImageIndices = new Dictionary<Il2CppTypeDefinition, int>();
-        private List<StructInfo> StructInfo = new List<StructInfo>();
-        private Dictionary<string, StructInfo> StructInfoWithStructName = new Dictionary<string, StructInfo>();
-        private HashSet<StructInfo> StructCache = new HashSet<StructInfo>();
-        private HashSet<string> StructNameHashSet = new HashSet<string>(StringComparer.Ordinal);
-        private Dictionary<Il2CppTypeDefinition, string> StructNameDic = new Dictionary<Il2CppTypeDefinition, string>();
-        private Dictionary<ulong, string> GenericClassStructNameDic = new Dictionary<ulong, string>();
-        private List<ulong> GenericClass = new List<ulong>();
+        private List<StructInfo> structInfo = new List<StructInfo>();
+        private Dictionary<string, StructInfo> structInfoWithStructName = new Dictionary<string, StructInfo>();
+        private HashSet<StructInfo> structCache = new HashSet<StructInfo>();
+        private HashSet<string> structNameHashSet = new HashSet<string>(StringComparer.Ordinal);
+        private Dictionary<Il2CppTypeDefinition, string> structNameDic = new Dictionary<Il2CppTypeDefinition, string>();
+        private Dictionary<ulong, string> genericClassStructNameDic = new Dictionary<ulong, string>();
+        private List<ulong> genericClassList = new List<ulong>();
 
         public ScriptGenerator(Il2CppExecutor il2CppExecutor)
         {
@@ -100,7 +100,7 @@ namespace Il2CppDumper
                     json.ScriptMetadata.Add(scriptMetadata);
                     scriptMetadata.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
                     scriptMetadata.Name = "Class$" + typeName;
-                    var signature = GetIl2CppTypeSignature(type);
+                    var signature = GetIl2CppStructName(type);
                     if (signature == "Il2CppArray*")
                     {
                         scriptMetadata.Signature = signature;
@@ -118,7 +118,7 @@ namespace Il2CppDumper
                     json.ScriptMetadata.Add(scriptMetadata);
                     scriptMetadata.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
                     scriptMetadata.Name = "Object$" + typeName;
-                    var signature = GetIl2CppTypeSignature(type);
+                    var signature = GetIl2CppStructName(type);
                     if (signature == "Il2CppArray*")
                     {
                         scriptMetadata.Signature = signature;
@@ -234,20 +234,20 @@ namespace Il2CppDumper
             }
             File.WriteAllText("script.json", JsonConvert.SerializeObject(json, Formatting.Indented));
             //.h
-            for (int i = 0; i < GenericClass.Count; i++)
+            for (int i = 0; i < genericClassList.Count; i++)
             {
-                var pointer = GenericClass[i];
+                var pointer = genericClassList[i];
                 AddGenericClassStruct(pointer);
             }
             //TODO 处理数组类型
             var preHeader = new StringBuilder();
             var headerStruct = new StringBuilder();
             var headerClass = new StringBuilder();
-            foreach (var info in StructInfo)
+            foreach (var info in structInfo)
             {
-                StructInfoWithStructName.Add(info.TypeName + "_o", info);
+                structInfoWithStructName.Add(info.TypeName + "_o", info);
             }
-            foreach (var info in StructInfo)
+            foreach (var info in structInfo)
             {
                 preHeader.Append($"struct {info.TypeName}_o;\n");
 
@@ -340,6 +340,10 @@ namespace Il2CppDumper
             {
                 str = "__cs";
             }
+            if (str == "auto")
+            {
+                str = "_auto";
+            }
             if (Regex.IsMatch(str, "^[0-9]"))
             {
                 return "_" + str;
@@ -394,12 +398,12 @@ namespace Il2CppDumper
                         {
                             return ParseType(il2Cpp.types[typeDef.elementTypeIndex]);
                         }
-                        return StructNameDic[typeDef] + "_o";
+                        return structNameDic[typeDef] + "_o";
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
                     {
                         var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
-                        return StructNameDic[typeDef] + "_o*";
+                        return structNameDic[typeDef] + "_o*";
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
                     {
@@ -420,16 +424,16 @@ namespace Il2CppDumper
                     {
                         var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
                         var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
-                        if (!GenericClassStructNameDic.TryGetValue(il2CppType.data.generic_class, out var typeStructName))
+                        if (!genericClassStructNameDic.TryGetValue(il2CppType.data.generic_class, out var typeStructName))
                         {
-                            var typeOriName = StructNameDic[typeDef];
+                            var typeOriName = structNameDic[typeDef];
                             var typeToReplaceName = FixName(executor.GetTypeDefName(typeDef, true, true));
                             var typeReplaceName = FixName(executor.GetTypeName(il2CppType, true, false));
                             typeStructName = typeOriName.Replace(typeToReplaceName, typeReplaceName);
-                            GenericClassStructNameDic.Add(il2CppType.data.generic_class, typeStructName);
-                            if (StructNameHashSet.Add(typeStructName))
+                            genericClassStructNameDic.Add(il2CppType.data.generic_class, typeStructName);
+                            if (structNameHashSet.Add(typeStructName))
                             {
-                                GenericClass.Add(il2CppType.data.generic_class);
+                                genericClassList.Add(il2CppType.data.generic_class);
                             }
                         }
                         if (typeDef.IsValueType)
@@ -469,8 +473,8 @@ namespace Il2CppDumper
         private void AddStruct(Il2CppTypeDefinition typeDef)
         {
             var structInfo = new StructInfo();
-            StructInfo.Add(structInfo);
-            structInfo.TypeName = StructNameDic[typeDef];
+            this.structInfo.Add(structInfo);
+            structInfo.TypeName = structNameDic[typeDef];
             structInfo.IsValueType = typeDef.IsValueType;
             AddFields(typeDef, structInfo.Fields, structInfo.StaticFields, null, false);
             AddVTableMethod(structInfo, typeDef);
@@ -481,8 +485,8 @@ namespace Il2CppDumper
             var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(pointer);
             var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
             var structInfo = new StructInfo();
-            StructInfo.Add(structInfo);
-            structInfo.TypeName = GenericClassStructNameDic[pointer];
+            this.structInfo.Add(structInfo);
+            structInfo.TypeName = genericClassStructNameDic[pointer];
             structInfo.IsValueType = typeDef.IsValueType;
             AddFields(typeDef, structInfo.Fields, structInfo.StaticFields, genericClass.context, false);
             AddVTableMethod(structInfo, typeDef);
@@ -597,14 +601,14 @@ namespace Il2CppDumper
             var typeName = executor.GetTypeDefName(typeDef, true, true);
             var typeStructName = FixName(typeName);
             var uniqueName = GetUniqueName(typeStructName);
-            StructNameDic.Add(typeDef, uniqueName);
+            structNameDic.Add(typeDef, uniqueName);
         }
 
         private string GetUniqueName(string name)
         {
             var fixName = name;
             int i = 1;
-            while (!StructNameHashSet.Add(fixName))
+            while (!structNameHashSet.Add(fixName))
             {
                 fixName = $"{name}_{i++}";
             }
@@ -613,20 +617,21 @@ namespace Il2CppDumper
 
         private string RecursionStructInfo(StructInfo info)
         {
-            if (!StructCache.Add(info))
+            if (!structCache.Add(info))
             {
                 return string.Empty;
             }
 
             var sb = new StringBuilder();
+            var pre = new StringBuilder();
 
             sb.Append($"struct {info.TypeName}_o {{\n");
             foreach (var field in info.Fields)
             {
                 if (field.IsValueType)
                 {
-                    var fieldInfo = StructInfoWithStructName[field.FieldTypeName];
-                    sb.Insert(0, RecursionStructInfo(fieldInfo));
+                    var fieldInfo = structInfoWithStructName[field.FieldTypeName];
+                    pre.Append(RecursionStructInfo(fieldInfo));
                 }
                 sb.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
             }
@@ -637,8 +642,8 @@ namespace Il2CppDumper
             {
                 if (field.IsValueType)
                 {
-                    var fieldInfo = StructInfoWithStructName[field.FieldTypeName];
-                    sb.Insert(0, RecursionStructInfo(fieldInfo));
+                    var fieldInfo = structInfoWithStructName[field.FieldTypeName];
+                    pre.Append(RecursionStructInfo(fieldInfo));
                 }
                 sb.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
             }
@@ -658,10 +663,10 @@ namespace Il2CppDumper
                 $"\t{info.TypeName}_VTable vtable;\n" +
                 $"}};\n");
 
-            return sb.ToString();
+            return pre.Append(sb).ToString();
         }
 
-        private string GetIl2CppTypeSignature(Il2CppType il2CppType)
+        private string GetIl2CppStructName(Il2CppType il2CppType)
         {
             switch (il2CppType.type)
             {
@@ -687,34 +692,30 @@ namespace Il2CppDumper
                 case Il2CppTypeEnum.IL2CPP_TYPE_OBJECT:
                     {
                         var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
-                        if (typeDef.IsEnum)
-                        {
-                            return GetIl2CppTypeSignature(il2Cpp.types[typeDef.elementTypeIndex]);
-                        }
-                        return StructNameDic[typeDef];
+                        return structNameDic[typeDef];
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
                     {
                         var oriType = il2Cpp.GetIl2CppType(il2CppType.data.type);
-                        return GetIl2CppTypeSignature(oriType);
+                        return GetIl2CppStructName(oriType);
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY: //TODO
                 case Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY: //TODO
                     return "Il2CppArray*";
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
                     {
-                        if (!GenericClassStructNameDic.TryGetValue(il2CppType.data.generic_class, out var typeStructName))
+                        if (!genericClassStructNameDic.TryGetValue(il2CppType.data.generic_class, out var typeStructName))
                         {
                             var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
                             var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
-                            var typeOriName = StructNameDic[typeDef];
+                            var typeOriName = structNameDic[typeDef];
                             var typeToReplaceName = FixName(executor.GetTypeDefName(typeDef, true, true));
                             var typeReplaceName = FixName(executor.GetTypeName(il2CppType, true, false));
                             typeStructName = typeOriName.Replace(typeToReplaceName, typeReplaceName);
-                            GenericClassStructNameDic.Add(il2CppType.data.generic_class, typeStructName);
-                            if (StructNameHashSet.Add(typeStructName))
+                            genericClassStructNameDic.Add(il2CppType.data.generic_class, typeStructName);
+                            if (structNameHashSet.Add(typeStructName))
                             {
-                                GenericClass.Add(il2CppType.data.generic_class);
+                                genericClassList.Add(il2CppType.data.generic_class);
                             }
                         }
                         return typeStructName;

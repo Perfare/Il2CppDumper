@@ -239,7 +239,7 @@ namespace Il2CppDumper
                 AddGenericClassStruct(pointer);
             }
             //TODO 处理数组类型
-            var preHeader = new StringBuilder(HeaderConstants.HeaderV242);
+            var preHeader = new StringBuilder();
             var headerStruct = new StringBuilder();
             var headerClass = new StringBuilder();
             foreach (var info in StructInfo)
@@ -278,33 +278,56 @@ namespace Il2CppDumper
 
                     foreach (var field in info.Fields)
                     {
-                        if (field.FieldName == "klass") //hack
-                        {
-                            field.FieldName = "_klass";
-                        }
-                        if (field.FieldName == "monitor") //hack
-                        {
-                            field.FieldName = "_monitor";
-                        }
-                        if (field.FieldName == "register") //hack
-                        {
-                            field.FieldName = "_register";
-                        }
-                        if (field.FieldName == "_cs") //hack
-                        {
-                            field.FieldName = "__cs";
-                        }
                         headerClass.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
                     }
                     headerClass.Append("};\n");
                 }
             }
-            var str = preHeader.Append(headerStruct).Append(headerClass).ToString();
-            File.WriteAllText("il2cpp.h", str);
+            var sb = new StringBuilder();
+            if (il2Cpp is PE)
+            {
+                sb.Append(HeaderConstants.TypedefHeader);
+            }
+            sb.Append(HeaderConstants.GenericHeader);
+            switch (il2Cpp.Version)
+            {
+                case 24f:
+                    sb.Append(HeaderConstants.HeaderV240);
+                    break;
+                case 24.1f:
+                    sb.Append(HeaderConstants.HeaderV241);
+                    break;
+                case 24.2f:
+                    sb.Append(HeaderConstants.HeaderV242);
+                    break;
+                default:
+                    sb.Append(HeaderConstants.HeaderV242);
+                    break;
+            }
+            sb.Append(preHeader);
+            sb.Append(headerStruct);
+            sb.Append(headerClass);
+            File.WriteAllText("il2cpp.h", sb.ToString());
         }
 
         private static string FixName(string str)
         {
+            if (str == "klass")
+            {
+                str = "_klass";
+            }
+            if (str == "monitor")
+            {
+                str = "_monitor";
+            }
+            if (str == "register")
+            {
+                str = "_register";
+            }
+            if (str == "_cs")
+            {
+                str = "__cs";
+            }
             if (Regex.IsMatch(str, "^[0-9]"))
             {
                 return "_" + str;

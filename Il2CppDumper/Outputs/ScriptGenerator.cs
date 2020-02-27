@@ -512,7 +512,7 @@ namespace Il2CppDumper
                     structFieldInfo.FieldTypeName = ParseType(fieldType, context);
                     var fieldName = FixName(metadata.GetStringFromIndex(fieldDef.nameIndex));
                     structFieldInfo.FieldName = fieldName;
-                    structFieldInfo.IsValueType = IsValueType(fieldType);
+                    structFieldInfo.IsValueType = IsValueType(fieldType, context);
                     if ((fieldType.attrs & FIELD_ATTRIBUTE_STATIC) != 0)
                     {
                         if (!isParent)
@@ -727,30 +727,56 @@ namespace Il2CppDumper
             }
         }
 
-        private bool IsValueType(Il2CppType il2CppType)
+        private bool IsValueType(Il2CppType il2CppType, Il2CppGenericContext context)
         {
-            var type = il2CppType.type;
-            if (type == Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE)
+            switch (il2CppType.type)
             {
-                var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
-                if (!typeDef.IsEnum)
-                {
-                    return true;
-                }
-                else
-                {
+                case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
+                    {
+                        var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
+                        if (!typeDef.IsEnum)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
+                    {
+                        var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
+                        var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
+                        return typeDef.IsValueType;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
+                    {
+                        if (context != null)
+                        {
+                            var genericParameter = metadata.genericParameters[il2CppType.data.genericParameterIndex];
+                            var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(context.class_inst);
+                            var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
+                            var pointer = pointers[genericParameter.num];
+                            var type = il2Cpp.GetIl2CppType(pointer);
+                            return IsValueType(type, null);
+                        }
+                        return false;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_MVAR:
+                    {
+                        if (context != null)
+                        {
+                            var genericParameter = metadata.genericParameters[il2CppType.data.genericParameterIndex];
+                            var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(context.method_inst);
+                            var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
+                            var pointer = pointers[genericParameter.num];
+                            var type = il2Cpp.GetIl2CppType(pointer);
+                            return IsValueType(type, null);
+                        }
+                        return false;
+                    }
+                default:
                     return false;
-                }
-            }
-            else if (type == Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST)
-            {
-                var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
-                var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
-                return typeDef.IsValueType;
-            }
-            else
-            {
-                return false;
             }
         }
     }

@@ -291,6 +291,12 @@ namespace Il2CppDumper
             sb.Append(HeaderConstants.GenericHeader);
             switch (il2Cpp.Version)
             {
+                case 22f:
+                    sb.Append(HeaderConstants.HeaderV22);
+                    break;
+                case 23f:
+                    sb.Append(HeaderConstants.HeaderV240);
+                    break;
                 case 24f:
                     sb.Append(HeaderConstants.HeaderV240);
                     break;
@@ -300,9 +306,10 @@ namespace Il2CppDumper
                 case 24.2f:
                     sb.Append(HeaderConstants.HeaderV242);
                     break;
+                //TODO
                 default:
-                    sb.Append(HeaderConstants.HeaderV242);
-                    break;
+                    Console.WriteLine($"WARNING: This il2cpp version [{il2Cpp.Version}] does not support generating .h files");
+                    return;
             }
             sb.Append(preHeader);
             sb.Append(headerStruct);

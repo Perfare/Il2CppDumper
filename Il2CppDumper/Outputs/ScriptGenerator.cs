@@ -116,7 +116,7 @@ namespace Il2CppDumper
                     var scriptMetadata = new ScriptMetadata();
                     json.ScriptMetadata.Add(scriptMetadata);
                     scriptMetadata.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
-                    scriptMetadata.Name = "Class$" + typeName;
+                    scriptMetadata.Name = "Object$" + typeName;
                     var signature = GetIl2CppTypeSignature(type);
                     if (signature == "Il2CppArray*")
                     {
@@ -464,33 +464,8 @@ namespace Il2CppDumper
             StructInfo.Add(structInfo);
             structInfo.TypeName = StructNameDic[typeDef];
             structInfo.IsValueType = typeDef.IsValueType;
-            GetFields(typeDef, structInfo.Fields, structInfo.StaticFields, null, false);
-            var dic = new SortedDictionary<int, Il2CppMethodDefinition>();
-            for (int i = 0; i < typeDef.vtable_count; i++)
-            {
-                var vTableIndex = typeDef.vtableStart + i;
-                var encodedMethodIndex = metadata.vtableMethods[vTableIndex];
-                var usage = metadata.GetEncodedIndexType(encodedMethodIndex);
-                var index = metadata.GetDecodedMethodIndex(encodedMethodIndex);
-                Il2CppMethodDefinition methodDef;
-                if (usage == 6) //kIl2CppMetadataUsageMethodRef
-                {
-                    var methodSpec = il2Cpp.methodSpecs[index];
-                    methodDef = metadata.methodDefs[methodSpec.methodDefinitionIndex];
-                }
-                else
-                {
-                    methodDef = metadata.methodDefs[index];
-                }
-                dic[methodDef.slot] = methodDef;
-            }
-            foreach (var i in dic)
-            {
-                var methodInfo = new StructVTableMethodInfo();
-                structInfo.VTableMethod.Add(methodInfo);
-                var methodDef = i.Value;
-                methodInfo.MethodName = $"_{methodDef.slot}_{FixName(metadata.GetStringFromIndex(methodDef.nameIndex))}";
-            }
+            AddFields(typeDef, structInfo.Fields, structInfo.StaticFields, null, false);
+            AddVTableMethod(structInfo, typeDef);
         }
 
         private void AddGenericClassStruct(ulong pointer)
@@ -501,36 +476,11 @@ namespace Il2CppDumper
             StructInfo.Add(structInfo);
             structInfo.TypeName = GenericClassStructNameDic[pointer];
             structInfo.IsValueType = typeDef.IsValueType;
-            GetFields(typeDef, structInfo.Fields, structInfo.StaticFields, genericClass.context, false);
-            var dic = new SortedDictionary<int, Il2CppMethodDefinition>();
-            for (int i = 0; i < typeDef.vtable_count; i++)
-            {
-                var vTableIndex = typeDef.vtableStart + i;
-                var encodedMethodIndex = metadata.vtableMethods[vTableIndex];
-                var usage = metadata.GetEncodedIndexType(encodedMethodIndex);
-                var index = metadata.GetDecodedMethodIndex(encodedMethodIndex);
-                Il2CppMethodDefinition methodDef;
-                if (usage == 6) //kIl2CppMetadataUsageMethodRef
-                {
-                    var methodSpec = il2Cpp.methodSpecs[index];
-                    methodDef = metadata.methodDefs[methodSpec.methodDefinitionIndex];
-                }
-                else
-                {
-                    methodDef = metadata.methodDefs[index];
-                }
-                dic[methodDef.slot] = methodDef;
-            }
-            foreach (var i in dic)
-            {
-                var methodInfo = new StructVTableMethodInfo();
-                structInfo.VTableMethod.Add(methodInfo);
-                var methodDef = i.Value;
-                methodInfo.MethodName = $"_{methodDef.slot}_{FixName(metadata.GetStringFromIndex(methodDef.nameIndex))}";
-            }
+            AddFields(typeDef, structInfo.Fields, structInfo.StaticFields, genericClass.context, false);
+            AddVTableMethod(structInfo, typeDef);
         }
 
-        private void GetFields(Il2CppTypeDefinition typeDef, List<StructFieldInfo> fields, List<StructFieldInfo> staticFields, Il2CppGenericContext context, bool isParent)
+        private void AddFields(Il2CppTypeDefinition typeDef, List<StructFieldInfo> fields, List<StructFieldInfo> staticFields, Il2CppGenericContext context, bool isParent)
         {
             if (!typeDef.IsValueType && !typeDef.IsEnum)
             {
@@ -540,7 +490,7 @@ namespace Il2CppDumper
                     var parentDef = TypeDefinitionFromIl2CppType(parent);
                     if (parentDef != null)
                     {
-                        GetFields(parentDef, fields, staticFields, context, true);
+                        AddFields(parentDef, fields, staticFields, context, true);
                     }
                 }
             }
@@ -559,6 +509,14 @@ namespace Il2CppDumper
                     structFieldInfo.FieldTypeName = ParseType(fieldType, context);
                     var fieldName = FixName(metadata.GetStringFromIndex(fieldDef.nameIndex));
                     structFieldInfo.FieldName = fieldName;
+                    if (fieldType.type == Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE)
+                    {
+                        var fieldTypeDef = metadata.typeDefs[fieldType.data.klassIndex];
+                        if (!fieldTypeDef.IsEnum)
+                        {
+                            structFieldInfo.IsValueType = true;
+                        }
+                    }
                     if ((fieldType.attrs & FIELD_ATTRIBUTE_STATIC) != 0)
                     {
                         if (!isParent)
@@ -583,6 +541,36 @@ namespace Il2CppDumper
                         fields.Add(structFieldInfo);
                     }
                 }
+            }
+        }
+
+        private void AddVTableMethod(StructInfo structInfo, Il2CppTypeDefinition typeDef)
+        {
+            var dic = new SortedDictionary<int, Il2CppMethodDefinition>();
+            for (int i = 0; i < typeDef.vtable_count; i++)
+            {
+                var vTableIndex = typeDef.vtableStart + i;
+                var encodedMethodIndex = metadata.vtableMethods[vTableIndex];
+                var usage = metadata.GetEncodedIndexType(encodedMethodIndex);
+                var index = metadata.GetDecodedMethodIndex(encodedMethodIndex);
+                Il2CppMethodDefinition methodDef;
+                if (usage == 6) //kIl2CppMetadataUsageMethodRef
+                {
+                    var methodSpec = il2Cpp.methodSpecs[index];
+                    methodDef = metadata.methodDefs[methodSpec.methodDefinitionIndex];
+                }
+                else
+                {
+                    methodDef = metadata.methodDefs[index];
+                }
+                dic[methodDef.slot] = methodDef;
+            }
+            foreach (var i in dic)
+            {
+                var methodInfo = new StructVTableMethodInfo();
+                structInfo.VTableMethod.Add(methodInfo);
+                var methodDef = i.Value;
+                methodInfo.MethodName = $"_{methodDef.slot}_{FixName(metadata.GetStringFromIndex(methodDef.nameIndex))}";
             }
         }
 
@@ -634,9 +622,9 @@ namespace Il2CppDumper
             sb.Append($"struct {info.TypeName}_t {{\n");
             foreach (var field in info.Fields)
             {
-                if (!field.FieldTypeName.EndsWith("*")) //hack
+                if (field.IsValueType)
                 {
-                    var fieldTypeName = field.FieldTypeName.Substring(0, field.FieldTypeName.Length - 2);
+                    var fieldTypeName = field.FieldTypeName.Substring(0, field.FieldTypeName.Length - 2); //hack
                     var fieldInfo = StructInfo.Find(x => x.TypeName == fieldTypeName);
                     if (fieldInfo != null)
                     {
@@ -650,9 +638,9 @@ namespace Il2CppDumper
             sb.Append($"struct {info.TypeName}_StaticFields {{\n");
             foreach (var field in info.StaticFields)
             {
-                if (!field.FieldTypeName.EndsWith("*")) //hack
+                if (field.IsValueType)
                 {
-                    var fieldTypeName = field.FieldTypeName.Substring(0, field.FieldTypeName.Length - 2);
+                    var fieldTypeName = field.FieldTypeName.Substring(0, field.FieldTypeName.Length - 2); //hack
                     var fieldInfo = StructInfo.Find(x => x.TypeName == fieldTypeName);
                     if (fieldInfo != null)
                     {

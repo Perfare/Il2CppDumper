@@ -21,12 +21,17 @@ def make_function(start, end):
 	ida_funcs.add_func(start, end)
 
 path = idaapi.ask_file(False, '*.json', 'script.json from Il2cppdumper')
+hpath = idaapi.ask_file(False, '*.h', 'il2cpp.h from Il2cppdumper')
+parse_decls(open(hpath, 'rb').read(), 0)
 data = json.loads(open(path, 'rb').read().decode('utf-8'))
 scriptMethods = data["ScriptMethod"]
 for scriptMethod in scriptMethods:
 	addr = get_addr(scriptMethod["Address"])
 	name = scriptMethod["Name"].encode("utf-8")
 	set_name(addr, name)
+	signature = scriptMethod["Signature"].encode("utf-8")
+	if apply_type(addr, parse_decl(signature, 0), 1) == False:
+		print "apply_type failed:", hex(addr), signature
 index = 1
 scriptStrings = data["ScriptString"]
 for scriptString in scriptStrings:
@@ -42,6 +47,11 @@ for scriptMetadata in scriptMetadatas:
 	name = scriptMetadata["Name"].encode("utf-8")
 	set_name(addr, name)
 	idc.set_cmt(addr, name, 1)
+	if scriptMetadata["Signature"] is not None:
+		signature = scriptMetadata["Signature"].encode("utf-8")
+		if apply_type(addr, parse_decl(signature, 0), 1) == False:
+			print "apply_type failed:", hex(addr), signature
+
 scriptMetadataMethods = data["ScriptMetadataMethod"]
 for scriptMetadataMethod in scriptMetadataMethods:
 	addr = get_addr(scriptMetadataMethod["Address"])

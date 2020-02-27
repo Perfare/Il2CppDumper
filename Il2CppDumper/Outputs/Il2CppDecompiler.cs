@@ -238,11 +238,7 @@ namespace Il2CppDumper
                                     if (methodPointer > 0)
                                     {
                                         var fixedMethodPointer = il2Cpp.GetRVA(methodPointer);
-                                        writer.Write("\t// RVA: 0x{0:X} Offset: 0x{1:X}", fixedMethodPointer, il2Cpp.MapVATR(methodPointer));
-                                        if (il2Cpp is PE || il2Cpp is Macho || il2Cpp is Macho64)
-                                        {
-                                            writer.Write(" VA: 0x{0:X}", methodPointer);
-                                        }
+                                        writer.Write("\t// RVA: 0x{0:X} Offset: 0x{1:X} VA: 0x{2:X}", fixedMethodPointer, il2Cpp.MapVATR(methodPointer), methodPointer);
                                     }
                                     else
                                     {
@@ -356,16 +352,12 @@ namespace Il2CppDumper
                     var typeIndex = metadata.attributeTypes[attributeTypeRange.start + i];
                     var methodPointer = il2Cpp.customAttributeGenerators[attributeIndex];
                     var fixedMethodPointer = il2Cpp.GetRVA(methodPointer);
-                    sb.AppendFormat("{0}[{1}] // RVA: 0x{2:X} Offset: 0x{3:X}",
+                    sb.AppendFormat("{0}[{1}] // RVA: 0x{2:X} Offset: 0x{3:X} VA: 0x{4:X}\n",
                         padding,
                         executor.GetTypeName(il2Cpp.types[typeIndex], false, false),
                         fixedMethodPointer,
-                        il2Cpp.MapVATR(methodPointer));
-                    if (il2Cpp is PE || il2Cpp is Macho || il2Cpp is Macho64)
-                    {
-                        sb.AppendFormat(" VA: 0x{0:X}", methodPointer);
-                    }
-                    sb.Append("\n");
+                        il2Cpp.MapVATR(methodPointer),
+                        methodPointer);
                 }
                 return sb.ToString();
             }

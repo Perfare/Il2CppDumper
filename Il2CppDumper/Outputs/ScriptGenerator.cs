@@ -413,11 +413,10 @@ namespace Il2CppDumper
                     return "Il2CppArray*";
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
                     {
-                        //TODO Enum ValueType
+                        var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
+                        var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
                         if (!GenericClassStructNameDic.TryGetValue(il2CppType.data.generic_class, out var typeStructName))
                         {
-                            var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
-                            var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
                             var typeOriName = StructNameDic[typeDef];
                             var typeToReplaceName = FixName(executor.GetTypeDefName(typeDef, true, true));
                             var typeReplaceName = FixName(executor.GetTypeName(il2CppType, true, false));
@@ -427,6 +426,10 @@ namespace Il2CppDumper
                             {
                                 GenericClass.Add(il2CppType.data.generic_class);
                             }
+                        }
+                        if (typeDef.IsValueType)
+                        {
+                            return typeStructName + "_t";
                         }
                         return typeStructName + "_t*";
                     }
@@ -509,14 +512,7 @@ namespace Il2CppDumper
                     structFieldInfo.FieldTypeName = ParseType(fieldType, context);
                     var fieldName = FixName(metadata.GetStringFromIndex(fieldDef.nameIndex));
                     structFieldInfo.FieldName = fieldName;
-                    if (fieldType.type == Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE)
-                    {
-                        var fieldTypeDef = metadata.typeDefs[fieldType.data.klassIndex];
-                        if (!fieldTypeDef.IsEnum)
-                        {
-                            structFieldInfo.IsValueType = true;
-                        }
-                    }
+                    structFieldInfo.IsValueType = IsValueType(fieldType);
                     if ((fieldType.attrs & FIELD_ATTRIBUTE_STATIC) != 0)
                     {
                         if (!isParent)
@@ -710,7 +706,6 @@ namespace Il2CppDumper
                     return "Il2CppArray*";
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
                     {
-                        //TODO Enum ValueType
                         if (!GenericClassStructNameDic.TryGetValue(il2CppType.data.generic_class, out var typeStructName))
                         {
                             var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
@@ -729,6 +724,33 @@ namespace Il2CppDumper
                     }
                 default:
                     throw new NotSupportedException();
+            }
+        }
+
+        private bool IsValueType(Il2CppType il2CppType)
+        {
+            var type = il2CppType.type;
+            if (type == Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE)
+            {
+                var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
+                if (!typeDef.IsEnum)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else if (type == Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST)
+            {
+                var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
+                var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
+                return typeDef.IsValueType;
+            }
+            else
+            {
+                return false;
             }
         }
     }

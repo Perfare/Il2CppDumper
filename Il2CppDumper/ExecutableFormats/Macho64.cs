@@ -12,7 +12,7 @@ namespace Il2CppDumper
         private List<MachoSection64Bit> sections = new List<MachoSection64Bit>();
         private static readonly byte[] FeatureBytes1 = { 0x2, 0x0, 0x80, 0xD2 };//MOV X2, #0
         private static readonly byte[] FeatureBytes2 = { 0x3, 0x0, 0x80, 0x52 };//MOV W3, #0
-
+        private ulong vmaddr;
 
         public Macho64(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
         {
@@ -26,7 +26,16 @@ namespace Il2CppDumper
                 var cmdsize = ReadUInt32();
                 if (cmd == 0x19) //LC_SEGMENT_64
                 {
-                    Position += 56; //skip segname, vmaddr, vmsize, fileoff, filesize, maxprot, initprot
+                    var segname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
+                    if (segname == "__TEXT") //__PAGEZERO
+                    {
+                        vmaddr = ReadUInt64();
+                    }
+                    else
+                    {
+                        Position += 8;
+                    }
+                    Position += 32; //skip vmsize, fileoff, filesize, maxprot, initprot
                     var nsects = ReadUInt32();
                     Position += 4; //skip flags
                     for (var j = 0; j < nsects; j++)
@@ -196,7 +205,7 @@ namespace Il2CppDumper
 
         public override ulong GetRVA(ulong pointer)
         {
-            return pointer - 0x100000000ul;
+            return pointer - vmaddr;
         }
     }
 }

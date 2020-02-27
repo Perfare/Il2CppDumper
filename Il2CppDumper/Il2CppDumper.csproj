@@ -66,6 +66,7 @@
     <Compile Include="ExecutableFormats\NSOClass.cs" />
     <Compile Include="Outputs\ScriptGenerator.cs" />
     <Compile Include="Utils\Il2CppExecutor.cs" />
+    <Compile Include="Utils\ReadCache.cs" />
     <Compile Include="Utils\SearchSection.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Attributes\VersionAttribute.cs" />

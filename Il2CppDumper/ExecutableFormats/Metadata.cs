@@ -14,10 +14,13 @@ namespace Il2CppDumper
         public Il2CppMethodDefinition[] methodDefs;
         public Il2CppParameterDefinition[] parameterDefs;
         public Il2CppFieldDefinition[] fieldDefs;
-        private Il2CppFieldDefaultValue[] fieldDefaultValues;
-        private Il2CppParameterDefaultValue[] parameterDefaultValues;
+        //private Il2CppFieldDefaultValue[] fieldDefaultValues;
+        //private Il2CppParameterDefaultValue[] parameterDefaultValues;
+        private Dictionary<int, Il2CppFieldDefaultValue> fieldDefaultValuesDic;
+        private Dictionary<int, Il2CppParameterDefaultValue> parameterDefaultValuesDic;
         public Il2CppPropertyDefinition[] propertyDefs;
         public Il2CppCustomAttributeTypeRange[] attributeTypeRanges;
+        private Dictionary<Il2CppImageDefinition, Dictionary<uint, int>> attributeTypeRangesDic;
         private Il2CppStringLiteral[] stringLiterals;
         private Il2CppMetadataUsageList[] metadataUsageLists;
         private Il2CppMetadataUsagePair[] metadataUsagePairs;
@@ -69,8 +72,10 @@ namespace Il2CppDumper
             methodDefs = ReadMetadataClassArray<Il2CppMethodDefinition>(metadataHeader.methodsOffset, metadataHeader.methodsCount);
             parameterDefs = ReadMetadataClassArray<Il2CppParameterDefinition>(metadataHeader.parametersOffset, metadataHeader.parametersCount);
             fieldDefs = ReadMetadataClassArray<Il2CppFieldDefinition>(metadataHeader.fieldsOffset, metadataHeader.fieldsCount);
-            fieldDefaultValues = ReadMetadataClassArray<Il2CppFieldDefaultValue>(metadataHeader.fieldDefaultValuesOffset, metadataHeader.fieldDefaultValuesCount);
-            parameterDefaultValues = ReadMetadataClassArray<Il2CppParameterDefaultValue>(metadataHeader.parameterDefaultValuesOffset, metadataHeader.parameterDefaultValuesCount);
+            var fieldDefaultValues = ReadMetadataClassArray<Il2CppFieldDefaultValue>(metadataHeader.fieldDefaultValuesOffset, metadataHeader.fieldDefaultValuesCount);
+            var parameterDefaultValues = ReadMetadataClassArray<Il2CppParameterDefaultValue>(metadataHeader.parameterDefaultValuesOffset, metadataHeader.parameterDefaultValuesCount);
+            fieldDefaultValuesDic = fieldDefaultValues.ToDictionary(x => x.fieldIndex);
+            parameterDefaultValuesDic = parameterDefaultValues.ToDictionary(x => x.parameterIndex);
             propertyDefs = ReadMetadataClassArray<Il2CppPropertyDefinition>(metadataHeader.propertiesOffset, metadataHeader.propertiesCount);
             interfaceIndices = ReadClassArray<int>(metadataHeader.interfacesOffset, metadataHeader.interfacesCount / 4);
             nestedTypeIndices = ReadClassArray<int>(metadataHeader.nestedTypesOffset, metadataHeader.nestedTypesCount / 4);
@@ -94,6 +99,20 @@ namespace Il2CppDumper
                 attributeTypeRanges = ReadMetadataClassArray<Il2CppCustomAttributeTypeRange>(metadataHeader.attributesInfoOffset, metadataHeader.attributesInfoCount);
                 attributeTypes = ReadClassArray<int>(metadataHeader.attributeTypesOffset, metadataHeader.attributeTypesCount / 4);
             }
+            if (Version > 24)
+            {
+                attributeTypeRangesDic = new Dictionary<Il2CppImageDefinition, Dictionary<uint, int>>();
+                foreach (var imageDef in imageDefs)
+                {
+                    var dic = new Dictionary<uint, int>();
+                    attributeTypeRangesDic[imageDef] = dic;
+                    var end = imageDef.customAttributeStart + imageDef.customAttributeCount;
+                    for (int i = imageDef.customAttributeStart; i < end; i++)
+                    {
+                        dic.Add(attributeTypeRanges[i].token, i);
+                    }
+                }
+            }
         }
 
         private T[] ReadMetadataClassArray<T>(uint addr, int count) where T : new()
@@ -101,14 +120,14 @@ namespace Il2CppDumper
             return ReadClassArray<T>(addr, count / MySizeOf(typeof(T)));
         }
 
-        public Il2CppFieldDefaultValue GetFieldDefaultValueFromIndex(int index)
+        public bool GetFieldDefaultValueFromIndex(int index, out Il2CppFieldDefaultValue value)
         {
-            return fieldDefaultValues.FirstOrDefault(x => x.fieldIndex == index);
+            return fieldDefaultValuesDic.TryGetValue(index, out value);
         }
 
-        public Il2CppParameterDefaultValue GetParameterDefaultValueFromIndex(int index)
+        public bool GetParameterDefaultValueFromIndex(int index, out Il2CppParameterDefaultValue value)
         {
-            return parameterDefaultValues.FirstOrDefault(x => x.parameterIndex == index);
+            return parameterDefaultValuesDic.TryGetValue(index, out value);
         }
 
         public uint GetDefaultValueFromIndex(int index)
@@ -130,15 +149,14 @@ namespace Il2CppDumper
         {
             if (Version > 24)
             {
-                var end = imageDef.customAttributeStart + imageDef.customAttributeCount;
-                for (int i = imageDef.customAttributeStart; i < end; i++)
+                if (attributeTypeRangesDic[imageDef].TryGetValue(token, out var index))
                 {
-                    if (attributeTypeRanges[i].token == token)
-                    {
-                        return i;
-                    }
+                    return index;
                 }
-                return -1;
+                else
+                {
+                    return -1;
+                }
             }
             else
             {

@@ -6,6 +6,7 @@ namespace Il2CppDumper
     {
         public Metadata metadata;
         public Il2Cpp il2Cpp;
+        private Dictionary<Il2CppGenericInst, string> GenericInstParamsCache = new Dictionary<Il2CppGenericInst, string>();
         private static readonly Dictionary<int, string> TypeString = new Dictionary<int, string>
         {
             {1,"void"},
@@ -170,14 +171,19 @@ namespace Il2CppDumper
 
         public string GetGenericInstParams(Il2CppGenericInst genericInst)
         {
-            var typeNames = new List<string>();
-            var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
-            for (uint i = 0; i < genericInst.type_argc; ++i)
+            if (!GenericInstParamsCache.TryGetValue(genericInst, out var value))
             {
-                var oriType = il2Cpp.GetIl2CppType(pointers[i]);
-                typeNames.Add(GetTypeName(oriType, false, false));
+                var typeNames = new List<string>();
+                var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
+                for (uint i = 0; i < genericInst.type_argc; ++i)
+                {
+                    var oriType = il2Cpp.GetIl2CppType(pointers[i]);
+                    typeNames.Add(GetTypeName(oriType, false, false));
+                }
+                value = $"<{string.Join(", ", typeNames)}>";
+                GenericInstParamsCache.Add(genericInst, value);
             }
-            return $"<{string.Join(", ", typeNames)}>";
+            return value;
         }
     }
 }

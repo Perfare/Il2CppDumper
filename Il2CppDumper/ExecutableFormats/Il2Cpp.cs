@@ -129,7 +129,12 @@ namespace Il2CppDumper
 
         public T MapVATR<T>(ulong addr) where T : new()
         {
-            return ReadClass<T>(MapVATR(addr));
+            if (!ReadClassCache<T>.TryGetValue(addr, out var value))
+            {
+                value = ReadClass<T>(MapVATR(addr));
+                ReadClassCache<T>.Add(addr, value);
+            }
+            return value;
         }
 
         public T[] MapVATR<T>(ulong addr, long count) where T : new()

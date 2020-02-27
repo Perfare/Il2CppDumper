@@ -39,29 +39,13 @@ namespace Il2CppDumper
                     for (int typeDefIndex = imageDef.typeStart; typeDefIndex < typeEnd; typeDefIndex++)
                     {
                         var typeDef = metadata.typeDefs[typeDefIndex];
-                        var isValueType = false;
-                        var isEnum = false;
                         var extends = new List<string>();
                         if (typeDef.parentIndex >= 0)
                         {
                             var parent = il2Cpp.types[typeDef.parentIndex];
-                            var parentFullName = executor.GetTypeName(parent, true, false);
-                            if (parentFullName == "System.ValueType")
+                            var parentName = executor.GetTypeName(parent, false, false);
+                            if (!typeDef.IsValueType && !typeDef.IsEnum && parentName != "object")
                             {
-                                var typeFullName = executor.GetTypeDefName(typeDef, true, true);
-                                if (typeFullName != "System.Enum")
-                                {
-                                    isValueType = true;
-                                }
-                            }
-                            else if (parentFullName == "System.Enum")
-                            {
-                                isValueType = true;
-                                isEnum = true;
-                            }
-                            else if (parentFullName != "object")
-                            {
-                                var parentName = executor.GetTypeName(parent, false, false);
                                 extends.Add(parentName);
                             }
                         }
@@ -106,13 +90,13 @@ namespace Il2CppDumper
                             writer.Write("static ");
                         else if ((typeDef.flags & TYPE_ATTRIBUTE_INTERFACE) == 0 && (typeDef.flags & TYPE_ATTRIBUTE_ABSTRACT) != 0)
                             writer.Write("abstract ");
-                        else if (!isValueType && !isEnum && (typeDef.flags & TYPE_ATTRIBUTE_SEALED) != 0)
+                        else if (!typeDef.IsValueType && !typeDef.IsEnum && (typeDef.flags & TYPE_ATTRIBUTE_SEALED) != 0)
                             writer.Write("sealed ");
                         if ((typeDef.flags & TYPE_ATTRIBUTE_INTERFACE) != 0)
                             writer.Write("interface ");
-                        else if (isEnum)
+                        else if (typeDef.IsEnum)
                             writer.Write("enum ");
-                        else if (isValueType)
+                        else if (typeDef.IsValueType)
                             writer.Write("struct ");
                         else
                             writer.Write("class ");
@@ -133,7 +117,6 @@ namespace Il2CppDumper
                             {
                                 var fieldDef = metadata.fieldDefs[i];
                                 var fieldType = il2Cpp.types[fieldDef.typeIndex];
-                                var fieldDefaultValue = metadata.GetFieldDefaultValueFromIndex(i);
                                 if (config.DumpAttribute)
                                 {
                                     writer.Write(GetCustomAttribute(imageDef, fieldDef.customAttributeIndex, fieldDef.token, "\t"));
@@ -171,7 +154,7 @@ namespace Il2CppDumper
                                         writer.Write("readonly ");
                                 }
                                 writer.Write($"{executor.GetTypeName(fieldType, false, false)} {metadata.GetStringFromIndex(fieldDef.nameIndex)}");
-                                if (fieldDefaultValue != null && fieldDefaultValue.dataIndex != -1)
+                                if (metadata.GetFieldDefaultValueFromIndex(i, out var fieldDefaultValue) && fieldDefaultValue.dataIndex != -1)
                                 {
                                     if (TryGetDefaultValue(fieldDefaultValue.typeIndex, fieldDefaultValue.dataIndex, out var value))
                                     {
@@ -196,7 +179,7 @@ namespace Il2CppDumper
                                     }
                                 }
                                 if (config.DumpFieldOffset)
-                                    writer.Write("; // 0x{0:X}\n", il2Cpp.GetFieldOffsetFromIndex(typeDefIndex, i - typeDef.fieldStart, i, isValueType));
+                                    writer.Write("; // 0x{0:X}\n", il2Cpp.GetFieldOffsetFromIndex(typeDefIndex, i - typeDef.fieldStart, i, typeDef.IsValueType));
                                 else
                                     writer.Write(";\n");
                             }
@@ -315,8 +298,7 @@ namespace Il2CppDumper
                                         }
                                     }
                                     parameterStr += $"{parameterTypeName} {parameterName}";
-                                    var parameterDefault = metadata.GetParameterDefaultValueFromIndex(methodDef.parameterStart + j);
-                                    if (parameterDefault != null && parameterDefault.dataIndex != -1)
+                                    if (metadata.GetParameterDefaultValueFromIndex(methodDef.parameterStart + j, out var parameterDefault) && parameterDefault.dataIndex != -1)
                                     {
                                         if (TryGetDefaultValue(parameterDefault.typeIndex, parameterDefault.dataIndex, out var value))
                                         {

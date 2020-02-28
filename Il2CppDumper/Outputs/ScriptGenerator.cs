@@ -499,10 +499,10 @@ namespace Il2CppDumper
                 if (typeDef.parentIndex >= 0)
                 {
                     var parent = il2Cpp.types[typeDef.parentIndex];
-                    var parentDef = TypeDefinitionFromIl2CppType(parent);
+                    TypeDefinitionFromIl2CppType(parent, out var parentDef, out var parentContext);
                     if (parentDef != null)
                     {
-                        AddFields(parentDef, fields, staticFields, context, true);
+                        AddFields(parentDef, fields, staticFields, parentContext, true);
                     }
                 }
             }
@@ -579,18 +579,23 @@ namespace Il2CppDumper
             }
         }
 
-        private Il2CppTypeDefinition TypeDefinitionFromIl2CppType(Il2CppType il2CppType)
+        private void TypeDefinitionFromIl2CppType(Il2CppType il2CppType, out Il2CppTypeDefinition typeDef, out Il2CppGenericContext context)
         {
+            context = null;
             switch (il2CppType.type)
             {
                 case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
                 case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
-                    return metadata.typeDefs[il2CppType.data.klassIndex];
+                    typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
+                    break;
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
                     var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
-                    return metadata.typeDefs[genericClass.typeDefinitionIndex];
+                    context = genericClass.context;
+                    typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
+                    break;
                 case Il2CppTypeEnum.IL2CPP_TYPE_OBJECT:
-                    return null;
+                    typeDef = null;
+                    break;
                 default:
                     throw new NotSupportedException();
             }

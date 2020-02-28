@@ -1,9 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29728.190
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Il2CppDumper", "Il2CppDumper\Il2CppDumper.csproj", "{379715D4-4B7B-41F2-B78A-8B18D86320E2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Il2CppDumper", "Il2CppDumper\Il2CppDumper.csproj", "{C51FCA7F-D396-4DAA-90C4-DF3483E86D23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,12 +8,9 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{379715D4-4B7B-41F2-B78A-8B18D86320E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{379715D4-4B7B-41F2-B78A-8B18D86320E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{379715D4-4B7B-41F2-B78A-8B18D86320E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{379715D4-4B7B-41F2-B78A-8B18D86320E2}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
+		{C51FCA7F-D396-4DAA-90C4-DF3483E86D23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C51FCA7F-D396-4DAA-90C4-DF3483E86D23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C51FCA7F-D396-4DAA-90C4-DF3483E86D23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C51FCA7F-D396-4DAA-90C4-DF3483E86D23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

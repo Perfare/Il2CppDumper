@@ -1,9 +1,7 @@
-﻿using System;
+﻿﻿using System;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Windows.Forms;
-using Newtonsoft.Json;
+ using Newtonsoft.Json;
 
 namespace Il2CppDumper
 {
@@ -14,7 +12,7 @@ namespace Il2CppDumper
         [STAThread]
         static void Main(string[] args)
         {
-            config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(Application.StartupPath + Path.DirectorySeparatorChar + @"config.json"));
+            config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(AppDomain.CurrentDomain.SetupInformation.ApplicationBase + @"config.json"));
             byte[] il2cppBytes = null;
             byte[] metadataBytes = null;
 
@@ -48,25 +46,7 @@ namespace Il2CppDumper
             }
             if (il2cppBytes == null)
             {
-                var ofd = new OpenFileDialog();
-                ofd.Filter = "Il2Cpp binary file|*.*";
-                if (ofd.ShowDialog() == DialogResult.OK)
-                {
-                    il2cppBytes = File.ReadAllBytes(ofd.FileName);
-                    ofd.Filter = "global-metadata|global-metadata.dat";
-                    if (ofd.ShowDialog() == DialogResult.OK)
-                    {
-                        metadataBytes = File.ReadAllBytes(ofd.FileName);
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
-                else
-                {
-                    return;
-                }
+                return;
             }
             try
             {
@@ -86,7 +66,6 @@ namespace Il2CppDumper
         static void ShowHelp()
         {
             Console.WriteLine($"usage: {AppDomain.CurrentDomain.FriendlyName} <executable-file> <global-metadata> [mode]");
-            Application.ExitThread();
         }
 
         private static bool Init(byte[] il2cppBytes, byte[] metadataBytes, out Metadata metadata, out Il2Cpp il2Cpp)

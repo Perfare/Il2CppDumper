@@ -1,4 +1,4 @@
-# Il2CppDumper
+# Il2CppDumper .Net Core
 
 [![Build status](https://ci.appveyor.com/api/projects/status/anhqw33vcpmp8ofa?svg=true)](https://ci.appveyor.com/project/Perfare/il2cppdumper/branch/master/artifacts)
 
@@ -14,7 +14,7 @@ Unity il2cpp逆向工程
 
 ## 使用说明
 
-直接运行Il2CppDumper.exe并依次选择il2cpp的可执行文件和global-metadata.dat文件，然后根据提示输入相应信息。
+只支持命令行使用
 
 程序运行完成后将在当前运行目录下生成输出文件
 

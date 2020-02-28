@@ -1,4 +1,4 @@
-# Il2CppDumper
+# Il2CppDumper .Net Core
 
 [![Build status](https://ci.appveyor.com/api/projects/status/anhqw33vcpmp8ofa?svg=true)](https://ci.appveyor.com/project/Perfare/il2cppdumper/branch/master/artifacts)
 
@@ -16,7 +16,7 @@ Unity il2cpp reverse engineer
 
 ## Usage
 
-Run `Il2CppDumper.exe` and choose the il2cpp executable file and `global-metadata.dat` file, then enter the information as prompted
+Only support Command-line
 
 The program will then generate all the output files in current working directory
 

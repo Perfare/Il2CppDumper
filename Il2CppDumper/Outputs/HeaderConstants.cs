@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Il2CppDumper
+﻿namespace Il2CppDumper
 {
     public static class HeaderConstants
     {
@@ -53,13 +47,6 @@ struct Il2CppArrayBounds
 {
     uintptr_t length;
     int32_t lower_bound;
-};
-
-struct Il2CppArray
-{
-    Il2CppObject obj;
-    Il2CppArrayBounds *bounds;
-    uintptr_t max_length;
 };
 
 ";

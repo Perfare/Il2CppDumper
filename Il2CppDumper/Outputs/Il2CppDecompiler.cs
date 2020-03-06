@@ -117,6 +117,7 @@ namespace Il2CppDumper
                             {
                                 var fieldDef = metadata.fieldDefs[i];
                                 var fieldType = il2Cpp.types[fieldDef.typeIndex];
+                                var isStatic = false;
                                 if (config.DumpAttribute)
                                 {
                                     writer.Write(GetCustomAttribute(imageDef, fieldDef.customAttributeIndex, fieldDef.token, "\t"));
@@ -149,9 +150,14 @@ namespace Il2CppDumper
                                 else
                                 {
                                     if ((fieldType.attrs & FIELD_ATTRIBUTE_STATIC) != 0)
+                                    {
+                                        isStatic = true;
                                         writer.Write("static ");
+                                    }
                                     if ((fieldType.attrs & FIELD_ATTRIBUTE_INIT_ONLY) != 0)
+                                    {
                                         writer.Write("readonly ");
+                                    }
                                 }
                                 writer.Write($"{executor.GetTypeName(fieldType, false, false)} {metadata.GetStringFromIndex(fieldDef.nameIndex)}");
                                 if (metadata.GetFieldDefaultValueFromIndex(i, out var fieldDefaultValue) && fieldDefaultValue.dataIndex != -1)
@@ -179,7 +185,7 @@ namespace Il2CppDumper
                                     }
                                 }
                                 if (config.DumpFieldOffset)
-                                    writer.Write("; // 0x{0:X}\n", il2Cpp.GetFieldOffsetFromIndex(typeDefIndex, i - typeDef.fieldStart, i, typeDef.IsValueType));
+                                    writer.Write("; // 0x{0:X}\n", il2Cpp.GetFieldOffsetFromIndex(typeDefIndex, i - typeDef.fieldStart, i, typeDef.IsValueType, isStatic));
                                 else
                                     writer.Write(";\n");
                             }

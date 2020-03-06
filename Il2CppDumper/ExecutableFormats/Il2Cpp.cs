@@ -142,7 +142,7 @@ namespace Il2CppDumper
             return ReadClassArray<T>(MapVATR(addr), count);
         }
 
-        public int GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex, bool isValueType)
+        public int GetFieldOffsetFromIndex(int typeIndex, int fieldIndexInType, int fieldIndex, bool isValueType, bool isStatic)
         {
             //TODO 计算泛型类的偏移
             try
@@ -163,7 +163,7 @@ namespace Il2CppDumper
                 }
                 if (offset > 0)
                 {
-                    if (isValueType)
+                    if (isValueType && !isStatic)
                     {
                         if (Is32Bit)
                         {

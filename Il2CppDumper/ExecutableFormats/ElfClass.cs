@@ -24,7 +24,7 @@ namespace Il2CppDumper
         public ushort e_phnum;
         public ushort e_shentsize;
         public ushort e_shnum;
-        public ushort e_shtrndx;
+        public ushort e_shstrndx;
     }
 
     public class Elf32_Phdr
@@ -97,7 +97,7 @@ namespace Il2CppDumper
         public ushort e_phnum;
         public ushort e_shentsize;
         public ushort e_shnum;
-        public ushort e_shtrndx;
+        public ushort e_shstrndx;
     }
 
     public class Elf64_Phdr

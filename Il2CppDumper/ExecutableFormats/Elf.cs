@@ -30,11 +30,7 @@ namespace Il2CppDumper
             Is32Bit = true;
             elfHeader = ReadClass<Elf32_Ehdr>();
             programSegment = ReadClassArray<Elf32_Phdr>(elfHeader.e_phoff, elfHeader.e_phnum);
-            try
-            {
-                sectionTable = ReadClassArray<Elf32_Shdr>(elfHeader.e_shoff, elfHeader.e_shnum);
-            }
-            catch
+            if (!CheckSection())
             {
                 Console.WriteLine("Detected this may be a dump file. If not, it must be protected.");
                 isDumped = true;
@@ -56,6 +52,29 @@ namespace Il2CppDumper
                 {
                     Console.WriteLine("ERROR: This file may be protected.");
                 }
+            }
+        }
+
+        public bool CheckSection()
+        {
+            try
+            {
+                var names = new List<string>();
+                sectionTable = ReadClassArray<Elf32_Shdr>(elfHeader.e_shoff, elfHeader.e_shnum);
+                var shstrndx = sectionTable[elfHeader.e_shstrndx].sh_offset;
+                foreach (var section in sectionTable)
+                {
+                    names.Add(ReadStringToNull(shstrndx + section.sh_name));
+                }
+                if (!names.Contains(".text"))
+                {
+                    return false;
+                }
+                return true; ;
+            }
+            catch
+            {
+                return false;
             }
         }
 

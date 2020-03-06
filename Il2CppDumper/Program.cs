@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using Newtonsoft.Json;
+#if NETFRAMEWORK
+using System.Windows.Forms;
+#endif
 
 namespace Il2CppDumper
 {
@@ -14,7 +15,7 @@ namespace Il2CppDumper
         [STAThread]
         static void Main(string[] args)
         {
-            config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(Application.StartupPath + Path.DirectorySeparatorChar + @"config.json"));
+            config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + @"config.json"));
             byte[] il2cppBytes = null;
             byte[] metadataBytes = null;
 
@@ -46,6 +47,7 @@ namespace Il2CppDumper
                     metadataBytes = file2;
                 }
             }
+#if NETFRAMEWORK
             if (il2cppBytes == null)
             {
                 var ofd = new OpenFileDialog();
@@ -68,6 +70,12 @@ namespace Il2CppDumper
                     return;
                 }
             }
+#endif
+            if (il2cppBytes == null)
+            {
+                ShowHelp();
+                return;
+            }
             try
             {
                 if (Init(il2cppBytes, metadataBytes, out var metadata, out var il2Cpp))
@@ -85,8 +93,7 @@ namespace Il2CppDumper
 
         static void ShowHelp()
         {
-            Console.WriteLine($"usage: {AppDomain.CurrentDomain.FriendlyName} <executable-file> <global-metadata> [mode]");
-            Application.ExitThread();
+            Console.WriteLine($"usage: {AppDomain.CurrentDomain.FriendlyName} <executable-file> <global-metadata>");
         }
 
         private static bool Init(byte[] il2cppBytes, byte[] metadataBytes, out Metadata metadata, out Il2Cpp il2Cpp)

@@ -15,10 +15,10 @@ namespace Il2CppDumper
         private Metadata metadata;
         private Il2Cpp il2Cpp;
         private Dictionary<Il2CppTypeDefinition, int> typeDefImageIndices = new Dictionary<Il2CppTypeDefinition, int>();
+        private HashSet<string> structNameHashSet = new HashSet<string>(StringComparer.Ordinal);
         private List<StructInfo> structInfoList = new List<StructInfo>();
         private Dictionary<string, StructInfo> structInfoWithStructName = new Dictionary<string, StructInfo>();
         private HashSet<StructInfo> structCache = new HashSet<StructInfo>();
-        private HashSet<string> structNameHashSet = new HashSet<string>(StringComparer.Ordinal);
         private Dictionary<Il2CppTypeDefinition, string> structNameDic = new Dictionary<Il2CppTypeDefinition, string>();
         private Dictionary<ulong, string> genericClassStructNameDic = new Dictionary<ulong, string>();
         private List<ulong> genericClassList = new List<ulong>();
@@ -506,7 +506,7 @@ namespace Il2CppDumper
                 if (typeDef.parentIndex >= 0)
                 {
                     var parent = il2Cpp.types[typeDef.parentIndex];
-                    TypeDefinitionFromIl2CppType(parent, out var parentDef, out var parentContext);
+                    ParseParent(parent, out var parentDef, out var parentContext);
                     if (parentDef != null)
                     {
                         AddFields(parentDef, fields, staticFields, parentContext, true);
@@ -598,7 +598,7 @@ namespace Il2CppDumper
                 $"}};\n");
         }
 
-        private void TypeDefinitionFromIl2CppType(Il2CppType il2CppType, out Il2CppTypeDefinition typeDef, out Il2CppGenericContext context)
+        private void ParseParent(Il2CppType il2CppType, out Il2CppTypeDefinition typeDef, out Il2CppGenericContext context)
         {
             context = null;
             switch (il2CppType.type)

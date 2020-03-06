@@ -24,6 +24,7 @@ namespace Il2CppDumper
         private List<ulong> genericClassList = new List<ulong>();
         private StringBuilder arrayClassPreHeader = new StringBuilder();
         private StringBuilder arrayClassHeader = new StringBuilder();
+        private static HashSet<string> keyword = new HashSet<string>(StringComparer.Ordinal) { "klass", "monitor", "register", "_cs", "auto", "friend", "template" };
 
         public ScriptGenerator(Il2CppExecutor il2CppExecutor)
         {
@@ -327,25 +328,9 @@ namespace Il2CppDumper
 
         private static string FixName(string str)
         {
-            if (str == "klass")
+            if (keyword.Contains(str))
             {
-                str = "_klass";
-            }
-            if (str == "monitor")
-            {
-                str = "_monitor";
-            }
-            if (str == "register")
-            {
-                str = "_register";
-            }
-            if (str == "_cs")
-            {
-                str = "__cs";
-            }
-            if (str == "auto")
-            {
-                str = "_auto";
+                str = "_" + str;
             }
             if (Regex.IsMatch(str, "^[0-9]"))
             {

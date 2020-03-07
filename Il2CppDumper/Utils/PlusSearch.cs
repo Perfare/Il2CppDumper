@@ -117,16 +117,22 @@ namespace Il2CppDumper
             SetSection(type, secs);
         }
 
-        public void SetSection(SearchSectionType type, NSOSegmentHeader section)
+        public void SetSection(SearchSectionType type, params NSOSegmentHeader[] sections)
         {
             var secs = new List<SearchSection>();
-            secs.Add(new SearchSection
+            foreach (var section in sections)
             {
-                offset = section.FileOffset,
-                offsetEnd = section.FileOffset + section.DecompressedSize,
-                address = section.MemoryOffset,
-                addressEnd = section.MemoryOffset + section.DecompressedSize
-            });
+                if (section != null)
+                {
+                    secs.Add(new SearchSection
+                    {
+                        offset = section.FileOffset,
+                        offsetEnd = section.FileOffset + section.DecompressedSize,
+                        address = section.MemoryOffset,
+                        addressEnd = section.MemoryOffset + section.DecompressedSize
+                    });
+                }
+            }
             SetSection(type, secs);
         }
 

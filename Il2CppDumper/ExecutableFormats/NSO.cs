@@ -105,7 +105,7 @@ namespace Il2CppDumper
         {
             var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
             plusSearch.SetSection(SearchSectionType.Exec, header.TextSegment);
-            plusSearch.SetSection(SearchSectionType.Data, header.DataSegment);
+            plusSearch.SetSection(SearchSectionType.Data, header.DataSegment, header.RoDataSegment);
             plusSearch.SetSection(SearchSectionType.Bss, header.BssSegment);
             var codeRegistration = plusSearch.FindCodeRegistration();
             var metadataRegistration = plusSearch.FindMetadataRegistration();

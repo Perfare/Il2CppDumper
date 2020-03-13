@@ -24,7 +24,7 @@ namespace Il2CppDumper
         private List<ulong> genericClassList = new List<ulong>();
         private StringBuilder arrayClassPreHeader = new StringBuilder();
         private StringBuilder arrayClassHeader = new StringBuilder();
-        private static HashSet<string> keyword = new HashSet<string>(StringComparer.Ordinal) 
+        private static HashSet<string> keyword = new HashSet<string>(StringComparer.Ordinal)
         { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "near", "far", "flat", "default" };
 
         public ScriptGenerator(Il2CppExecutor il2CppExecutor)
@@ -437,6 +437,10 @@ namespace Il2CppDumper
                         }
                         if (typeDef.IsValueType)
                         {
+                            if (typeDef.IsEnum)
+                            {
+                                return ParseType(il2Cpp.types[typeDef.elementTypeIndex]);
+                            }
                             return typeStructName + "_o";
                         }
                         return typeStructName + "_o*";

@@ -224,7 +224,8 @@ namespace Il2CppDumper
                 orderedPointers.AddRange(il2Cpp.customAttributeGenerators);
                 if (il2Cpp.Version >= 22)
                 {
-                    orderedPointers.AddRange(il2Cpp.reversePInvokeWrappers);
+                         if (il2Cpp.reversePInvokeWrappers != null)
+                              orderedPointers.AddRange(il2Cpp.reversePInvokeWrappers);
                     orderedPointers.AddRange(il2Cpp.unresolvedVirtualCallPointers);
                 }
                 //TODO interopData内也包含函数

@@ -25,7 +25,7 @@ namespace Il2CppDumper
         private StringBuilder arrayClassPreHeader = new StringBuilder();
         private StringBuilder arrayClassHeader = new StringBuilder();
         private static HashSet<string> keyword = new HashSet<string>(StringComparer.Ordinal)
-        { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "near", "far", "flat", "default" };
+        { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "near", "far", "flat", "default", "_ds", "interrupt" };
 
         public ScriptGenerator(Il2CppExecutor il2CppExecutor)
         {
@@ -807,20 +807,13 @@ namespace Il2CppDumper
                 case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
                     {
                         var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
-                        if (!typeDef.IsEnum)
-                        {
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
+                        return !typeDef.IsEnum;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
                     {
                         var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
                         var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
-                        return typeDef.IsValueType;
+                        return typeDef.IsValueType && !typeDef.IsEnum;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
                     {

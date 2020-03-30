@@ -21,12 +21,18 @@ namespace Il2CppDumper
         {
             elfHeader = ReadClass<Elf64_Ehdr>();
             programSegment = ReadClassArray<Elf64_Phdr>(elfHeader.e_phoff, elfHeader.e_phnum);
-            if(!CheckSection())
+            if (!CheckSection())
             {
-                Console.WriteLine("Detected this may be a dump file. If not, it must be protected.");
-                isDumped = true;
-                Console.WriteLine("Input dump address:");
+                Console.WriteLine("Detected this may be a dump file.");
+                Console.WriteLine("Input dump address or input 0 to force continue:");
                 dumpAddr = Convert.ToUInt64(Console.ReadLine(), 16);
+                if (dumpAddr != 0)
+                {
+                    isDumped = true;
+                }
+            }
+            if (isDumped)
+            {
                 FixedProgramSegment();
             }
             pt_dynamic = programSegment.First(x => x.p_type == PT_DYNAMIC);

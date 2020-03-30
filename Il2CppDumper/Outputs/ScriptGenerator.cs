@@ -303,8 +303,6 @@ namespace Il2CppDumper
                     sb.Append(HeaderConstants.HeaderV22);
                     break;
                 case 23f:
-                    sb.Append(HeaderConstants.HeaderV240);
-                    break;
                 case 24f:
                     sb.Append(HeaderConstants.HeaderV240);
                     break;
@@ -312,6 +310,7 @@ namespace Il2CppDumper
                     sb.Append(HeaderConstants.HeaderV241);
                     break;
                 case 24.2f:
+                case 24.3f:
                     sb.Append(HeaderConstants.HeaderV242);
                     break;
                 //TODO

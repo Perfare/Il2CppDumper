@@ -17,6 +17,6 @@ namespace Il2CppDumper
         public bool DummyDll = true;
         public bool MakeFunction = false;
         public bool ForceIl2CppVersion = false;
-        public int ForceVersion = 16;
+        public float ForceVersion = 24.3f;
     }
 }

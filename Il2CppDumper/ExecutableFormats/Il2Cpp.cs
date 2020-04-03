@@ -212,9 +212,17 @@ namespace Il2CppDumper
                 }
                 else
                 {
-                    var ptrs = codeGenModuleMethodPointers[imageIndex];
-                    var methodPointerIndex = methodToken & 0x00FFFFFFu;
-                    return ptrs[methodPointerIndex - 1];
+                    if (imageIndex < codeGenModuleMethodPointers.Length)
+                    {
+                        var ptrs = codeGenModuleMethodPointers[imageIndex];
+                        var methodPointerIndex = methodToken & 0x00FFFFFFu;
+                        return ptrs[methodPointerIndex - 1];
+                    }
+                    else
+                    {
+                        return 0UL;
+                    }
+                    
                 }
             }
             else

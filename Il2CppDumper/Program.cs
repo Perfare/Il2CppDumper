@@ -112,10 +112,26 @@ namespace Il2CppDumper
             var isPE = false;
             var is64bit = false;
             var isNSO = false;
+            var isRaw = false;
+            var baseAddr = 0UL;
             switch (il2cppMagic)
             {
                 default:
-                    throw new NotSupportedException("ERROR: il2cpp file not supported.");
+                    //throw new NotSupportedException("ERROR: il2cpp file not supported.");
+                    Console.Write("Failed to recognize the format of il2cpp, processing it as raw memory file!");
+                    isRaw = true;
+                    Console.Write("Enter base address (in hex, like 23c000): ");
+                    baseAddr = Convert.ToUInt64(Console.ReadLine(), 16);
+                    Console.WriteLine("Select the bit width:");
+                    Console.WriteLine("1.32bit 2.64bit");
+                    var k = Console.ReadKey();
+                    var choice = int.Parse(k.KeyChar.ToString()) - 1;
+                    if (choice > 2 || choice < 0)
+                    {
+                        throw new InvalidDataException("ERROR: wrong bit width choice");
+                    }
+                    is64bit = choice == 1;
+                    break;
                 case 0x304F534E:
                     isNSO = true;
                     is64bit = true;
@@ -158,7 +174,11 @@ namespace Il2CppDumper
             var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.Version;
             Console.WriteLine("Initializing il2cpp file...");
             var il2CppMemory = new MemoryStream(il2cppBytes);
-            if (isNSO)
+            if (isRaw)
+            {
+                il2Cpp = new Raw(il2CppMemory, baseAddr, is64bit, version, metadata.maxMetadataUsages);
+            }
+            else if (isNSO)
             {
                 var nso = new NSO(il2CppMemory, version, metadata.maxMetadataUsages);
                 il2Cpp = nso.UnCompress();

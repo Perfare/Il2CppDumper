@@ -17,7 +17,7 @@ namespace Il2CppDumper
         private bool isDumped;
         private ulong dumpAddr;
 
-        public Elf64(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
+        public Elf64(Stream stream) : base(stream)
         {
             elfHeader = ReadClass<Elf64_Ehdr>();
             programSegment = ReadClassArray<Elf64_Phdr>(elfHeader.e_phoff, elfHeader.e_phnum);

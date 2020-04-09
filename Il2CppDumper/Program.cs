@@ -87,7 +87,8 @@ namespace Il2CppDumper
             {
                 Console.WriteLine(e);
             }
-            if (config.RequireAnyKey) {
+            if (config.RequireAnyKey)
+            {
                 Console.WriteLine("Press any key to exit...");
                 Console.ReadKey(true);
             }
@@ -108,28 +109,29 @@ namespace Il2CppDumper
             Console.WriteLine("Initializing metadata...");
             metadata = new Metadata(new MemoryStream(metadataBytes));
             Console.WriteLine($"Metadata Version: {metadata.Version}");
-            //判断il2cpp的magic
+
+            Console.WriteLine("Initializing il2cpp file...");
             var il2cppMagic = BitConverter.ToUInt32(il2cppBytes, 0);
-            var isElf = false;
-            var isPE = false;
-            var is64bit = false;
-            var isNSO = false;
+            var il2CppMemory = new MemoryStream(il2cppBytes);
             switch (il2cppMagic)
             {
                 default:
                     throw new NotSupportedException("ERROR: il2cpp file not supported.");
                 case 0x304F534E:
-                    isNSO = true;
-                    is64bit = true;
+                    var nso = new NSO(il2CppMemory);
+                    il2Cpp = nso.UnCompress();
                     break;
                 case 0x905A4D: //PE
-                    isPE = true;
+                    il2Cpp = new PE(il2CppMemory);
                     break;
                 case 0x464c457f: //ELF
-                    isElf = true;
                     if (il2cppBytes[4] == 2) //ELF64
                     {
-                        is64bit = true;
+                        il2Cpp = new Elf64(il2CppMemory);
+                    }
+                    else
+                    {
+                        il2Cpp = new Elf(il2CppMemory);
                     }
                     break;
                 case 0xCAFEBABE: //FAT Mach-O
@@ -146,40 +148,20 @@ namespace Il2CppDumper
                     var index = int.Parse(key.KeyChar.ToString()) - 1;
                     var magic = machofat.fats[index % 2].magic;
                     il2cppBytes = machofat.GetMacho(index % 2);
+                    il2CppMemory = new MemoryStream(il2cppBytes);
                     if (magic == 0xFEEDFACF)
                         goto case 0xFEEDFACF;
                     else
                         goto case 0xFEEDFACE;
                 case 0xFEEDFACF: // 64bit Mach-O
-                    is64bit = true;
+                    il2Cpp = new Macho64(il2CppMemory);
                     break;
                 case 0xFEEDFACE: // 32bit Mach-O
+                    il2Cpp = new Macho(il2CppMemory);
                     break;
             }
-
             var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.Version;
-            Console.WriteLine("Initializing il2cpp file...");
-            var il2CppMemory = new MemoryStream(il2cppBytes);
-            if (isNSO)
-            {
-                var nso = new NSO(il2CppMemory, version, metadata.maxMetadataUsages);
-                il2Cpp = nso.UnCompress();
-            }
-            else if (isPE)
-            {
-                il2Cpp = new PE(il2CppMemory, version, metadata.maxMetadataUsages);
-            }
-            else if (isElf)
-            {
-                if (is64bit)
-                    il2Cpp = new Elf64(il2CppMemory, version, metadata.maxMetadataUsages);
-                else
-                    il2Cpp = new Elf(il2CppMemory, version, metadata.maxMetadataUsages);
-            }
-            else if (is64bit)
-                il2Cpp = new Macho64(il2CppMemory, version, metadata.maxMetadataUsages);
-            else
-                il2Cpp = new Macho(il2CppMemory, version, metadata.maxMetadataUsages);
+            il2Cpp.SetProperties(version, metadata.maxMetadataUsages);
             Console.WriteLine($"Il2Cpp Version: {il2Cpp.Version}");
 
             Console.WriteLine("Searching...");

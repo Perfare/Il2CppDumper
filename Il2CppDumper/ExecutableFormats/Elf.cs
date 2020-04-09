@@ -25,7 +25,7 @@ namespace Il2CppDumper
         private static readonly string ARMFeatureBytes = "? 0x10 ? 0xE7 ? 0x00 ? 0xE0 ? 0x20 ? 0xE0";
         private static readonly string X86FeatureBytes = "? 0x10 ? 0xE7 ? 0x00 ? 0xE0 ? 0x20 ? 0xE0"; //TODO
 
-        public Elf(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
+        public Elf(Stream stream) : base(stream)
         {
             Is32Bit = true;
             elfHeader = ReadClass<Elf32_Ehdr>();

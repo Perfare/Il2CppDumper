@@ -11,7 +11,7 @@ namespace Il2CppDumper
         private SectionHeader[] sections;
         private ulong imageBase;
 
-        public PE(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
+        public PE(Stream stream) : base(stream)
         {
             var dosHeader = ReadClass<DosHeader>();
             if (dosHeader.Magic != 0x5A4D)

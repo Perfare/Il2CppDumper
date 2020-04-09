@@ -33,7 +33,9 @@ namespace Il2CppDumper
         public abstract bool PlusSearch(int methodCount, int typeDefinitionsCount);
         public abstract bool SymbolSearch();
 
-        protected Il2Cpp(Stream stream, float version, long maxMetadataUsages) : base(stream)
+        protected Il2Cpp(Stream stream) : base(stream) { }
+
+        public void SetProperties(float version, long maxMetadataUsages)
         {
             Version = version;
             this.maxMetadataUsages = maxMetadataUsages;

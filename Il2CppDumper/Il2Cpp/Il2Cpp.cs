@@ -47,6 +47,20 @@ namespace Il2CppDumper
             Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
             if (codeRegistration != 0 && metadataRegistration != 0)
             {
+                if (Version == 24.2f)
+                {
+                    pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
+                    pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
+                    genericMethodTable = MapVATR<Il2CppGenericMethodFunctionsDefinitions>(pMetadataRegistration.genericMethodTable, pMetadataRegistration.genericMethodTableCount);
+                    var genericMethodPointersCount = genericMethodTable.Max(x => x.indices.methodIndex) + 1;
+                    if (pCodeRegistration.reversePInvokeWrapperCount == genericMethodPointersCount)
+                    {
+                        Version = 24.3f;
+                        codeRegistration -= Is32Bit ? 8u : 16u;
+                        Console.WriteLine($"Change il2cpp version to: {Version}");
+                        Console.WriteLine("Actual CodeRegistration : {0:x}", codeRegistration);
+                    }
+                }
                 Init(codeRegistration, metadataRegistration);
                 return true;
             }
@@ -56,20 +70,16 @@ namespace Il2CppDumper
         public virtual void Init(ulong codeRegistration, ulong metadataRegistration)
         {
             pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
-            pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
             if (Version == 24.2f)
             {
-                genericMethodTable = MapVATR<Il2CppGenericMethodFunctionsDefinitions>(pMetadataRegistration.genericMethodTable, pMetadataRegistration.genericMethodTableCount);
-                var genericMethodPointersCount = genericMethodTable.Max(x => x.indices.methodIndex) + 1;
-                if (pCodeRegistration.reversePInvokeWrapperCount == genericMethodPointersCount)
+                if (pCodeRegistration.codeGenModules == 0) //TODO
                 {
                     Version = 24.3f;
-                    codeRegistration -= Is32Bit ? 8u : 16u;
                     Console.WriteLine($"Change il2cpp version to: {Version}");
-                    Console.WriteLine("Actual CodeRegistration : {0:x}", codeRegistration);
                     pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
                 }
             }
+            pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
             genericMethodPointers = MapVATR<ulong>(pCodeRegistration.genericMethodPointers, pCodeRegistration.genericMethodPointersCount);
             invokerPointers = MapVATR<ulong>(pCodeRegistration.invokerPointers, pCodeRegistration.invokerPointersCount);
             customAttributeGenerators = MapVATR<ulong>(pCodeRegistration.customAttributeGenerators, pCodeRegistration.customAttributeCount);
@@ -146,12 +156,7 @@ namespace Il2CppDumper
 
         public T MapVATR<T>(ulong addr) where T : new()
         {
-            if (!ReadClassCache<T>.TryGetValue(addr, out var value))
-            {
-                value = ReadClass<T>(MapVATR(addr));
-                ReadClassCache<T>.Add(addr, value);
-            }
-            return value;
+            return ReadClass<T>(MapVATR(addr));
         }
 
         public T[] MapVATR<T>(ulong addr, long count) where T : new()

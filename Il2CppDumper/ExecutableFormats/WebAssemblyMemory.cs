@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace Il2CppDumper
 {
@@ -17,7 +16,34 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
         {
-            return false;
+            var exec = new SearchSection
+            {
+                offset = 0,
+                offsetEnd = (ulong)methodCount, //hack
+                address = 0,
+                addressEnd = (ulong)methodCount //hack
+            };
+            var data = new SearchSection
+            {
+                offset = 1024,
+                offsetEnd = Length,
+                address = 1024,
+                addressEnd = Length
+            };
+            var bss = new SearchSection
+            {
+                offset = Length,
+                offsetEnd = 1024 + 2159056, //STATICTOP
+                address = Length,
+                addressEnd = 1024 + 2159056 //STATICTOP
+            };
+            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+            plusSearch.SetSection(SearchSectionType.Exec, exec);
+            plusSearch.SetSection(SearchSectionType.Data, data);
+            plusSearch.SetSection(SearchSectionType.Bss, bss);
+            var codeRegistration = plusSearch.FindCodeRegistration();
+            var metadataRegistration = plusSearch.FindMetadataRegistration();
+            return AutoInit(codeRegistration, metadataRegistration);
         }
 
         public override bool Search()

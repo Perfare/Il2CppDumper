@@ -136,6 +136,11 @@ namespace Il2CppDumper
             SetSection(type, secs);
         }
 
+        public void SetSection(SearchSectionType type, params SearchSection[] secs)
+        {
+            SetSection(type, secs.ToList());
+        }
+
         private void SetSection(SearchSectionType type, List<SearchSection> secs)
         {
             switch (type)
@@ -183,7 +188,7 @@ namespace Il2CppDumper
             foreach (var section in data)
             {
                 il2Cpp.Position = section.offset;
-                while (il2Cpp.Position < section.offsetEnd)
+                while (il2Cpp.Position < section.offsetEnd - 4)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadUInt32() == methodCount)
@@ -217,7 +222,7 @@ namespace Il2CppDumper
             foreach (var section in data)
             {
                 il2Cpp.Position = section.offset;
-                while (il2Cpp.Position < section.offsetEnd)
+                while (il2Cpp.Position < section.offsetEnd - 8)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadInt64() == methodCount)
@@ -251,7 +256,7 @@ namespace Il2CppDumper
             foreach (var section in data)
             {
                 il2Cpp.Position = section.offset;
-                while (il2Cpp.Position < section.offsetEnd)
+                while (il2Cpp.Position < section.offsetEnd - 4)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadInt32() == typeDefinitionsCount)
@@ -286,7 +291,7 @@ namespace Il2CppDumper
             foreach (var section in data)
             {
                 il2Cpp.Position = section.offset;
-                while (il2Cpp.Position < section.offsetEnd)
+                while (il2Cpp.Position < section.offsetEnd - 8)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadInt64() == typeDefinitionsCount)

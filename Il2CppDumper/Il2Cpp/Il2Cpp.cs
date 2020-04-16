@@ -22,7 +22,7 @@ namespace Il2CppDumper
         private Il2CppGenericMethodFunctionsDefinitions[] genericMethodTable;
         public Il2CppGenericInst[] genericInsts;
         public Il2CppMethodSpec[] methodSpecs;
-        private Dictionary<int, ulong> genericMethoddDictionary;
+        public Dictionary<int, List<(Il2CppMethodSpec, ulong)>> genericMethoddDictionary = new Dictionary<int, List<(Il2CppMethodSpec, ulong)>>();
         private bool fieldOffsetsArePointers;
         protected long maxMetadataUsages;
         private Il2CppCodeGenModule[] codeGenModules;
@@ -143,14 +143,16 @@ namespace Il2CppDumper
             }
             genericMethodTable = MapVATR<Il2CppGenericMethodFunctionsDefinitions>(pMetadataRegistration.genericMethodTable, pMetadataRegistration.genericMethodTableCount);
             methodSpecs = MapVATR<Il2CppMethodSpec>(pMetadataRegistration.methodSpecs, pMetadataRegistration.methodSpecsCount);
-            genericMethoddDictionary = new Dictionary<int, ulong>(genericMethodTable.Length);
             foreach (var table in genericMethodTable)
             {
-                var index = methodSpecs[table.genericMethodIndex].methodDefinitionIndex;
-                if (!genericMethoddDictionary.ContainsKey(index))
+                var methodSpec = methodSpecs[table.genericMethodIndex];
+                var methodDefinitionIndex = methodSpec.methodDefinitionIndex;
+                if (!genericMethoddDictionary.TryGetValue(methodDefinitionIndex, out var tuple))
                 {
-                    genericMethoddDictionary.Add(index, genericMethodPointers[table.indices.methodIndex]);
+                    tuple = new List<(Il2CppMethodSpec, ulong)>();
+                    genericMethoddDictionary.Add(methodDefinitionIndex, tuple);
                 }
+                tuple.Add((methodSpec, genericMethodPointers[table.indices.methodIndex]));
             }
         }
 
@@ -209,30 +211,24 @@ namespace Il2CppDumper
             return typeDic[pointer];
         }
 
-        public ulong GetMethodPointer(int methodIndex, int methodDefinitionIndex, int imageIndex, uint methodToken)
+        public ulong GetMethodPointer(Il2CppMethodDefinition methodDef, int imageIndex)
         {
             if (Version >= 24.2f)
             {
-                if (genericMethoddDictionary.TryGetValue(methodDefinitionIndex, out var methodPointer))
-                {
-                    return methodPointer;
-                }
-                else
-                {
-                    var ptrs = codeGenModuleMethodPointers[imageIndex];
-                    var methodPointerIndex = methodToken & 0x00FFFFFFu;
-                    return ptrs[methodPointerIndex - 1];
-                }
+                var methodToken = methodDef.token;
+                var ptrs = codeGenModuleMethodPointers[imageIndex];
+                var methodPointerIndex = methodToken & 0x00FFFFFFu;
+                return ptrs[methodPointerIndex - 1];
             }
             else
             {
+                var methodIndex = methodDef.methodIndex;
                 if (methodIndex >= 0)
                 {
                     return methodPointers[methodIndex];
                 }
-                genericMethoddDictionary.TryGetValue(methodDefinitionIndex, out var methodPointer);
-                return methodPointer;
             }
+            return 0;
         }
 
         public virtual ulong GetRVA(ulong pointer)

@@ -237,7 +237,7 @@ namespace Il2CppDumper
                             }
                         }
                         //methodAddress
-                        var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, i, imageIndex, methodDef.token);
+                        var methodPointer = il2Cpp.GetMethodPointer(methodDef, imageIndex);
                         if (methodPointer > 0)
                         {
                             var customAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(addressAttribute));

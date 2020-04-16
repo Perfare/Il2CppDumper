@@ -6,7 +6,6 @@ namespace Il2CppDumper
     {
         public Metadata metadata;
         public Il2Cpp il2Cpp;
-        private Dictionary<Il2CppGenericInst, string> GenericInstParamsCache = new Dictionary<Il2CppGenericInst, string>();
         private static readonly Dictionary<int, string> TypeString = new Dictionary<int, string>
         {
             {1,"void"},
@@ -113,14 +112,7 @@ namespace Il2CppDumper
                         else if (typeDef.genericContainerIndex >= 0)
                         {
                             var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
-                            var genericParameterNames = new List<string>();
-                            for (int i = 0; i < genericContainer.type_argc; i++)
-                            {
-                                var genericParameterIndex = genericContainer.genericParameterStart + i;
-                                var param = metadata.genericParameters[genericParameterIndex];
-                                genericParameterNames.Add(metadata.GetStringFromIndex(param.nameIndex));
-                            }
-                            str += $"<{string.Join(", ", genericParameterNames)}>";
+                            str += GetGenericContainerParams(genericContainer);
                         }
 
                         return str;
@@ -156,14 +148,7 @@ namespace Il2CppDumper
                 if (genericParameter)
                 {
                     var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
-                    var genericParameterNames = new List<string>();
-                    for (int i = 0; i < genericContainer.type_argc; i++)
-                    {
-                        var genericParameterIndex = genericContainer.genericParameterStart + i;
-                        var param = metadata.genericParameters[genericParameterIndex];
-                        genericParameterNames.Add(metadata.GetStringFromIndex(param.nameIndex));
-                    }
-                    typeName += $"<{string.Join(", ", genericParameterNames)}>";
+                    typeName += GetGenericContainerParams(genericContainer);
                 }
             }
             return prefix + typeName;
@@ -171,19 +156,45 @@ namespace Il2CppDumper
 
         public string GetGenericInstParams(Il2CppGenericInst genericInst)
         {
-            if (!GenericInstParamsCache.TryGetValue(genericInst, out var value))
+            var genericParameterNames = new List<string>();
+            var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
+            for (int i = 0; i < genericInst.type_argc; i++)
             {
-                var typeNames = new List<string>();
-                var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
-                for (uint i = 0; i < genericInst.type_argc; ++i)
-                {
-                    var oriType = il2Cpp.GetIl2CppType(pointers[i]);
-                    typeNames.Add(GetTypeName(oriType, false, false));
-                }
-                value = $"<{string.Join(", ", typeNames)}>";
-                GenericInstParamsCache.Add(genericInst, value);
+                var il2CppType = il2Cpp.GetIl2CppType(pointers[i]);
+                genericParameterNames.Add(GetTypeName(il2CppType, false, false));
             }
-            return value;
+            return $"<{string.Join(", ", genericParameterNames)}>";
+        }
+
+        public string GetGenericContainerParams(Il2CppGenericContainer genericContainer)
+        {
+            var genericParameterNames = new List<string>();
+            for (int i = 0; i < genericContainer.type_argc; i++)
+            {
+                var genericParameterIndex = genericContainer.genericParameterStart + i;
+                var genericParameter = metadata.genericParameters[genericParameterIndex];
+                genericParameterNames.Add(metadata.GetStringFromIndex(genericParameter.nameIndex));
+            }
+            return $"<{string.Join(", ", genericParameterNames)}>";
+        }
+
+        public string GetMethodSpecMethodName(Il2CppMethodSpec methodSpec)
+        {
+            var methodDef = metadata.methodDefs[methodSpec.methodDefinitionIndex];
+            var typeDef = metadata.typeDefs[methodDef.declaringType];
+            var typeName = GetTypeDefName(typeDef, false, false);
+            if (methodSpec.classIndexIndex != -1)
+            {
+                var classInst = il2Cpp.genericInsts[methodSpec.classIndexIndex];
+                typeName += GetGenericInstParams(classInst);
+            }
+            var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex);
+            if (methodSpec.methodIndexIndex != -1)
+            {
+                var methodInst = il2Cpp.genericInsts[methodSpec.methodIndexIndex];
+                methodName += GetGenericInstParams(methodInst);
+            }
+            return methodName;
         }
     }
 }

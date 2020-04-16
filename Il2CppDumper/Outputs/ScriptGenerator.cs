@@ -62,7 +62,7 @@ namespace Il2CppDumper
                     {
                         var methodDef = metadata.methodDefs[i];
                         var methodName = metadata.GetStringFromIndex(methodDef.nameIndex);
-                        var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, i, imageIndex, methodDef.token);
+                        var methodPointer = il2Cpp.GetMethodPointer(methodDef, imageIndex);
                         if (methodPointer > 0)
                         {
                             var scriptMethod = new ScriptMethod();
@@ -143,7 +143,7 @@ namespace Il2CppDumper
                     scriptMetadataMethod.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
                     scriptMetadataMethod.Name = "Method$" + methodName;
                     var imageIndex = typeDefImageIndices[typeDef];
-                    var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, (int)i.Value, imageIndex, methodDef.token);
+                    var methodPointer = il2Cpp.GetMethodPointer(methodDef, imageIndex);
                     if (methodPointer > 0)
                     {
                         scriptMetadataMethod.MethodAddress = il2Cpp.GetRVA(methodPointer);
@@ -197,7 +197,7 @@ namespace Il2CppDumper
                     scriptMetadataMethod.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
                     scriptMetadataMethod.Name = "Method$" + methodName;
                     var imageIndex = typeDefImageIndices[typeDef];
-                    var methodPointer = il2Cpp.GetMethodPointer(methodDef.methodIndex, methodSpec.methodDefinitionIndex, imageIndex, methodDef.token);
+                    var methodPointer = il2Cpp.GetMethodPointer(methodDef, imageIndex);
                     if (methodPointer > 0)
                     {
                         scriptMetadataMethod.MethodAddress = il2Cpp.GetRVA(methodPointer);

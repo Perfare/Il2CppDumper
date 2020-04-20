@@ -301,6 +301,9 @@ namespace Il2CppDumper
             sb.Append(HeaderConstants.GenericHeader);
             switch (il2Cpp.Version)
             {
+                case 21f:
+                    sb.Append(HeaderConstants.HeaderV21);
+                    break;
                 case 22f:
                     sb.Append(HeaderConstants.HeaderV22);
                     break;

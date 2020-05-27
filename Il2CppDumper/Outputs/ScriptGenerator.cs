@@ -54,12 +54,14 @@ namespace Il2CppDumper
                 for (int typeIndex = imageDef.typeStart; typeIndex < typeEnd; typeIndex++)
                 {
                     var typeDef = metadata.typeDefs[typeIndex];
-                    AddStruct(typeDef);
+                    var structInfo = AddStruct(typeDef);
                     var typeName = executor.GetTypeDefName(typeDef, true, true);
                     typeDefImageIndices.Add(typeDef, imageIndex);
                     var methodEnd = typeDef.methodStart + typeDef.method_count;
                     for (var i = typeDef.methodStart; i < methodEnd; ++i)
                     {
+                        var methodInfo = new StructMethodInfo();
+
                         var methodDef = metadata.methodDefs[i];
                         var methodName = metadata.GetStringFromIndex(methodDef.nameIndex);
                         var methodPointer = il2Cpp.GetMethodPointer(methodDef, imageIndex);
@@ -74,22 +76,43 @@ namespace Il2CppDumper
                             var methodReturnType = il2Cpp.types[methodDef.returnType];
                             var returnType = ParseType(methodReturnType);
                             var signature = $"{returnType} {FixName(methodFullName)} (";
+
                             var parameterStrs = new List<string>();
+                            var parameterRetTypes = new List<string>();
+                            var parameterNames = new List<string>();
+
                             if ((methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
                             {
                                 var thisType = ParseType(il2Cpp.types[typeDef.byrefTypeIndex]);
-                                parameterStrs.Add($"{thisType} this");
+
+                                parameterStrs.Add($"{thisType} __instance");
+                                parameterRetTypes.Add(thisType);
+                                parameterNames.Add("__instance");
                             }
                             for (var j = 0; j < methodDef.parameterCount; j++)
                             {
                                 var parameterDef = metadata.parameterDefs[methodDef.parameterStart + j];
                                 var parameterName = metadata.GetStringFromIndex(parameterDef.nameIndex);
                                 var parameterType = il2Cpp.types[parameterDef.typeIndex];
-                                parameterStrs.Add($"{ParseType(parameterType)} {FixName(parameterName)}");
+
+                                var fixName = FixName(parameterName);
+                                var retType = ParseType(parameterType);
+
+                                parameterNames.Add(fixName);
+                                parameterRetTypes.Add(retType);
+                                parameterStrs.Add($"{retType} {fixName}");
                             }
                             signature += string.Join(", ", parameterStrs);
-                            signature += ");";
-                            scriptMethod.Signature = signature;
+                            signature += ")";
+
+                            scriptMethod.Signature = signature + ";";
+
+                            methodInfo.Address = scriptMethod.Address;
+                            methodInfo.Signature = signature;
+                            methodInfo.FnFormat = $"const auto fn = reinterpret_cast<{returnType}( * )( {string.Join(", ", parameterRetTypes)} )>( MAKE_RVA({{0}}) );\n\t\treturn fn({string.Join(", ", parameterNames)});";
+
+                            if (!structInfo.Methods.Contains(methodInfo))
+                                structInfo.Methods.Add(methodInfo);
                         }
                     }
                 }
@@ -290,6 +313,13 @@ namespace Il2CppDumper
                     {
                         headerClass.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
                     }
+
+                    headerClass.Append("\n");
+
+                    foreach (var method in info.Methods) {
+                        headerClass.Append($"\t/*static {method.Signature} {{\n\t\t{string.Format(method.FnFormat, $"0x{method.Address.ToString("x")}")}\n\t}}*/\n");
+                    }
+
                     headerClass.Append("};\n");
                 }
             }
@@ -483,7 +513,7 @@ namespace Il2CppDumper
             }
         }
 
-        private void AddStruct(Il2CppTypeDefinition typeDef)
+        private StructInfo AddStruct(Il2CppTypeDefinition typeDef)
         {
             var structInfo = new StructInfo();
             structInfoList.Add(structInfo);
@@ -491,6 +521,8 @@ namespace Il2CppDumper
             structInfo.IsValueType = typeDef.IsValueType;
             AddFields(typeDef, structInfo.Fields, structInfo.StaticFields, null, false);
             AddVTableMethod(structInfo, typeDef);
+
+            return structInfo;
         }
 
         private void AddGenericClassStruct(ulong pointer)

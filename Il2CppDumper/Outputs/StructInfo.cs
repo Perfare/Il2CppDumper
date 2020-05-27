@@ -13,6 +13,8 @@ namespace Il2CppDumper
         public List<StructFieldInfo> Fields = new List<StructFieldInfo>();
         public List<StructFieldInfo> StaticFields = new List<StructFieldInfo>();
         public List<StructVTableMethodInfo> VTableMethod = new List<StructVTableMethodInfo>();
+
+        public List<StructMethodInfo> Methods = new List<StructMethodInfo>();
     }
 
     public class StructFieldInfo
@@ -25,5 +27,16 @@ namespace Il2CppDumper
     public class StructVTableMethodInfo
     {
         public string MethodName;
+    }
+
+    public class StructMethodInfo : IEquatable<StructMethodInfo> {
+        public ulong Address;
+
+        public string FnFormat;
+        public string Signature;
+
+        public bool Equals(StructMethodInfo other) {
+            return this.Address == other.Address;
+        }
     }
 }

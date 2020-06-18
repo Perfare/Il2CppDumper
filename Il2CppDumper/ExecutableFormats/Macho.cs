@@ -25,34 +25,44 @@ namespace Il2CppDumper
                 var pos = Position;
                 var cmd = ReadUInt32();
                 var cmdsize = ReadUInt32();
-                if (cmd == 1) //LC_SEGMENT
+                switch (cmd)
                 {
-                    var segname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
-                    if (segname == "__TEXT") //__PAGEZERO
-                    {
-                        vmaddr = ReadUInt32();
-                    }
-                    else
-                    {
-                        Position += 4;
-                    }
-                    Position += 20; //skip vmsize, fileoff, filesize, maxprot, initprot
-                    var nsects = ReadUInt32();
-                    Position += 4; //skip flags
-                    for (var j = 0; j < nsects; j++)
-                    {
-                        var section = new MachoSection();
-                        sections.Add(section);
-                        section.sectname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
-                        Position += 16; //skip segname
-                        section.addr = ReadUInt32();
-                        section.size = ReadUInt32();
-                        section.offset = ReadUInt32();
-                        Position += 12; //skip align, reloff, nreloc
-                        section.flags = ReadUInt32();
-                        section.end = section.addr + section.size;
-                        Position += 8; //skip reserved1, reserved2
-                    }
+                    case 1: //LC_SEGMENT
+                        var segname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
+                        if (segname == "__TEXT") //__PAGEZERO
+                        {
+                            vmaddr = ReadUInt32();
+                        }
+                        else
+                        {
+                            Position += 4;
+                        }
+                        Position += 20; //skip vmsize, fileoff, filesize, maxprot, initprot
+                        var nsects = ReadUInt32();
+                        Position += 4; //skip flags
+                        for (var j = 0; j < nsects; j++)
+                        {
+                            var section = new MachoSection();
+                            sections.Add(section);
+                            section.sectname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
+                            Position += 16; //skip segname
+                            section.addr = ReadUInt32();
+                            section.size = ReadUInt32();
+                            section.offset = ReadUInt32();
+                            Position += 12; //skip align, reloff, nreloc
+                            section.flags = ReadUInt32();
+                            section.end = section.addr + section.size;
+                            Position += 8; //skip reserved1, reserved2
+                        }
+                        break;
+                    case 0x21: //LC_ENCRYPTION_INFO
+                        Position += 8;
+                        var cryptID = ReadUInt32();
+                        if (cryptID != 0)
+                        {
+                            Console.WriteLine("ERROR: This Mach-O executable is encrypted and cannot be processed.");
+                        }
+                        break;
                 }
                 Position = pos + cmdsize;//next
             }

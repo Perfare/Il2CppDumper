@@ -41,7 +41,7 @@ namespace Il2CppDumper
             this.maxMetadataUsages = maxMetadataUsages;
         }
 
-        protected bool AutoInit(ulong codeRegistration, ulong metadataRegistration)
+        protected bool AutoPlusInit(ulong codeRegistration, ulong metadataRegistration)
         {
             Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
             Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);

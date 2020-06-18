@@ -109,7 +109,7 @@ namespace Il2CppDumper
             plusSearch.SetSection(SearchSectionType.Bss, header.BssSegment);
             var codeRegistration = plusSearch.FindCodeRegistration();
             var metadataRegistration = plusSearch.FindMetadataRegistration();
-            return AutoInit(codeRegistration, metadataRegistration);
+            return AutoPlusInit(codeRegistration, metadataRegistration);
         }
 
         public override bool SymbolSearch()

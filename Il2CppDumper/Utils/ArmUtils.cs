@@ -11,28 +11,36 @@ namespace Il2CppDumper
             return (uint)((high << 16) + low);
         }
 
-        public static ulong DecodeAdr(ulong pc, byte[] label)
+        public static ulong DecodeAdr(ulong pc, byte[] inst)
         {
-            var bin = label.HexToBin();
-            var uint64 = new string(bin[16], 44) + bin.Substring(17, 7) + bin.Substring(8, 8) + bin.Substring(0, 3) + bin.Substring(25, 2);
+            var bin = inst.HexToBin();
+            var uint64 = bin.Substring(8, 19) + bin.Substring(1, 2);
+            uint64 = uint64.PadLeft(64, uint64[0]);
             return pc + Convert.ToUInt64(uint64, 2);
         }
 
-        public static ulong DecodeAdrp(ulong pc, byte[] label)
+        public static ulong DecodeAdrp(ulong pc, byte[] inst)
         {
             pc &= 0xFFFFFFFFFFFFF000;
-            var bin = label.HexToBin();
-            var uint64 = new string(bin[16], 32) + bin.Substring(17, 7) + bin.Substring(8, 8) + bin.Substring(0, 3) + bin.Substring(25, 2) + new string('0', 12);
+            var bin = inst.HexToBin();
+            var uint64 = bin.Substring(8, 19) + bin.Substring(1, 2) + new string('0', 12);
+            uint64 = uint64.PadLeft(64, uint64[0]);
             return pc + Convert.ToUInt64(uint64, 2);
         }
 
-        public static ulong DecodeAdd(byte[] ins)
+        public static ulong DecodeAdd(byte[] inst)
         {
-            var bin = ins.HexToBin();
-            var uint64 = Convert.ToUInt64(bin.Substring(18, 6) + bin.Substring(8, 6), 2);
-            if (bin[17] == '1')
+            var bin = inst.HexToBin();
+            var uint64 = Convert.ToUInt64(bin.Substring(10, 12), 2);
+            if (bin[9] == '1')
                 uint64 <<= 12;
             return uint64;
+        }
+
+        public static bool IsAdr(byte[] inst)
+        {
+            var bin = inst.HexToBin();
+            return bin[0] == '0' && bin.Substring(3, 5) == "10000";
         }
     }
 }

@@ -75,10 +75,10 @@ namespace Il2CppDumper
                             var returnType = ParseType(methodReturnType);
                             var signature = $"{returnType} {FixName(methodFullName)} (";
                             var parameterStrs = new List<string>();
-                            if ((methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
+                            if (il2Cpp.Version <= 22f || (methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
                             {
                                 var thisType = ParseType(il2Cpp.types[typeDef.byrefTypeIndex]);
-                                parameterStrs.Add($"{thisType} this");
+                                parameterStrs.Add($"{thisType} __this");
                             }
                             for (var j = 0; j < methodDef.parameterCount; j++)
                             {

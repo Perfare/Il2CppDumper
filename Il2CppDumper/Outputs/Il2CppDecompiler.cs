@@ -210,7 +210,7 @@ namespace Il2CppDumper
                                     var propertyType = il2Cpp.types[methodDef.returnType];
                                     writer.Write($"{executor.GetTypeName(propertyType, false, false)} {metadata.GetStringFromIndex(propertyDef.nameIndex)} {{ ");
                                 }
-                                else if (propertyDef.set > 0)
+                                else if (propertyDef.set >= 0)
                                 {
                                     var methodDef = metadata.methodDefs[typeDef.methodStart + propertyDef.set];
                                     writer.Write(GetModifiers(methodDef));

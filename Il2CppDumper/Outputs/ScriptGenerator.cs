@@ -21,6 +21,7 @@ namespace Il2CppDumper
         private HashSet<StructInfo> structCache = new HashSet<StructInfo>();
         private Dictionary<Il2CppTypeDefinition, string> structNameDic = new Dictionary<Il2CppTypeDefinition, string>();
         private Dictionary<ulong, string> genericClassStructNameDic = new Dictionary<ulong, string>();
+        private Dictionary<string, Il2CppType> nameGenericClassDic = new Dictionary<string, Il2CppType>();
         private List<ulong> genericClassList = new List<ulong>();
         private StringBuilder arrayClassPreHeader = new StringBuilder();
         private StringBuilder arrayClassHeader = new StringBuilder();
@@ -49,15 +50,17 @@ namespace Il2CppDumper
                     CreateStructNameDic(typeDef);
                 }
             }
-            // 处理类定义
-            foreach (var typeDef in metadata.typeDefs)
+            // 生成后面处理泛型实例要用到的字典
+            foreach (var il2CppType in il2Cpp.types.Where(x => x.type == Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST))
             {
-                AddStruct(typeDef);
-            }
-            // 处理泛型实例类
-            foreach (var genericClass in il2Cpp.types.Where(x => x.type == Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST))
-            {
-                ParseType(genericClass); //TODO 可以考虑排除不需要导出的类
+                var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
+                var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
+                var typeBaseName = structNameDic[typeDef];
+                var typeToReplaceName = FixName(executor.GetTypeDefName(typeDef, true, true));
+                var typeReplaceName = FixName(executor.GetTypeName(il2CppType, true, false));
+                var typeStructName = typeBaseName.Replace(typeToReplaceName, typeReplaceName);
+                nameGenericClassDic[typeStructName] = il2CppType;
+                genericClassStructNameDic[il2CppType.data.generic_class] = typeStructName;
             }
             // 处理函数
             for (var imageIndex = 0; imageIndex < metadata.imageDefs.Length; imageIndex++)
@@ -67,6 +70,7 @@ namespace Il2CppDumper
                 for (int typeIndex = imageDef.typeStart; typeIndex < typeEnd; typeIndex++)
                 {
                     var typeDef = metadata.typeDefs[typeIndex];
+                    AddStruct(typeDef);
                     var typeName = executor.GetTypeDefName(typeDef, true, true);
                     var methodEnd = typeDef.methodStart + typeDef.method_count;
                     for (var i = typeDef.methodStart; i < methodEnd; ++i)
@@ -137,12 +141,19 @@ namespace Il2CppDumper
                                     var parameterStrs = new List<string>();
                                     if (il2Cpp.Version <= 22f || (methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
                                     {
-                                        var thisType = ParseType(il2Cpp.types[typeDef.byrefTypeIndex]);
+                                        string thisType;
                                         if (methodSpec.classIndexIndex != -1)
                                         {
+                                            var typeBaseName = structNameDic[typeDef];
                                             var typeToReplaceName = FixName(typeName);
                                             var typeReplaceName = FixName(methodSpecTypeName);
-                                            thisType = thisType.Replace(typeToReplaceName, typeReplaceName);
+                                            var typeStructName = typeBaseName.Replace(typeToReplaceName, typeReplaceName);
+                                            var il2CppType = nameGenericClassDic[typeStructName];
+                                            thisType = ParseType(il2CppType);
+                                        }
+                                        else
+                                        {
+                                            thisType = ParseType(il2Cpp.types[typeDef.byrefTypeIndex]);
                                         }
                                         parameterStrs.Add($"{thisType} __this");
                                     }
@@ -483,17 +494,10 @@ namespace Il2CppDumper
                     {
                         var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
                         var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
-                        if (!genericClassStructNameDic.TryGetValue(il2CppType.data.generic_class, out var typeStructName))
+                        var typeStructName = genericClassStructNameDic[il2CppType.data.generic_class];
+                        if (structNameHashSet.Add(typeStructName))
                         {
-                            var typeOriName = structNameDic[typeDef];
-                            var typeToReplaceName = FixName(executor.GetTypeDefName(typeDef, true, true));
-                            var typeReplaceName = FixName(executor.GetTypeName(il2CppType, true, false));
-                            typeStructName = typeOriName.Replace(typeToReplaceName, typeReplaceName);
-                            genericClassStructNameDic.Add(il2CppType.data.generic_class, typeStructName);
-                            if (structNameHashSet.Add(typeStructName))
-                            {
-                                genericClassList.Add(il2CppType.data.generic_class);
-                            }
+                            genericClassList.Add(il2CppType.data.generic_class);
                         }
                         if (typeDef.IsValueType)
                         {
@@ -813,19 +817,10 @@ namespace Il2CppDumper
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
                     {
-                        if (!genericClassStructNameDic.TryGetValue(il2CppType.data.generic_class, out var typeStructName))
+                        var typeStructName = genericClassStructNameDic[il2CppType.data.generic_class];
+                        if (structNameHashSet.Add(typeStructName))
                         {
-                            var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
-                            var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
-                            var typeOriName = structNameDic[typeDef];
-                            var typeToReplaceName = FixName(executor.GetTypeDefName(typeDef, true, true));
-                            var typeReplaceName = FixName(executor.GetTypeName(il2CppType, true, false));
-                            typeStructName = typeOriName.Replace(typeToReplaceName, typeReplaceName);
-                            genericClassStructNameDic.Add(il2CppType.data.generic_class, typeStructName);
-                            if (structNameHashSet.Add(typeStructName))
-                            {
-                                genericClassList.Add(il2CppType.data.generic_class);
-                            }
+                            genericClassList.Add(il2CppType.data.generic_class);
                         }
                         return typeStructName;
                     }

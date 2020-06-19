@@ -335,12 +335,13 @@ namespace Il2CppDumper
                                 writer.Write(string.Join(", ", parameterStrs));
                                 writer.Write(") { }\n");
 
-                                if (il2Cpp.genericMethoddDictionary.TryGetValue(i, out var genericMethods))
+                                if (il2Cpp.methodDefinitionMethodSpecs.TryGetValue(i, out var methodSpecs))
                                 {
                                     writer.Write("\t/* GenericInstMethod :\n");
-                                    foreach ((var methodSpec, var genericMethodPointer) in genericMethods)
+                                    foreach (var methodSpec in methodSpecs)
                                     {
                                         writer.Write("\t|\n");
+                                        var genericMethodPointer = il2Cpp.methodSpecGenericMethodPointers[methodSpec];
                                         if (genericMethodPointer > 0)
                                         {
                                             var fixedPointer = il2Cpp.GetRVA(genericMethodPointer);
@@ -350,7 +351,8 @@ namespace Il2CppDumper
                                         {
                                             writer.Write("\t|-RVA: -1 Offset: -1\n");
                                         }
-                                        writer.Write($"\t|-{executor.GetMethodSpecMethodName(methodSpec)}\n");
+                                        (var methodSpecTypeName, var methodSpecMethodName) = executor.GetMethodSpecName(methodSpec);
+                                        writer.Write($"\t|-{methodSpecTypeName}.{methodSpecMethodName}\n");
                                     }
                                     writer.Write("\t*/\n");
                                 }

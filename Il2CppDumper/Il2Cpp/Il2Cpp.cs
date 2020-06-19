@@ -20,9 +20,11 @@ namespace Il2CppDumper
         private Dictionary<ulong, Il2CppType> typeDic = new Dictionary<ulong, Il2CppType>();
         public ulong[] metadataUsages;
         private Il2CppGenericMethodFunctionsDefinitions[] genericMethodTable;
+        public ulong[] genericInstPointers;
         public Il2CppGenericInst[] genericInsts;
         public Il2CppMethodSpec[] methodSpecs;
-        public Dictionary<int, List<(Il2CppMethodSpec, ulong)>> genericMethoddDictionary = new Dictionary<int, List<(Il2CppMethodSpec, ulong)>>();
+        public Dictionary<int, List<Il2CppMethodSpec>> methodDefinitionMethodSpecs = new Dictionary<int, List<Il2CppMethodSpec>>();
+        public Dictionary<Il2CppMethodSpec, ulong> methodSpecGenericMethodPointers = new Dictionary<Il2CppMethodSpec, ulong>();
         private bool fieldOffsetsArePointers;
         protected long maxMetadataUsages;
         private Il2CppCodeGenModule[] codeGenModules;
@@ -94,7 +96,8 @@ namespace Il2CppDumper
                 if (pCodeRegistration.unresolvedVirtualCallCount != 0)
                     unresolvedVirtualCallPointers = MapVATR<ulong>(pCodeRegistration.unresolvedVirtualCallPointers, pCodeRegistration.unresolvedVirtualCallCount);
             }
-            genericInsts = Array.ConvertAll(MapVATR<ulong>(pMetadataRegistration.genericInsts, pMetadataRegistration.genericInstsCount), x => MapVATR<Il2CppGenericInst>(x));
+            genericInstPointers = MapVATR<ulong>(pMetadataRegistration.genericInsts, pMetadataRegistration.genericInstsCount);
+            genericInsts = Array.ConvertAll(genericInstPointers, MapVATR<Il2CppGenericInst>);
             fieldOffsetsArePointers = Version > 21;
             if (Version == 21)
             {
@@ -147,12 +150,13 @@ namespace Il2CppDumper
             {
                 var methodSpec = methodSpecs[table.genericMethodIndex];
                 var methodDefinitionIndex = methodSpec.methodDefinitionIndex;
-                if (!genericMethoddDictionary.TryGetValue(methodDefinitionIndex, out var tuple))
+                if (!methodDefinitionMethodSpecs.TryGetValue(methodDefinitionIndex, out var list))
                 {
-                    tuple = new List<(Il2CppMethodSpec, ulong)>();
-                    genericMethoddDictionary.Add(methodDefinitionIndex, tuple);
+                    list = new List<Il2CppMethodSpec>();
+                    methodDefinitionMethodSpecs.Add(methodDefinitionIndex, list);
                 }
-                tuple.Add((methodSpec, genericMethodPointers[table.indices.methodIndex]));
+                list.Add(methodSpec);
+                methodSpecGenericMethodPointers.Add(methodSpec, genericMethodPointers[table.indices.methodIndex]);
             }
         }
 

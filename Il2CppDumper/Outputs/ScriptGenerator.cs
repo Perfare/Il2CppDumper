@@ -37,6 +37,7 @@ namespace Il2CppDumper
         public void WriteScript(Config config)
         {
             var json = new ScriptJson();
+            // 生成唯一名称
             for (var imageIndex = 0; imageIndex < metadata.imageDefs.Length; imageIndex++)
             {
                 var imageDef = metadata.imageDefs[imageIndex];
@@ -44,9 +45,21 @@ namespace Il2CppDumper
                 for (int typeIndex = imageDef.typeStart; typeIndex < typeEnd; typeIndex++)
                 {
                     var typeDef = metadata.typeDefs[typeIndex];
+                    typeDefImageIndices.Add(typeDef, imageIndex);
                     CreateStructNameDic(typeDef);
                 }
             }
+            // 处理类定义
+            foreach (var typeDef in metadata.typeDefs)
+            {
+                AddStruct(typeDef);
+            }
+            // 处理泛型实例类
+            foreach (var genericClass in il2Cpp.types.Where(x => x.type == Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST))
+            {
+                ParseType(genericClass);
+            }
+            // 处理函数
             for (var imageIndex = 0; imageIndex < metadata.imageDefs.Length; imageIndex++)
             {
                 var imageDef = metadata.imageDefs[imageIndex];
@@ -54,9 +67,7 @@ namespace Il2CppDumper
                 for (int typeIndex = imageDef.typeStart; typeIndex < typeEnd; typeIndex++)
                 {
                     var typeDef = metadata.typeDefs[typeIndex];
-                    AddStruct(typeDef);
                     var typeName = executor.GetTypeDefName(typeDef, true, true);
-                    typeDefImageIndices.Add(typeDef, imageIndex);
                     var methodEnd = typeDef.methodStart + typeDef.method_count;
                     for (var i = typeDef.methodStart; i < methodEnd; ++i)
                     {
@@ -91,9 +102,54 @@ namespace Il2CppDumper
                             signature += ");";
                             scriptMethod.Signature = signature;
                         }
+                        //泛型实例函数
+                        if (il2Cpp.methodDefinitionMethodSpecs.TryGetValue(i, out var methodSpecs))
+                        {
+                            foreach (var methodSpec in methodSpecs)
+                            {
+                                var genericMethodPointer = il2Cpp.methodSpecGenericMethodPointers[methodSpec];
+                                if (genericMethodPointer > 0)
+                                {
+                                    var scriptMethod = new ScriptMethod();
+                                    json.ScriptMethod.Add(scriptMethod);
+                                    scriptMethod.Address = il2Cpp.GetRVA(genericMethodPointer);
+                                    (var methodSpecTypeName, var methodSpecMethodName) = executor.GetMethodSpecName(methodSpec, true);
+                                    var methodFullName = methodSpecTypeName + "$$" + methodSpecMethodName;
+                                    scriptMethod.Name = methodFullName;
+
+                                    var genericContext = executor.GetMethodSpecGenericContext(methodSpec);
+                                    var methodReturnType = il2Cpp.types[methodDef.returnType];
+                                    var returnType = ParseType(methodReturnType, genericContext);
+                                    var signature = $"{returnType} {FixName(methodFullName)} (";
+                                    var parameterStrs = new List<string>();
+                                    if (il2Cpp.Version <= 22f || (methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
+                                    {
+                                        var thisType = ParseType(il2Cpp.types[typeDef.byrefTypeIndex]);
+                                        if (methodSpec.classIndexIndex != -1)
+                                        {
+                                            var typeToReplaceName = FixName(typeName);
+                                            var typeReplaceName = FixName(methodSpecTypeName);
+                                            thisType = thisType.Replace(typeToReplaceName, typeReplaceName);
+                                        }
+                                        parameterStrs.Add($"{thisType} __this");
+                                    }
+                                    for (var j = 0; j < methodDef.parameterCount; j++)
+                                    {
+                                        var parameterDef = metadata.parameterDefs[methodDef.parameterStart + j];
+                                        var parameterName = metadata.GetStringFromIndex(parameterDef.nameIndex);
+                                        var parameterType = il2Cpp.types[parameterDef.typeIndex];
+                                        parameterStrs.Add($"{ParseType(parameterType, genericContext)} {FixName(parameterName)}");
+                                    }
+                                    signature += string.Join(", ", parameterStrs);
+                                    signature += ");";
+                                    scriptMethod.Signature = signature;
+                                }
+                            }
+                        }
                     }
                 }
             }
+            // 处理MetadataUsage
             if (il2Cpp.Version > 16)
             {
                 foreach (var i in metadata.metadataUsageDic[1]) //kIl2CppMetadataUsageTypeInfo
@@ -177,30 +233,15 @@ namespace Il2CppDumper
                 foreach (var i in metadata.metadataUsageDic[6]) //kIl2CppMetadataUsageMethodRef
                 {
                     var methodSpec = il2Cpp.methodSpecs[i.Value];
-                    var methodDef = metadata.methodDefs[methodSpec.methodDefinitionIndex];
-                    var typeDef = metadata.typeDefs[methodDef.declaringType];
-                    var typeName = executor.GetTypeDefName(typeDef, true, false);
-                    if (methodSpec.classIndexIndex != -1)
-                    {
-                        var classInst = il2Cpp.genericInsts[methodSpec.classIndexIndex];
-                        typeName += executor.GetGenericInstParams(classInst);
-                    }
-                    var methodName = typeName + "." + metadata.GetStringFromIndex(methodDef.nameIndex);
-                    if (methodSpec.methodIndexIndex != -1)
-                    {
-                        var methodInst = il2Cpp.genericInsts[methodSpec.methodIndexIndex];
-                        methodName += executor.GetGenericInstParams(methodInst);
-                    }
-                    methodName += "()";
                     var scriptMetadataMethod = new ScriptMetadataMethod();
                     json.ScriptMetadataMethod.Add(scriptMetadataMethod);
                     scriptMetadataMethod.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
-                    scriptMetadataMethod.Name = "Method$" + methodName;
-                    var imageIndex = typeDefImageIndices[typeDef];
-                    var methodPointer = il2Cpp.GetMethodPointer(methodDef, imageIndex);
-                    if (methodPointer > 0)
+                    (var methodSpecTypeName, var methodSpecMethodName) = executor.GetMethodSpecName(methodSpec, true);
+                    scriptMetadataMethod.Name = "Method$" + methodSpecTypeName + "." + methodSpecMethodName + "()";
+                    var genericMethodPointer = il2Cpp.methodSpecGenericMethodPointers[methodSpec];
+                    if (genericMethodPointer > 0)
                     {
-                        scriptMetadataMethod.MethodAddress = il2Cpp.GetRVA(methodPointer);
+                        scriptMetadataMethod.MethodAddress = il2Cpp.GetRVA(genericMethodPointer);
                     }
                 }
             }

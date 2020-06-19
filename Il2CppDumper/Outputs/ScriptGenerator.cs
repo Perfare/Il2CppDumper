@@ -57,7 +57,7 @@ namespace Il2CppDumper
             // 处理泛型实例类
             foreach (var genericClass in il2Cpp.types.Where(x => x.type == Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST))
             {
-                ParseType(genericClass);
+                ParseType(genericClass); //TODO 可以考虑排除不需要导出的类
             }
             // 处理函数
             for (var imageIndex = 0; imageIndex < metadata.imageDefs.Length; imageIndex++)
@@ -84,6 +84,10 @@ namespace Il2CppDumper
 
                             var methodReturnType = il2Cpp.types[methodDef.returnType];
                             var returnType = ParseType(methodReturnType);
+                            if (methodReturnType.byref == 1)
+                            {
+                                returnType += "*";
+                            }
                             var signature = $"{returnType} {FixName(methodFullName)} (";
                             var parameterStrs = new List<string>();
                             if (il2Cpp.Version <= 22f || (methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
@@ -96,7 +100,12 @@ namespace Il2CppDumper
                                 var parameterDef = metadata.parameterDefs[methodDef.parameterStart + j];
                                 var parameterName = metadata.GetStringFromIndex(parameterDef.nameIndex);
                                 var parameterType = il2Cpp.types[parameterDef.typeIndex];
-                                parameterStrs.Add($"{ParseType(parameterType)} {FixName(parameterName)}");
+                                var parameterCType = ParseType(parameterType);
+                                if (parameterType.byref == 1)
+                                {
+                                    parameterCType += "*";
+                                }
+                                parameterStrs.Add($"{parameterCType} {FixName(parameterName)}");
                             }
                             signature += string.Join(", ", parameterStrs);
                             signature += ");";
@@ -120,6 +129,10 @@ namespace Il2CppDumper
                                     var genericContext = executor.GetMethodSpecGenericContext(methodSpec);
                                     var methodReturnType = il2Cpp.types[methodDef.returnType];
                                     var returnType = ParseType(methodReturnType, genericContext);
+                                    if (methodReturnType.byref == 1)
+                                    {
+                                        returnType += "*";
+                                    }
                                     var signature = $"{returnType} {FixName(methodFullName)} (";
                                     var parameterStrs = new List<string>();
                                     if (il2Cpp.Version <= 22f || (methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
@@ -138,7 +151,12 @@ namespace Il2CppDumper
                                         var parameterDef = metadata.parameterDefs[methodDef.parameterStart + j];
                                         var parameterName = metadata.GetStringFromIndex(parameterDef.nameIndex);
                                         var parameterType = il2Cpp.types[parameterDef.typeIndex];
-                                        parameterStrs.Add($"{ParseType(parameterType, genericContext)} {FixName(parameterName)}");
+                                        var parameterCType = ParseType(parameterType, genericContext);
+                                        if (parameterType.byref == 1)
+                                        {
+                                            parameterCType += "*";
+                                        }
+                                        parameterStrs.Add($"{parameterCType} {FixName(parameterName)}");
                                     }
                                     signature += string.Join(", ", parameterStrs);
                                     signature += ");";

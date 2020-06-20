@@ -231,10 +231,22 @@ namespace Il2CppDumper
         public ulong invokerIndices;
         public ulong reversePInvokeWrapperCount;
         public ulong reversePInvokeWrapperIndices;
-        public ulong rgctxRangesCount;
+        public long rgctxRangesCount;
         public ulong rgctxRanges;
-        public ulong rgctxsCount;
+        public long rgctxsCount;
         public ulong rgctxs;
         public ulong debuggerMetadata;
+    }
+
+    public class Il2CppRange
+    {
+        public int start;
+        public int length;
+    }
+
+    public class Il2CppTokenRangePair
+    {
+        public uint token;
+        public Il2CppRange range;
     }
 }

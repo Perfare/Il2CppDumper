@@ -47,7 +47,7 @@ namespace Il2CppDumper
         public uint typeDefinitionsOffset; // Il2CppTypeDefinition
         public int typeDefinitionsCount;
         [Version(Max = 24.1f)]
-        public int rgctxEntriesOffset; // Il2CppRGCTXDefinition
+        public uint rgctxEntriesOffset; // Il2CppRGCTXDefinition
         [Version(Max = 24.1f)]
         public int rgctxEntriesCount;
         public uint imagesOffset; // Il2CppImageDefinition
@@ -319,5 +319,27 @@ namespace Il2CppDumper
         public short constraintsCount;
         public ushort num;
         public ushort flags;
+    }
+
+    public enum Il2CppRGCTXDataType
+    {
+        IL2CPP_RGCTX_DATA_INVALID,
+        IL2CPP_RGCTX_DATA_TYPE,
+        IL2CPP_RGCTX_DATA_CLASS,
+        IL2CPP_RGCTX_DATA_METHOD,
+        IL2CPP_RGCTX_DATA_ARRAY,
+    }
+
+    public class Il2CppRGCTXDefinitionData
+    {
+        public int rgctxDataDummy;
+        public int methodIndex => rgctxDataDummy;
+        public int typeIndex => rgctxDataDummy;
+    }
+
+    public class Il2CppRGCTXDefinition
+    {
+        public Il2CppRGCTXDataType type;
+        public Il2CppRGCTXDefinitionData data;
     }
 }

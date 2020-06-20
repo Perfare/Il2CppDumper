@@ -23,10 +23,14 @@ typedef unsigned long long uint64_t;
 ";
 
         public readonly static string GenericHeader =
-@"struct VirtualInvokeData
+@"typedef void(*Il2CppMethodPointer)();
+
+struct MethodInfo;
+
+struct VirtualInvokeData
 {
-    uintptr_t methodPtr;
-    void* method;
+    Il2CppMethodPointer methodPtr;
+    const MethodInfo* method;
 };
 
 struct Il2CppType
@@ -43,10 +47,12 @@ struct Il2CppObject
     void *monitor;
 };
 
-struct Il2CppArrayBounds
+union Il2CppRGCTXData
 {
-    uintptr_t length;
-    int32_t lower_bound;
+    void* rgctxDataDummy;
+    const MethodInfo* method;
+    const Il2CppType* type;
+    Il2CppClass* klass;
 };
 
 ";
@@ -79,7 +85,6 @@ struct Il2CppArrayBounds
 
 struct Il2CppClass_2
 {
-    void* rgctx_data;
     Il2CppClass** typeHierarchy;
     void *unity_user_data;
     uint32_t initializationExceptionGCHandle;
@@ -118,8 +123,43 @@ struct Il2CppClass
 {
     Il2CppClass_1 _1;
     void* static_fields;
+    Il2CppRGCTXData* rgctx_data;
     Il2CppClass_2 _2;
     VirtualInvokeData vtable[255];
+};
+
+typedef uintptr_t il2cpp_array_size_t;
+typedef int32_t il2cpp_array_lower_bound_t;
+struct Il2CppArrayBounds
+{
+    il2cpp_array_size_t length;
+    il2cpp_array_lower_bound_t lower_bound;
+};
+
+struct MethodInfo
+{
+    Il2CppMethodPointer methodPointer;
+    void* invoker_method;
+    const char* name;
+    Il2CppClass *klass;
+    const Il2CppType *return_type;
+    const void* parameters;
+    union
+    {
+        const Il2CppRGCTXData* rgctx_data;
+        const void* methodDefinition;
+    };
+    union
+    {
+        const void* genericMethod;
+        const void* genericContainer;
+    };
+    uint32_t token;
+    uint16_t flags;
+    uint16_t iflags;
+    uint16_t slot;
+    uint8_t parameters_count;
+    uint8_t bitflags;
 };
 
 ";
@@ -152,7 +192,6 @@ struct Il2CppClass
 
 struct Il2CppClass_2
 {
-    void* rgctx_data;
     Il2CppClass** typeHierarchy;
     uint32_t initializationExceptionGCHandle;
     uint32_t cctor_started;
@@ -190,8 +229,43 @@ struct Il2CppClass
 {
     Il2CppClass_1 _1;
     void* static_fields;
+    Il2CppRGCTXData* rgctx_data;
     Il2CppClass_2 _2;
     VirtualInvokeData vtable[255];
+};
+
+typedef uintptr_t il2cpp_array_size_t;
+typedef int32_t il2cpp_array_lower_bound_t;
+struct Il2CppArrayBounds
+{
+    il2cpp_array_size_t length;
+    il2cpp_array_lower_bound_t lower_bound;
+};
+
+struct MethodInfo
+{
+    Il2CppMethodPointer methodPointer;
+    void* invoker_method;
+    const char* name;
+    Il2CppClass *klass;
+    const Il2CppType *return_type;
+    const void* parameters;
+    union
+    {
+        const Il2CppRGCTXData* rgctx_data;
+        const void* methodDefinition;
+    };
+    union
+    {
+        const void* genericMethod;
+        const void* genericContainer;
+    };
+    uint32_t token;
+    uint16_t flags;
+    uint16_t iflags;
+    uint16_t slot;
+    uint8_t parameters_count;
+    uint8_t bitflags;
 };
 
 ";
@@ -223,7 +297,6 @@ struct Il2CppClass
 
 struct Il2CppClass_2
 {
-    void* rgctx_data;
     Il2CppClass** typeHierarchy;
     uint32_t cctor_started;
     uint32_t cctor_finished;
@@ -260,8 +333,44 @@ struct Il2CppClass
 {
     Il2CppClass_1 _1;
     void* static_fields;
+    Il2CppRGCTXData* rgctx_data;
     Il2CppClass_2 _2;
     VirtualInvokeData vtable[255];
+};
+
+typedef int32_t il2cpp_array_size_t;
+typedef int32_t il2cpp_array_lower_bound_t;
+struct Il2CppArrayBounds
+{
+    il2cpp_array_size_t length;
+    il2cpp_array_lower_bound_t lower_bound;
+};
+
+struct MethodInfo
+{
+    Il2CppMethodPointer methodPointer;
+    void* invoker_method;
+    const char* name;
+    Il2CppClass *declaring_type;
+    const Il2CppType *return_type;
+    const void* parameters;
+    union
+    {
+        const Il2CppRGCTXData* rgctx_data;
+        const void* methodDefinition;
+    };
+    union
+    {
+        const void* genericMethod;
+        const void* genericContainer;
+    };
+    int32_t customAttributeIndex;
+    uint32_t token;
+    uint16_t flags;
+    uint16_t iflags;
+    uint16_t slot;
+    uint8_t parameters_count;
+    uint8_t bitflags;
 };
 
 ";
@@ -292,7 +401,6 @@ struct Il2CppClass
 
 struct Il2CppClass_2
 {
-    void* rgctx_data;
     Il2CppClass** typeHierarchy;
     uint32_t cctor_started;
     uint32_t cctor_finished;
@@ -329,77 +437,44 @@ struct Il2CppClass
 {
     Il2CppClass_1 _1;
     void* static_fields;
+    Il2CppRGCTXData* rgctx_data;
     Il2CppClass_2 _2;
     VirtualInvokeData vtable[255];
 };
 
-";
-
-        public readonly static string HeaderV21 =
-@"struct Il2CppClass_1
+typedef int32_t il2cpp_array_size_t;
+typedef int32_t il2cpp_array_lower_bound_t;
+struct Il2CppArrayBounds
 {
-    void* image;
-    void* gc_desc;
+    il2cpp_array_size_t length;
+    il2cpp_array_lower_bound_t lower_bound;
+};
+
+struct MethodInfo
+{
+    Il2CppMethodPointer methodPointer;
+    void* invoker_method;
     const char* name;
-    const char* namespaze;
-    Il2CppType* byval_arg;
-    Il2CppType* this_arg;
-    Il2CppClass* element_class;
-    Il2CppClass* castClass;
-    Il2CppClass* declaringType;
-    Il2CppClass* parent;
-    void *generic_class;
-    void* typeDefinition;
-    void* fields;
-    void* events;
-    void* properties;
-    void* methods;
-    Il2CppClass** nestedTypes;
-    Il2CppClass** implementedInterfaces;
-    VirtualInvokeData* vtable;
-    void* interfaceOffsets;
-};
-
-struct Il2CppClass_2
-{
-    void* rgctx_data;
-    Il2CppClass** typeHierarchy;
-    uint32_t cctor_started;
-    uint32_t cctor_finished;
-    uint64_t cctor_thread;
-    int32_t genericContainerIndex;
+    Il2CppClass *declaring_type;
+    const Il2CppType *return_type;
+    const void* parameters;
+    union
+    {
+        const Il2CppRGCTXData* rgctx_data;
+        const void* methodDefinition;
+    };
+    union
+    {
+        const void* genericMethod;
+        const void* genericContainer;
+    };
     int32_t customAttributeIndex;
-    uint32_t instance_size;
-    uint32_t actualSize;
-    uint32_t element_size;
-    int32_t native_size;
-    uint32_t static_fields_size;
-    uint32_t thread_static_fields_size;
-    int32_t thread_static_fields_offset;
-    uint32_t flags;
     uint32_t token;
-    uint16_t method_count;
-    uint16_t property_count;
-    uint16_t field_count;
-    uint16_t event_count;
-    uint16_t nested_type_count;
-    uint16_t vtable_count;
-    uint16_t interfaces_count;
-    uint16_t interface_offsets_count;
-    uint8_t typeHierarchyDepth;
-    uint8_t rank;
-    uint8_t minimumAlignment;
-    uint8_t packingSize;
-    uint8_t bitflags1;
-    uint8_t bitflags2;
-};
-
-struct Il2CppClass
-{
-    Il2CppClass_1 _1;
-    void* static_fields;
-    Il2CppClass_2 _2;
-    VirtualInvokeData vtable[255];
+    uint16_t flags;
+    uint16_t iflags;
+    uint16_t slot;
+    uint8_t parameters_count;
+    uint8_t bitflags;
 };
 
 ";

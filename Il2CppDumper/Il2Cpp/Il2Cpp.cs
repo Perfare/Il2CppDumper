@@ -29,6 +29,7 @@ namespace Il2CppDumper
         protected long maxMetadataUsages;
         private Il2CppCodeGenModule[] codeGenModules;
         public ulong[][] codeGenModuleMethodPointers;
+        public Dictionary<int, Dictionary<uint, Il2CppRGCTXDefinition[]>> rgctxsDictionary = new Dictionary<int, Dictionary<uint, Il2CppRGCTXDefinition[]>>();
 
         public abstract ulong MapVATR(ulong uiAddr);
         public abstract bool Search();
@@ -137,6 +138,20 @@ namespace Il2CppDumper
                     catch
                     {
                         codeGenModuleMethodPointers[i] = new ulong[codeGenModule.methodPointerCount];
+                    }
+
+                    var rgctxsDefDictionary = new Dictionary<uint, Il2CppRGCTXDefinition[]>();
+                    rgctxsDictionary.Add(i, rgctxsDefDictionary);
+                    if (codeGenModule.rgctxsCount > 0)
+                    {
+                        var rgctxs = MapVATR<Il2CppRGCTXDefinition>(codeGenModule.rgctxs, codeGenModule.rgctxsCount);
+                        var rgctxRanges = MapVATR<Il2CppTokenRangePair>(codeGenModule.rgctxRanges, codeGenModule.rgctxRangesCount);
+                        foreach (var rgctxRange in rgctxRanges)
+                        {
+                            var rgctxDefs = new Il2CppRGCTXDefinition[rgctxRange.range.length];
+                            Array.Copy(rgctxs, rgctxRange.range.start, rgctxDefs, 0, rgctxRange.range.length);
+                            rgctxsDefDictionary.Add(rgctxRange.token, rgctxDefs);
+                        }
                     }
                 }
             }

@@ -13,6 +13,7 @@ namespace Il2CppDumper
         public List<StructFieldInfo> Fields = new List<StructFieldInfo>();
         public List<StructFieldInfo> StaticFields = new List<StructFieldInfo>();
         public List<StructVTableMethodInfo> VTableMethod = new List<StructVTableMethodInfo>();
+        public List<StructRGCTXInfo> RGCTXs = new List<StructRGCTXInfo>();
     }
 
     public class StructFieldInfo
@@ -24,6 +25,14 @@ namespace Il2CppDumper
 
     public class StructVTableMethodInfo
     {
+        public string MethodName;
+    }
+
+    public class StructRGCTXInfo
+    {
+        public Il2CppRGCTXDataType Type;
+        public string TypeName;
+        public string ClassName;
         public string MethodName;
     }
 }

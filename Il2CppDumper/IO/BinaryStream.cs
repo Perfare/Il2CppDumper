@@ -164,6 +164,11 @@ namespace Il2CppDumper
                     {
                         i.SetValue(t, ReadPrimitive(fieldType));
                     }
+                    else if (fieldType.IsEnum)
+                    {
+                        var e = fieldType.GetField("value__").FieldType;
+                        i.SetValue(t, ReadPrimitive(e));
+                    }
                     else if (fieldType.IsArray)
                     {
                         var arrayLengthAttribute = i.GetCustomAttribute<ArrayLengthAttribute>();

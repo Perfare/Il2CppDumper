@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Il2CppDumper
 {
@@ -210,6 +211,24 @@ namespace Il2CppDumper
                 methodInstPointer = il2Cpp.genericInstPointers[methodSpec.methodIndexIndex];
             }
             return new Il2CppGenericContext { class_inst = classInstPointer, method_inst = methodInstPointer };
+        }
+
+        public Il2CppRGCTXDefinition[] GetTypeRGCTXDefinition(Il2CppTypeDefinition typeDef, int imageIndex)
+        {
+            Il2CppRGCTXDefinition[] collection = null;
+            if (il2Cpp.Version >= 24.2f)
+            {
+                il2Cpp.rgctxsDictionary[imageIndex].TryGetValue(typeDef.token, out collection);
+            }
+            else
+            {
+                if (typeDef.rgctxCount > 0)
+                {
+                    collection = new Il2CppRGCTXDefinition[typeDef.rgctxCount];
+                    Array.Copy(metadata.rgctxEntries, typeDef.rgctxStartIndex, collection, 0, typeDef.rgctxCount);
+                }
+            }
+            return collection;
         }
     }
 }

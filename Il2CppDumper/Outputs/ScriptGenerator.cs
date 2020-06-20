@@ -25,8 +25,9 @@ namespace Il2CppDumper
         private List<ulong> genericClassList = new List<ulong>();
         private StringBuilder arrayClassPreHeader = new StringBuilder();
         private StringBuilder arrayClassHeader = new StringBuilder();
+        private StringBuilder methodInfoHeader = new StringBuilder();
         private static HashSet<string> keyword = new HashSet<string>(StringComparer.Ordinal)
-        { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "near", "far", "flat", "default", "_ds", "interrupt" };
+        { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "near", "far", "flat", "default", "_ds", "interrupt", "inline", "unsigned", "signed"};
 
         public ScriptGenerator(Il2CppExecutor il2CppExecutor)
         {
@@ -71,6 +72,9 @@ namespace Il2CppDumper
                 {
                     var typeDef = metadata.typeDefs[typeIndex];
                     AddStruct(typeDef);
+                    var methodInfoName = $"MethodInfo_{typeIndex}";
+                    var structTypeName = structNameDic[typeDef];
+                    GenerateMethodInfo(structTypeName, methodInfoName);
                     var typeName = executor.GetTypeDefName(typeDef, true, true);
                     var methodEnd = typeDef.methodStart + typeDef.method_count;
                     for (var i = typeDef.methodStart; i < methodEnd; ++i)
@@ -94,10 +98,14 @@ namespace Il2CppDumper
                             }
                             var signature = $"{returnType} {FixName(methodFullName)} (";
                             var parameterStrs = new List<string>();
-                            if (il2Cpp.Version <= 22f || (methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
+                            if ((methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
                             {
                                 var thisType = ParseType(il2Cpp.types[typeDef.byrefTypeIndex]);
                                 parameterStrs.Add($"{thisType} __this");
+                            }
+                            else if (il2Cpp.Version <= 24f)
+                            {
+                                parameterStrs.Add($"Il2CppObject* __this");
                             }
                             for (var j = 0; j < methodDef.parameterCount; j++)
                             {
@@ -111,6 +119,7 @@ namespace Il2CppDumper
                                 }
                                 parameterStrs.Add($"{parameterCType} {FixName(parameterName)}");
                             }
+                            parameterStrs.Add("const MethodInfo* method");
                             signature += string.Join(", ", parameterStrs);
                             signature += ");";
                             scriptMethod.Signature = signature;
@@ -139,7 +148,7 @@ namespace Il2CppDumper
                                     }
                                     var signature = $"{returnType} {FixName(methodFullName)} (";
                                     var parameterStrs = new List<string>();
-                                    if (il2Cpp.Version <= 22f || (methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
+                                    if ((methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
                                     {
                                         string thisType;
                                         if (methodSpec.classIndexIndex != -1)
@@ -157,6 +166,10 @@ namespace Il2CppDumper
                                         }
                                         parameterStrs.Add($"{thisType} __this");
                                     }
+                                    else if (il2Cpp.Version <= 24f)
+                                    {
+                                        parameterStrs.Add($"Il2CppObject* __this");
+                                    }
                                     for (var j = 0; j < methodDef.parameterCount; j++)
                                     {
                                         var parameterDef = metadata.parameterDefs[methodDef.parameterStart + j];
@@ -169,6 +182,7 @@ namespace Il2CppDumper
                                         }
                                         parameterStrs.Add($"{parameterCType} {FixName(parameterName)}");
                                     }
+                                    parameterStrs.Add($"const {methodInfoName}* method");
                                     signature += string.Join(", ", parameterStrs);
                                     signature += ");";
                                     scriptMethod.Signature = signature;
@@ -332,6 +346,25 @@ namespace Il2CppDumper
                 }
                 else
                 {
+                    headerClass.Append($"struct {info.TypeName}_RGCTXs {{\n");
+                    for (int i = 0; i < info.RGCTXs.Count; i++)
+                    {
+                        StructRGCTXInfo rgctx = info.RGCTXs[i];
+                        switch (rgctx.Type)
+                        {
+                            case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_TYPE:
+                                headerClass.Append($"\tIl2CppType* _{i}_{rgctx.TypeName};\n");
+                                break;
+                            case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_CLASS:
+                                headerClass.Append($"\tIl2CppClass* _{i}_{rgctx.ClassName};\n");
+                                break;
+                            case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_METHOD:
+                                headerClass.Append($"\tMethodInfo* _{i}_{rgctx.MethodName};\n");
+                                break;
+                        }
+                    }
+                    headerClass.Append("};\n");
+
                     headerClass.Append($"struct {info.TypeName}_StaticFields {{\n");
                     foreach (var field in info.StaticFields)
                     {
@@ -349,6 +382,7 @@ namespace Il2CppDumper
                     headerClass.Append($"struct {info.TypeName}_c {{\n" +
                         $"\tIl2CppClass_1 _1;\n" +
                         $"\t{info.TypeName}_StaticFields* static_fields;\n" +
+                        $"\t{info.TypeName}_RGCTXs* rgctx_data;\n" +
                         $"\tIl2CppClass_2 _2;\n" +
                         $"\t{info.TypeName}_VTable vtable;\n" +
                         $"}};\n");
@@ -395,6 +429,7 @@ namespace Il2CppDumper
             sb.Append(headerStruct);
             sb.Append(headerClass);
             sb.Append(arrayClassHeader);
+            sb.Append(methodInfoHeader);
             File.WriteAllText("il2cpp.h", sb.ToString());
         }
 
@@ -554,6 +589,7 @@ namespace Il2CppDumper
             structInfo.IsValueType = typeDef.IsValueType;
             AddFields(typeDef, structInfo.Fields, structInfo.StaticFields, null, false);
             AddVTableMethod(structInfo, typeDef);
+            AddRGCTX(structInfo, typeDef);
         }
 
         private void AddGenericClassStruct(ulong pointer)
@@ -655,6 +691,43 @@ namespace Il2CppDumper
             }
         }
 
+        private void AddRGCTX(StructInfo structInfo, Il2CppTypeDefinition typeDef)
+        {
+            var imageIndex = typeDefImageIndices[typeDef];
+            var collection = executor.GetTypeRGCTXDefinition(typeDef, imageIndex);
+            if (collection != null)
+            {
+                foreach (var definitionData in collection)
+                {
+                    var structRGCTXInfo = new StructRGCTXInfo();
+                    structInfo.RGCTXs.Add(structRGCTXInfo);
+                    structRGCTXInfo.Type = definitionData.type;
+                    switch (definitionData.type)
+                    {
+                        case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_TYPE:
+                            {
+                                var il2CppType = il2Cpp.types[definitionData.data.typeIndex];
+                                structRGCTXInfo.TypeName = FixName(executor.GetTypeName(il2CppType, true, false));
+                                break;
+                            }
+                        case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_CLASS:
+                            {
+                                var il2CppType = il2Cpp.types[definitionData.data.typeIndex];
+                                structRGCTXInfo.ClassName = FixName(executor.GetTypeName(il2CppType, true, false));
+                                break;
+                            }
+                        case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_METHOD:
+                            {
+                                var methodSpec = il2Cpp.methodSpecs[definitionData.data.methodIndex];
+                                (var methodSpecTypeName, var methodSpecMethodName) = executor.GetMethodSpecName(methodSpec, true);
+                                structRGCTXInfo.MethodName = FixName(methodSpecTypeName + "." + methodSpecMethodName);
+                                break;
+                            }
+                    }
+                }
+            }
+        }
+
         private void ParseArrayClassStruct(Il2CppType il2CppType, Il2CppGenericContext context)
         {
             var structName = GetIl2CppStructName(il2CppType, context);
@@ -662,7 +735,7 @@ namespace Il2CppDumper
             arrayClassHeader.Append($"struct {structName}_array {{\n" +
                 $"\tIl2CppObject obj;\n" +
                 $"\tIl2CppArrayBounds *bounds;\n" +
-                $"\tuintptr_t max_length;\n" +
+                $"\til2cpp_array_size_t max_length;\n" +
                 $"\t{ParseType(il2CppType, context)} m_Items[65535];\n" +
                 $"}};\n");
         }
@@ -730,6 +803,25 @@ namespace Il2CppDumper
             }
             sb.Append("};\n");
 
+            sb.Append($"struct {info.TypeName}_RGCTXs {{\n");
+            for (int i = 0; i < info.RGCTXs.Count; i++)
+            {
+                var rgctx = info.RGCTXs[i];
+                switch (rgctx.Type)
+                {
+                    case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_TYPE:
+                        sb.Append($"\tIl2CppType* _{i}_{rgctx.TypeName};\n");
+                        break;
+                    case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_CLASS:
+                        sb.Append($"\tIl2CppClass* _{i}_{rgctx.ClassName};\n");
+                        break;
+                    case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_METHOD:
+                        sb.Append($"\tMethodInfo* _{i}_{rgctx.MethodName};\n");
+                        break;
+                }
+            }
+            sb.Append("};\n");
+
             sb.Append($"struct {info.TypeName}_StaticFields {{\n");
             foreach (var field in info.StaticFields)
             {
@@ -752,6 +844,7 @@ namespace Il2CppDumper
             sb.Append($"struct {info.TypeName}_c {{\n" +
                 $"\tIl2CppClass_1 _1;\n" +
                 $"\t{info.TypeName}_StaticFields* static_fields;\n" +
+                $"\t{info.TypeName}_RGCTXs* rgctx_data;\n" +
                 $"\tIl2CppClass_2 _2;\n" +
                 $"\t{info.TypeName}_VTable vtable;\n" +
                 $"}};\n");
@@ -899,6 +992,45 @@ namespace Il2CppDumper
                 default:
                     return false;
             }
+        }
+
+        private void GenerateMethodInfo(string structTypeName, string methodInfoName)
+        {
+            methodInfoHeader.Append($"struct {methodInfoName} {{\n");
+            methodInfoHeader.Append($"\tIl2CppMethodPointer methodPointer;\n");
+            methodInfoHeader.Append($"\tvoid* invoker_method;\n");
+            methodInfoHeader.Append($"\tconst char* name;\n");
+            if (il2Cpp.Version <= 24f)
+            {
+                methodInfoHeader.Append($"\t{structTypeName}_c *declaring_type;\n");
+            }
+            else
+            {
+                methodInfoHeader.Append($"\t{structTypeName}_c *klass;\n");
+            }
+            methodInfoHeader.Append($"\tconst Il2CppType *return_type;\n");
+            methodInfoHeader.Append($"\tconst void* parameters;\n");
+            methodInfoHeader.Append($"\tunion\n");
+            methodInfoHeader.Append($"\t{{\n");
+            methodInfoHeader.Append($"\t\tconst Il2CppRGCTXData* rgctx_data;\n");
+            methodInfoHeader.Append($"\t\tconst void* methodDefinition;\n");
+            methodInfoHeader.Append($"\t}};\n");
+            methodInfoHeader.Append($"\tunion\n");
+            methodInfoHeader.Append($"\t{{\n");
+            methodInfoHeader.Append($"\t\tconst void* genericMethod;\n");
+            methodInfoHeader.Append($"\t\tconst void* genericContainer;\n");
+            methodInfoHeader.Append($"\t}};\n");
+            if (il2Cpp.Version <= 24f)
+            {
+                methodInfoHeader.Append($"\tint32_t customAttributeIndex;\n");
+            }
+            methodInfoHeader.Append($"\tuint32_t token;\n");
+            methodInfoHeader.Append($"\tuint16_t flags;\n");
+            methodInfoHeader.Append($"\tuint16_t iflags;\n");
+            methodInfoHeader.Append($"\tuint16_t slot;\n");
+            methodInfoHeader.Append($"\tuint8_t parameters_count;\n");
+            methodInfoHeader.Append($"\tuint8_t bitflags;\n");
+            methodInfoHeader.Append($"}};\n");
         }
     }
 }

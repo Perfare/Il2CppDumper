@@ -35,6 +35,8 @@ namespace Il2CppDumper
         public Il2CppGenericParameter[] genericParameters;
         public int[] constraintIndices;
         public uint[] vtableMethods;
+        public Il2CppRGCTXDefinition[] rgctxEntries;
+
         private Dictionary<uint, string> stringCache = new Dictionary<uint, string>();
 
         public Metadata(Stream stream) : base(stream)
@@ -112,6 +114,10 @@ namespace Il2CppDumper
                         dic.Add(attributeTypeRanges[i].token, i);
                     }
                 }
+            }
+            if (Version <= 24.1f)
+            {
+                rgctxEntries = ReadMetadataClassArray<Il2CppRGCTXDefinition>(metadataHeader.rgctxEntriesOffset, metadataHeader.rgctxEntriesCount);
             }
         }
 
@@ -213,19 +219,33 @@ namespace Il2CppDumper
                     if (Version < attr.Min || Version > attr.Max)
                         continue;
                 }
-                switch (i.FieldType.Name)
+                var fieldType = i.FieldType;
+                if (fieldType.IsPrimitive)
                 {
-                    case "Int32":
-                    case "UInt32":
-                        size += 4;
-                        break;
-                    case "Int16":
-                    case "UInt16":
-                        size += 2;
-                        break;
+                    size += GetPrimitiveTypeSize(fieldType.Name);
+                }
+                else if (fieldType.IsEnum)
+                {
+                    var e = fieldType.GetField("value__").FieldType;
+                    size += GetPrimitiveTypeSize(e.Name);
                 }
             }
             return size;
+
+            int GetPrimitiveTypeSize(string name)
+            {
+                switch (name)
+                {
+                    case "Int32":
+                    case "UInt32":
+                        return 4;
+                    case "Int16":
+                    case "UInt16":
+                        return 2;
+                    default:
+                        return 0;
+                }
+            }
         }
     }
 }

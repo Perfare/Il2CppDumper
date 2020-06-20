@@ -33,7 +33,6 @@ def make_function(start, end):
 	else:
 		func.setBody(body)
 
-print 'Script: Edit config.json and set MakeFunction to false to speed up ghidra script execution'
 f = askFile("script.json from Il2cppdumper", "Open")
 data = json.loads(open(f.absolutePath, 'rb').read().decode('utf-8'))
 

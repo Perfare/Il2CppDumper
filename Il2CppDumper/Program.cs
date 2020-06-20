@@ -108,7 +108,7 @@ namespace Il2CppDumper
 
         static void ShowHelp()
         {
-            Console.WriteLine($"usage: {AppDomain.CurrentDomain.FriendlyName} <executable-file> <global-metadata>");
+            Console.WriteLine($"usage: {AppDomain.CurrentDomain.FriendlyName} <executable-file> <global-metadata> <output-directory>");
         }
 
         private static bool Init(byte[] il2cppBytes, byte[] metadataBytes, out Metadata metadata, out Il2Cpp il2Cpp)
@@ -219,11 +219,14 @@ namespace Il2CppDumper
             var decompiler = new Il2CppDecompiler(executor);
             decompiler.Decompile(config, outputDir);
             Console.WriteLine("Done!");
-            Console.WriteLine("Generate script...");
-            var scriptGenerator = new ScriptGenerator(executor);
-            scriptGenerator.WriteScript(outputDir);
-            Console.WriteLine("Done!");
-            if (config.DummyDll)
+            if (config.GenerateScript)
+            {
+                Console.WriteLine("Generate script...");
+                var scriptGenerator = new ScriptGenerator(executor);
+                scriptGenerator.WriteScript(outputDir);
+                Console.WriteLine("Done!");
+            }
+            if (config.GenerateDummyDll)
             {
                 Console.WriteLine("Generate dummy dll...");
                 DummyAssemblyExporter.Export(metadata, il2Cpp, outputDir);

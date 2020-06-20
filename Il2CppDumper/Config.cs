@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Il2CppDumper
+﻿namespace Il2CppDumper
 {
     public class Config
     {
@@ -14,7 +9,8 @@ namespace Il2CppDumper
         public bool DumpFieldOffset = true;
         public bool DumpMethodOffset = true;
         public bool DumpTypeDefIndex = true;
-        public bool DummyDll = true;
+        public bool GenerateDummyDll = true;
+        public bool GenerateScript = true;
         public bool RequireAnyKey = true;
         public bool ForceIl2CppVersion = false;
         public float ForceVersion = 24.3f;

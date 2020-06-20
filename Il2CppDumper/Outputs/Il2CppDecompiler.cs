@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using static Il2CppDumper.Il2CppConstants;
 
@@ -338,10 +339,11 @@ namespace Il2CppDumper
                                 if (il2Cpp.methodDefinitionMethodSpecs.TryGetValue(i, out var methodSpecs))
                                 {
                                     writer.Write("\t/* GenericInstMethod :\n");
-                                    foreach (var methodSpec in methodSpecs)
+                                    var groups = methodSpecs.GroupBy(x => il2Cpp.methodSpecGenericMethodPointers[x]);
+                                    foreach (var group in groups)
                                     {
                                         writer.Write("\t|\n");
-                                        var genericMethodPointer = il2Cpp.methodSpecGenericMethodPointers[methodSpec];
+                                        var genericMethodPointer = group.Key;
                                         if (genericMethodPointer > 0)
                                         {
                                             var fixedPointer = il2Cpp.GetRVA(genericMethodPointer);
@@ -351,8 +353,11 @@ namespace Il2CppDumper
                                         {
                                             writer.Write("\t|-RVA: -1 Offset: -1\n");
                                         }
-                                        (var methodSpecTypeName, var methodSpecMethodName) = executor.GetMethodSpecName(methodSpec);
-                                        writer.Write($"\t|-{methodSpecTypeName}.{methodSpecMethodName}\n");
+                                        foreach (var methodSpec in group)
+                                        {
+                                            (var methodSpecTypeName, var methodSpecMethodName) = executor.GetMethodSpecName(methodSpec);
+                                            writer.Write($"\t|-{methodSpecTypeName}.{methodSpecMethodName}\n");
+                                        }
                                     }
                                     writer.Write("\t*/\n");
                                 }

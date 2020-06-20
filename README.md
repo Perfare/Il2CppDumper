@@ -24,7 +24,7 @@ The program will then generate all the output files in current working directory
 ### Command-line
 
 ```
-Il2CppDumper.exe <executable-file> <global-metadata>
+Il2CppDumper.exe <executable-file> <global-metadata> <output-directory>
 ```
 
 ### Outputs
@@ -70,11 +70,8 @@ Available options:
 * `DumpMethod`, `DumpField`, `DumpProperty`, `DumpAttribute`, `DumpFieldOffset`, `DumpMethodOffset`, `DumpTypeDefIndex`
   * Whether to output these information to dump.cs
 
-* `DummyDll`
-  * Whether to generate dummy DLLs
-
-* `MakeFunction`
-  * Whether to add the MakeFunction code in script.json
+* `GenerateDummyDll`, `GenerateScript`
+  * Whether to generate these things
 
 * `ForceIl2CppVersion`, `ForceVersion`
   * If `ForceIl2CppVersion` is `true`, the program will use the version number specified in `ForceVersion` to choose parser for il2cpp binaries (does not affect the choice of metadata parser). This may be useful on some older il2cpp version (e.g. the program may need to use v16 parser on il2cpp v20 (Android) binaries in order to work properly)

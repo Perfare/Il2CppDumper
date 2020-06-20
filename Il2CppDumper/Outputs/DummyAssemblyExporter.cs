@@ -9,8 +9,9 @@ namespace Il2CppDumper
 {
     public static class DummyAssemblyExporter
     {
-        public static void Export(Metadata metadata, Il2Cpp il2Cpp)
+        public static void Export(Metadata metadata, Il2Cpp il2Cpp, string outputDir)
         {
+            Directory.SetCurrentDirectory(outputDir);
             if (Directory.Exists("DummyDll"))
                 Directory.Delete("DummyDll", true);
             Directory.CreateDirectory("DummyDll");

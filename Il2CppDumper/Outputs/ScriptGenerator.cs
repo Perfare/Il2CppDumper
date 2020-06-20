@@ -36,7 +36,7 @@ namespace Il2CppDumper
             il2Cpp = il2CppExecutor.il2Cpp;
         }
 
-        public void WriteScript(Config config)
+        public void WriteScript(string outputDir)
         {
             var json = new ScriptJson();
             // 生成唯一名称
@@ -272,7 +272,7 @@ namespace Il2CppDumper
                     value = x.Value,
                     address = $"0x{x.Address:X}"
                 }).ToArray();
-                File.WriteAllText("stringliteral.json", JsonConvert.SerializeObject(stringLiterals, Formatting.Indented), new UTF8Encoding(false));
+                File.WriteAllText(outputDir + "stringliteral.json", JsonConvert.SerializeObject(stringLiterals, Formatting.Indented), new UTF8Encoding(false));
                 foreach (var i in metadata.metadataUsageDic[6]) //kIl2CppMetadataUsageMethodRef
                 {
                     var methodSpec = il2Cpp.methodSpecs[i.Value];
@@ -288,41 +288,38 @@ namespace Il2CppDumper
                     }
                 }
             }
-            if (config.MakeFunction)
+            List<ulong> orderedPointers;
+            if (il2Cpp.Version >= 24.2f)
             {
-                List<ulong> orderedPointers;
-                if (il2Cpp.Version >= 24.2f)
+                orderedPointers = new List<ulong>();
+                foreach (var methodPointers in il2Cpp.codeGenModuleMethodPointers)
                 {
-                    orderedPointers = new List<ulong>();
-                    foreach (var methodPointers in il2Cpp.codeGenModuleMethodPointers)
-                    {
-                        orderedPointers.AddRange(methodPointers);
-                    }
+                    orderedPointers.AddRange(methodPointers);
                 }
-                else
-                {
-                    orderedPointers = il2Cpp.methodPointers.ToList();
-                }
-                orderedPointers.AddRange(il2Cpp.genericMethodPointers);
-                orderedPointers.AddRange(il2Cpp.invokerPointers);
-                orderedPointers.AddRange(il2Cpp.customAttributeGenerators);
-                if (il2Cpp.Version >= 22)
-                {
-                    if (il2Cpp.reversePInvokeWrappers != null)
-                        orderedPointers.AddRange(il2Cpp.reversePInvokeWrappers);
-                    if (il2Cpp.unresolvedVirtualCallPointers != null)
-                        orderedPointers.AddRange(il2Cpp.unresolvedVirtualCallPointers);
-                }
-                //TODO interopData内也包含函数
-                orderedPointers = orderedPointers.Distinct().OrderBy(x => x).ToList();
-                orderedPointers.Remove(0);
-                for (int i = 0; i < orderedPointers.Count; i++)
-                {
-                    orderedPointers[i] = il2Cpp.GetRVA(orderedPointers[i]);
-                }
-                json.Addresses = orderedPointers;
             }
-            File.WriteAllText("script.json", JsonConvert.SerializeObject(json, Formatting.Indented));
+            else
+            {
+                orderedPointers = il2Cpp.methodPointers.ToList();
+            }
+            orderedPointers.AddRange(il2Cpp.genericMethodPointers);
+            orderedPointers.AddRange(il2Cpp.invokerPointers);
+            orderedPointers.AddRange(il2Cpp.customAttributeGenerators);
+            if (il2Cpp.Version >= 22)
+            {
+                if (il2Cpp.reversePInvokeWrappers != null)
+                    orderedPointers.AddRange(il2Cpp.reversePInvokeWrappers);
+                if (il2Cpp.unresolvedVirtualCallPointers != null)
+                    orderedPointers.AddRange(il2Cpp.unresolvedVirtualCallPointers);
+            }
+            //TODO interopData内也包含函数
+            orderedPointers = orderedPointers.Distinct().OrderBy(x => x).ToList();
+            orderedPointers.Remove(0);
+            for (int i = 0; i < orderedPointers.Count; i++)
+            {
+                orderedPointers[i] = il2Cpp.GetRVA(orderedPointers[i]);
+            }
+            json.Addresses = orderedPointers;
+            File.WriteAllText(outputDir + "script.json", JsonConvert.SerializeObject(json, Formatting.Indented));
             //il2cpp.h
             for (int i = 0; i < genericClassList.Count; i++)
             {
@@ -430,7 +427,7 @@ namespace Il2CppDumper
             sb.Append(headerClass);
             sb.Append(arrayClassHeader);
             sb.Append(methodInfoHeader);
-            File.WriteAllText("il2cpp.h", sb.ToString());
+            File.WriteAllText(outputDir + "il2cpp.h", sb.ToString());
         }
 
         private static string FixName(string str)

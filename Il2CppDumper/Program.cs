@@ -18,6 +18,7 @@ namespace Il2CppDumper
             config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + @"config.json"));
             byte[] il2cppBytes = null;
             byte[] metadataBytes = null;
+            string outputDir = null;
 
             if (args.Length == 1)
             {
@@ -27,25 +28,36 @@ namespace Il2CppDumper
                     return;
                 }
             }
-            if (args.Length > 2)
+            if (args.Length > 3)
             {
                 ShowHelp();
                 return;
             }
             if (args.Length > 1)
             {
-                var file1 = File.ReadAllBytes(args[0]);
-                var file2 = File.ReadAllBytes(args[1]);
-                if (BitConverter.ToUInt32(file1, 0) == 0xFAB11BAF)
+                foreach (var arg in args)
                 {
-                    il2cppBytes = file2;
-                    metadataBytes = file1;
+                    if (File.Exists(arg))
+                    {
+                        var file = File.ReadAllBytes(arg);
+                        if (BitConverter.ToUInt32(file, 0) == 0xFAB11BAF)
+                        {
+                            metadataBytes = file;
+                        }
+                        else
+                        {
+                            il2cppBytes = file;
+                        }
+                    }
+                    else if (Directory.Exists(arg))
+                    {
+                        outputDir = Path.GetFullPath(arg) + Path.DirectorySeparatorChar;
+                    }
                 }
-                else if (BitConverter.ToUInt32(file2, 0) == 0xFAB11BAF)
-                {
-                    il2cppBytes = file1;
-                    metadataBytes = file2;
-                }
+            }
+            if (outputDir == null)
+            {
+                outputDir = AppDomain.CurrentDomain.BaseDirectory;
             }
 #if NETFRAMEWORK
             if (il2cppBytes == null)
@@ -80,7 +92,7 @@ namespace Il2CppDumper
             {
                 if (Init(il2cppBytes, metadataBytes, out var metadata, out var il2Cpp))
                 {
-                    Dump(metadata, il2Cpp);
+                    Dump(metadata, il2Cpp, outputDir);
                 }
             }
             catch (Exception e)
@@ -200,21 +212,21 @@ namespace Il2CppDumper
             return true;
         }
 
-        private static void Dump(Metadata metadata, Il2Cpp il2Cpp)
+        private static void Dump(Metadata metadata, Il2Cpp il2Cpp, string outputDir)
         {
             Console.WriteLine("Dumping...");
             var executor = new Il2CppExecutor(metadata, il2Cpp);
             var decompiler = new Il2CppDecompiler(executor);
-            decompiler.Decompile(config);
+            decompiler.Decompile(config, outputDir);
             Console.WriteLine("Done!");
             Console.WriteLine("Generate script...");
             var scriptGenerator = new ScriptGenerator(executor);
-            scriptGenerator.WriteScript(config);
+            scriptGenerator.WriteScript(outputDir);
             Console.WriteLine("Done!");
             if (config.DummyDll)
             {
                 Console.WriteLine("Generate dummy dll...");
-                DummyAssemblyExporter.Export(metadata, il2Cpp);
+                DummyAssemblyExporter.Export(metadata, il2Cpp, outputDir);
                 Console.WriteLine("Done!");
             }
         }

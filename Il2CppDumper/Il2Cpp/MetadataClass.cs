@@ -66,9 +66,9 @@ namespace Il2CppDumper
         public uint fieldRefsOffset; // Il2CppFieldRef
         [Version(Min = 19)]
         public int fieldRefsCount;
-        [Version(Min = 19)]
+        [Version(Min = 20)]
         public int referencedAssembliesOffset; // int32_t
-        [Version(Min = 19)]
+        [Version(Min = 20)]
         public int referencedAssembliesCount;
         [Version(Min = 21)]
         public uint attributesInfoOffset; // Il2CppCustomAttributeTypeRange

@@ -229,6 +229,10 @@ namespace Il2CppDumper
                     var e = fieldType.GetField("value__").FieldType;
                     size += GetPrimitiveTypeSize(e.Name);
                 }
+                else
+                {
+                    size += MySizeOf(fieldType);
+                }
             }
             return size;
 

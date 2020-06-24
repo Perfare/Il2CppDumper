@@ -55,6 +55,10 @@ namespace Il2CppDumper
             foreach (var il2CppType in il2Cpp.types.Where(x => x.type == Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST))
             {
                 var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
+                if (genericClass.typeDefinitionIndex == 4294967295 || genericClass.typeDefinitionIndex == -1)
+                {
+                    continue;
+                }
                 var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
                 var typeBaseName = structNameDic[typeDef];
                 var typeToReplaceName = FixName(executor.GetTypeDefName(typeDef, true, true));

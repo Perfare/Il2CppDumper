@@ -161,8 +161,15 @@ namespace Il2CppDumper
                                             var typeToReplaceName = FixName(typeName);
                                             var typeReplaceName = FixName(methodSpecTypeName);
                                             var typeStructName = typeBaseName.Replace(typeToReplaceName, typeReplaceName);
-                                            var il2CppType = nameGenericClassDic[typeStructName];
-                                            thisType = ParseType(il2CppType);
+                                            if (nameGenericClassDic.TryGetValue(typeStructName, out var il2CppType))
+                                            {
+                                                thisType = ParseType(il2CppType);
+                                            }
+                                            else
+                                            {
+                                                //没有单独的泛型实例类
+                                                thisType = ParseType(il2Cpp.types[typeDef.byrefTypeIndex]);
+                                            }
                                         }
                                         else
                                         {

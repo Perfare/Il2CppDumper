@@ -10,6 +10,7 @@ namespace Il2CppDumper
     {
         public string TypeName;
         public bool IsValueType;
+        public List<string> Parents = new List<string>();
         public List<StructFieldInfo> Fields = new List<StructFieldInfo>();
         public List<StructFieldInfo> StaticFields = new List<StructFieldInfo>();
         public List<StructVTableMethodInfo> VTableMethod = new List<StructVTableMethodInfo>();

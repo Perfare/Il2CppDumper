@@ -556,7 +556,7 @@ namespace Il2CppDumper
                     return true;
                 case Il2CppTypeEnum.IL2CPP_TYPE_STRING:
                     var len = metadata.ReadInt32();
-                    value = Encoding.UTF8.GetString(metadata.ReadBytes(len));
+                    value = metadata.ReadString(len);
                     return true;
                 default:
                     value = pointer;

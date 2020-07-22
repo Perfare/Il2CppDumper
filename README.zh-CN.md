@@ -11,7 +11,8 @@ Unity il2cpp逆向工程
 * 支持Unity 5.3 - 2020
 * 生成IDA和Ghidra的脚本，帮助IDA和Ghidra更好的分析il2cpp文件
 * 生成结构体头文件
-* 支持从内存dump的`libil2cpp.so`文件以绕过99%的保护
+* 支持从内存dump的`libil2cpp.so`文件以绕过保护
+* 支持绕过简单的PE保护
 
 ## 使用说明
 
@@ -76,13 +77,19 @@ Il2CppDumper.exe <executable-file> <global-metadata> <output-directory>
 
 global-metadata.dat已被加密。关于解密的问题请去相关破解论坛寻求帮助，请不要在issues提问！
 
+如果你的文件是`libil2cpp.so`并且你拥有一台已root的安卓手机，你可以尝试我的另一个项目[Riru-Il2CppDumper](https://github.com/Perfare/Riru-Il2CppDumper)，它能够无视global-metadata.dat加密
+
 #### `ERROR: Can't use auto mode to process file, try manual mode.`
 
-确认可执行文件未受保护后，你可以打开一个新的issue，并上传文件，我会尝试解决
+请注意PC平台的可执行文件是`GameAssembly.dll`或者`*Assembly.dll`
+
+你可以打开一个新的issue，并上传文件，我会尝试解决
 
 #### `ERROR: This file may be protected.`
 
-Il2CppDumper检测到可执行文件已被保护，使用`GameGuardian`从游戏内存中dump `libil2cpp.so`，然后使用Il2CppDumper载入按提示操作，即可绕过99%的保护
+Il2CppDumper检测到可执行文件已被保护，使用`GameGuardian`从游戏内存中dump `libil2cpp.so`，然后使用Il2CppDumper载入按提示操作，可绕过大部分保护
+
+如果你拥有一台已root的安卓手机，你可以尝试我的另一个项目[Riru-Il2CppDumper](https://github.com/Perfare/Riru-Il2CppDumper)，它能够绕过几乎所有保护
 
 ## 感谢
 

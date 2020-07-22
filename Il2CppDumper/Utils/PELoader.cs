@@ -39,8 +39,6 @@ namespace Il2CppDumper
                     switch (section.Characteristics)
                     {
                         case 0x60000020:
-                            Marshal.Copy(new IntPtr(handle.ToInt64() + section.VirtualAddress), peBuff, (int)section.VirtualAddress, (int)section.VirtualSize);
-                            break;
                         case 0x40000040:
                         case 0xC0000040:
                             Marshal.Copy(new IntPtr(handle.ToInt64() + section.VirtualAddress), peBuff, (int)section.VirtualAddress, (int)section.VirtualSize);

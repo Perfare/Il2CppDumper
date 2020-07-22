@@ -135,12 +135,7 @@ namespace Il2CppDumper
                     il2Cpp = nso.UnCompress();
                     break;
                 case 0x905A4D: //PE
-#if NETFRAMEWORK
-                    il2Cpp = PELoader.Load(il2cppPath);
-#endif
-#if NETCOREAPP
                     il2Cpp = new PE(il2CppMemory);
-#endif
                     break;
                 case 0x464c457f: //ELF
                     if (il2cppBytes[4] == 2) //ELF64
@@ -186,6 +181,15 @@ namespace Il2CppDumper
             try
             {
                 var flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length);
+#if NETFRAMEWORK
+                if (!flag && il2Cpp is PE)
+                {
+                    Console.WriteLine("Use custom PE loader");
+                    il2Cpp = PELoader.Load(il2cppPath);
+                    il2Cpp.SetProperties(version, metadata.maxMetadataUsages);
+                    flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length);
+                }
+#endif
                 if (!flag)
                 {
                     flag = il2Cpp.Search();

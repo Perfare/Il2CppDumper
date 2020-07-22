@@ -87,7 +87,7 @@ If your file is `libil2cpp.so` and you have a rooted Android phone, you can try 
 
 #### `ERROR: Can't use auto mode to process file, try manual mode.`
 
-Please note that the executable file for the PC platform is `GameAssembly.dll` or `*Assembly.dl`
+Please note that the executable file for the PC platform is `GameAssembly.dll` or `*Assembly.dll`
 
 You can open a new issue and upload the file, I will try to solve.
 

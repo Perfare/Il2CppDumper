@@ -119,6 +119,7 @@ namespace Il2CppDumper
                                 var fieldDef = metadata.fieldDefs[i];
                                 var fieldType = il2Cpp.types[fieldDef.typeIndex];
                                 var isStatic = false;
+                                var isConst = false;
                                 if (config.DumpAttribute)
                                 {
                                     writer.Write(GetCustomAttribute(imageDef, fieldDef.customAttributeIndex, fieldDef.token, "\t"));
@@ -146,6 +147,7 @@ namespace Il2CppDumper
                                 }
                                 if ((fieldType.attrs & FIELD_ATTRIBUTE_LITERAL) != 0)
                                 {
+                                    isConst = true;
                                     writer.Write("const ");
                                 }
                                 else
@@ -185,7 +187,7 @@ namespace Il2CppDumper
                                         writer.Write($" /*Metadata offset 0x{value:X}*/");
                                     }
                                 }
-                                if (config.DumpFieldOffset)
+                                if (config.DumpFieldOffset && !isConst)
                                     writer.Write("; // 0x{0:X}\n", il2Cpp.GetFieldOffsetFromIndex(typeDefIndex, i - typeDef.fieldStart, i, typeDef.IsValueType, isStatic));
                                 else
                                     writer.Write(";\n");

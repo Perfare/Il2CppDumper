@@ -8,7 +8,7 @@ namespace Il2CppDumper
 {
     public class PELoader
     {
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         private extern static IntPtr LoadLibrary(string path);
 
         public static PE Load(string fileName)
@@ -27,6 +27,11 @@ namespace Il2CppDumper
                     throw new InvalidDataException("ERROR: Invalid PE file");
                 }
                 var fileHeader = reader.ReadClass<FileHeader>();
+                if ((fileHeader.Machine == 0x14c && Environment.Is64BitProcess) //64bit process can't load 32bit dll
+                    || (fileHeader.Machine == 0x8664 && !Environment.Is64BitProcess)) //32bit process can't load 64bit dll
+                {
+                    return new PE(new MemoryStream(buff));
+                }
                 var pos = reader.Position;
                 reader.Position = pos + fileHeader.SizeOfOptionalHeader;
                 var sections = reader.ReadClassArray<SectionHeader>(fileHeader.NumberOfSections);
@@ -34,6 +39,12 @@ namespace Il2CppDumper
                 var size = last.VirtualAddress + last.VirtualSize;
                 var peBuff = new byte[size];
                 var handle = LoadLibrary(fileName);
+                if (handle == IntPtr.Zero)
+                {
+                    //Missing dependent DLL
+                    //throw new Win32Exception();
+                    return new PE(new MemoryStream(buff));
+                }
                 foreach (var section in sections)
                 {
                     switch (section.Characteristics)

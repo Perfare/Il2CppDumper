@@ -16,8 +16,8 @@ namespace Il2CppDumper
         static void Main(string[] args)
         {
             config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + @"config.json"));
-            byte[] il2cppBytes = null;
-            byte[] metadataBytes = null;
+            string il2cppPath = null;
+            string metadataPath = null;
             string outputDir = null;
 
             if (args.Length == 1)
@@ -42,11 +42,11 @@ namespace Il2CppDumper
                         var file = File.ReadAllBytes(arg);
                         if (BitConverter.ToUInt32(file, 0) == 0xFAB11BAF)
                         {
-                            metadataBytes = file;
+                            metadataPath = arg;
                         }
                         else
                         {
-                            il2cppBytes = file;
+                            il2cppPath = arg;
                         }
                     }
                     else if (Directory.Exists(arg))
@@ -60,17 +60,17 @@ namespace Il2CppDumper
                 outputDir = AppDomain.CurrentDomain.BaseDirectory;
             }
 #if NETFRAMEWORK
-            if (il2cppBytes == null)
+            if (il2cppPath == null)
             {
                 var ofd = new OpenFileDialog();
                 ofd.Filter = "Il2Cpp binary file|*.*";
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
-                    il2cppBytes = File.ReadAllBytes(ofd.FileName);
+                    il2cppPath = ofd.FileName;
                     ofd.Filter = "global-metadata|global-metadata.dat";
                     if (ofd.ShowDialog() == DialogResult.OK)
                     {
-                        metadataBytes = File.ReadAllBytes(ofd.FileName);
+                        metadataPath = ofd.FileName;
                     }
                     else
                     {
@@ -83,14 +83,14 @@ namespace Il2CppDumper
                 }
             }
 #endif
-            if (il2cppBytes == null)
+            if (il2cppPath == null)
             {
                 ShowHelp();
                 return;
             }
             try
             {
-                if (Init(il2cppBytes, metadataBytes, out var metadata, out var il2Cpp))
+                if (Init(il2cppPath, metadataPath, out var metadata, out var il2Cpp))
                 {
                     Dump(metadata, il2Cpp, outputDir);
                 }
@@ -111,18 +111,15 @@ namespace Il2CppDumper
             Console.WriteLine($"usage: {AppDomain.CurrentDomain.FriendlyName} <executable-file> <global-metadata> <output-directory>");
         }
 
-        private static bool Init(byte[] il2cppBytes, byte[] metadataBytes, out Metadata metadata, out Il2Cpp il2Cpp)
+        private static bool Init(string il2cppPath, string metadataPath, out Metadata metadata, out Il2Cpp il2Cpp)
         {
-            var sanity = BitConverter.ToUInt32(metadataBytes, 0);
-            if (sanity != 0xFAB11BAF)
-            {
-                throw new InvalidDataException("ERROR: Metadata file supplied is not valid metadata file.");
-            }
             Console.WriteLine("Initializing metadata...");
+            var metadataBytes = File.ReadAllBytes(metadataPath);
             metadata = new Metadata(new MemoryStream(metadataBytes));
             Console.WriteLine($"Metadata Version: {metadata.Version}");
 
             Console.WriteLine("Initializing il2cpp file...");
+            var il2cppBytes = File.ReadAllBytes(il2cppPath);
             var il2cppMagic = BitConverter.ToUInt32(il2cppBytes, 0);
             var il2CppMemory = new MemoryStream(il2cppBytes);
             switch (il2cppMagic)
@@ -138,7 +135,12 @@ namespace Il2CppDumper
                     il2Cpp = nso.UnCompress();
                     break;
                 case 0x905A4D: //PE
+#if NETFRAMEWORK
+                    il2Cpp = PELoader.Load(il2cppPath);
+#endif
+#if NETCOREAPP
                     il2Cpp = new PE(il2CppMemory);
+#endif
                     break;
                 case 0x464c457f: //ELF
                     if (il2cppBytes[4] == 2) //ELF64

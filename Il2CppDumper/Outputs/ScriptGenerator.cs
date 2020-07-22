@@ -23,7 +23,6 @@ namespace Il2CppDumper
         private Dictionary<ulong, string> genericClassStructNameDic = new Dictionary<ulong, string>();
         private Dictionary<string, Il2CppType> nameGenericClassDic = new Dictionary<string, Il2CppType>();
         private List<ulong> genericClassList = new List<ulong>();
-        private StringBuilder arrayClassPreHeader = new StringBuilder();
         private StringBuilder arrayClassHeader = new StringBuilder();
         private StringBuilder methodInfoHeader = new StringBuilder();
         private static HashSet<string> keyword = new HashSet<string>(StringComparer.Ordinal)
@@ -213,11 +212,11 @@ namespace Il2CppDumper
                     var scriptMetadata = new ScriptMetadata();
                     json.ScriptMetadata.Add(scriptMetadata);
                     scriptMetadata.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
-                    scriptMetadata.Name = "Class$" + typeName;
+                    scriptMetadata.Name = typeName + "_TypeInfo";
                     var signature = GetIl2CppStructName(type);
                     if (signature.EndsWith("_array"))
                     {
-                        scriptMetadata.Signature = signature + "*";
+                        scriptMetadata.Signature = "Il2CppClass*";
                     }
                     else
                     {
@@ -231,16 +230,8 @@ namespace Il2CppDumper
                     var scriptMetadata = new ScriptMetadata();
                     json.ScriptMetadata.Add(scriptMetadata);
                     scriptMetadata.Address = il2Cpp.GetRVA(il2Cpp.metadataUsages[i.Key]);
-                    scriptMetadata.Name = "Object$" + typeName;
-                    var signature = GetIl2CppStructName(type);
-                    if (signature.EndsWith("_array"))
-                    {
-                        scriptMetadata.Signature = signature + "*";
-                    }
-                    else
-                    {
-                        scriptMetadata.Signature = FixName(signature) + "_o*";
-                    }
+                    scriptMetadata.Name = typeName + "_var";
+                    scriptMetadata.Signature = "Il2CppType*";
                 }
                 foreach (var i in metadata.metadataUsageDic[3]) //kIl2CppMetadataUsageMethodDef
                 {
@@ -337,16 +328,13 @@ namespace Il2CppDumper
                 var pointer = genericClassList[i];
                 AddGenericClassStruct(pointer);
             }
-            var preHeader = new StringBuilder();
             var headerStruct = new StringBuilder();
-            var headerClass = new StringBuilder();
             foreach (var info in structInfoList)
             {
                 structInfoWithStructName.Add(info.TypeName + "_o", info);
             }
             foreach (var info in structInfoList)
             {
-                preHeader.Append($"struct {info.TypeName}_o;\n");
                 headerStruct.Append(RecursionStructInfo(info));
             }
             var sb = new StringBuilder();
@@ -372,10 +360,7 @@ namespace Il2CppDumper
                     Console.WriteLine($"WARNING: This il2cpp version [{il2Cpp.Version}] does not support generating .h files");
                     return;
             }
-            sb.Append(preHeader);
-            sb.Append(arrayClassPreHeader);
             sb.Append(headerStruct);
-            sb.Append(headerClass);
             sb.Append(arrayClassHeader);
             sb.Append(methodInfoHeader);
             File.WriteAllText(outputDir + "il2cpp.h", sb.ToString());
@@ -564,26 +549,11 @@ namespace Il2CppDumper
                     var parentDef = GetTypeDefinition(parent);
                     if (parentDef != null)
                     {
-                        AddParents(parentDef, structInfo);
-                        if (parentDef.field_count > 0)
-                        {
-                            var fieldEnd = parentDef.fieldStart + parentDef.field_count;
-                            for (var i = parentDef.fieldStart; i < fieldEnd; ++i)
-                            {
-                                var fieldDef = metadata.fieldDefs[i];
-                                var fieldType = il2Cpp.types[fieldDef.typeIndex];
-                                if ((fieldType.attrs & FIELD_ATTRIBUTE_LITERAL) == 0 && (fieldType.attrs & FIELD_ATTRIBUTE_STATIC) == 0)
-                                {
-                                    structInfo.Parents.Add(GetIl2CppStructName(parent));
-                                    break;
-                                }
-                            }
-                        }
+                        structInfo.Parent = GetIl2CppStructName(parent);
                     }
                 }
             }
         }
-
 
         private void AddFields(Il2CppTypeDefinition typeDef, StructInfo structInfo, Il2CppGenericContext context)
         {
@@ -603,6 +573,7 @@ namespace Il2CppDumper
                     var fieldName = FixName(metadata.GetStringFromIndex(fieldDef.nameIndex));
                     structFieldInfo.FieldName = fieldName;
                     structFieldInfo.IsValueType = IsValueType(fieldType, context);
+                    structFieldInfo.IsCustomType = IsCustomType(fieldType, context);
                     if ((fieldType.attrs & FIELD_ATTRIBUTE_STATIC) != 0)
                     {
                         structInfo.StaticFields.Add(structFieldInfo);
@@ -685,7 +656,6 @@ namespace Il2CppDumper
         private void ParseArrayClassStruct(Il2CppType il2CppType, Il2CppGenericContext context)
         {
             var structName = GetIl2CppStructName(il2CppType, context);
-            arrayClassPreHeader.Append($"struct {structName}_array;\n");
             arrayClassHeader.Append($"struct {structName}_array {{\n" +
                 $"\tIl2CppObject obj;\n" +
                 $"\tIl2CppArrayBounds *bounds;\n" +
@@ -740,7 +710,30 @@ namespace Il2CppDumper
             var sb = new StringBuilder();
             var pre = new StringBuilder();
 
-            sb.Append($"struct {info.TypeName}_Fields {{\n");
+            if (info.Parent != null)
+            {
+                var parentStructName = info.Parent + "_o";
+                pre.Append(RecursionStructInfo(structInfoWithStructName[parentStructName]));
+                sb.Append($"struct {info.TypeName}_Fields : {info.Parent}_Fields{{\n");
+            }
+            else
+            {
+                if (il2Cpp is PE && !info.IsValueType)
+                {
+                    if (il2Cpp.Is32Bit)
+                    {
+                        sb.Append($"struct __declspec(align(4)) {info.TypeName}_Fields {{\n");
+                    }
+                    else
+                    {
+                        sb.Append($"struct __declspec(align(8)) {info.TypeName}_Fields {{\n");
+                    }
+                }
+                else
+                {
+                    sb.Append($"struct {info.TypeName}_Fields {{\n");
+                }
+            }
             foreach (var field in info.Fields)
             {
                 if (field.IsValueType)
@@ -748,7 +741,14 @@ namespace Il2CppDumper
                     var fieldInfo = structInfoWithStructName[field.FieldTypeName];
                     pre.Append(RecursionStructInfo(fieldInfo));
                 }
-                sb.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
+                if (field.IsCustomType)
+                {
+                    sb.Append($"\tstruct {field.FieldTypeName} {field.FieldName};\n");
+                }
+                else
+                {
+                    sb.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
+                }
             }
             sb.Append("};\n");
 
@@ -792,13 +792,6 @@ namespace Il2CppDumper
                 sb.Append($"\t{info.TypeName}_c *klass;\n");
                 sb.Append($"\tvoid *monitor;\n");
             }
-            for (int i = 0; i < info.Parents.Count; i++)
-            {
-                var parent = info.Parents[i];
-                var parentStructName = parent + "_o";
-                pre.Append(RecursionStructInfo(structInfoWithStructName[parentStructName]));
-                sb.Append($"\t{parent}_Fields parent_fields_{i};\n");
-            }
             sb.Append($"\t{info.TypeName}_Fields fields;\n");
             sb.Append("};\n");
 
@@ -810,7 +803,14 @@ namespace Il2CppDumper
                     var fieldInfo = structInfoWithStructName[field.FieldTypeName];
                     pre.Append(RecursionStructInfo(fieldInfo));
                 }
-                sb.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
+                if (field.IsCustomType)
+                {
+                    sb.Append($"\tstruct {field.FieldTypeName} {field.FieldName};\n");
+                }
+                else
+                {
+                    sb.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
+                }
             }
             sb.Append("};\n");
 
@@ -951,6 +951,72 @@ namespace Il2CppDumper
                             var pointer = pointers[genericParameter.num];
                             var type = il2Cpp.GetIl2CppType(pointer);
                             return IsValueType(type, null);
+                        }
+                        return false;
+                    }
+                default:
+                    return false;
+            }
+        }
+
+        private bool IsCustomType(Il2CppType il2CppType, Il2CppGenericContext context)
+        {
+            switch (il2CppType.type)
+            {
+                case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
+                    {
+                        var oriType = il2Cpp.GetIl2CppType(il2CppType.data.type);
+                        return IsCustomType(oriType, context);
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_STRING:
+                case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
+                case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY:
+                case Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY:
+                    {
+                        return true;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
+                    {
+                        var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
+                        if (typeDef.IsEnum)
+                        {
+                            return IsCustomType(il2Cpp.types[typeDef.elementTypeIndex], context);
+                        }
+                        return true;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
+                    {
+                        var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
+                        var typeDef = metadata.typeDefs[genericClass.typeDefinitionIndex];
+                        if (typeDef.IsEnum)
+                        {
+                            return IsCustomType(il2Cpp.types[typeDef.elementTypeIndex], context);
+                        }
+                        return true;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
+                    {
+                        if (context != null)
+                        {
+                            var genericParameter = metadata.genericParameters[il2CppType.data.genericParameterIndex];
+                            var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(context.class_inst);
+                            var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
+                            var pointer = pointers[genericParameter.num];
+                            var type = il2Cpp.GetIl2CppType(pointer);
+                            return IsCustomType(type, null);
+                        }
+                        return false;
+                    }
+                case Il2CppTypeEnum.IL2CPP_TYPE_MVAR:
+                    {
+                        if (context != null)
+                        {
+                            var genericParameter = metadata.genericParameters[il2CppType.data.genericParameterIndex];
+                            var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(context.method_inst);
+                            var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
+                            var pointer = pointers[genericParameter.num];
+                            var type = il2Cpp.GetIl2CppType(pointer);
+                            return IsCustomType(type, null);
                         }
                         return false;
                     }

@@ -560,6 +560,7 @@ namespace Il2CppDumper
             if (typeDef.field_count > 0)
             {
                 var fieldEnd = typeDef.fieldStart + typeDef.field_count;
+                var cache = new HashSet<string>(StringComparer.Ordinal);
                 for (var i = typeDef.fieldStart; i < fieldEnd; ++i)
                 {
                     var fieldDef = metadata.fieldDefs[i];
@@ -571,6 +572,10 @@ namespace Il2CppDumper
                     var structFieldInfo = new StructFieldInfo();
                     structFieldInfo.FieldTypeName = ParseType(fieldType, context);
                     var fieldName = FixName(metadata.GetStringFromIndex(fieldDef.nameIndex));
+                    if (!cache.Add(fieldName))
+                    {
+                        fieldName = $"_{i - typeDef.fieldStart}_{fieldName}";
+                    }
                     structFieldInfo.FieldName = fieldName;
                     structFieldInfo.IsValueType = IsValueType(fieldType, context);
                     structFieldInfo.IsCustomType = IsCustomType(fieldType, context);

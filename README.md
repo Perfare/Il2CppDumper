@@ -13,7 +13,8 @@ Unity il2cpp reverse engineer
 * Supports Unity 5.3 - 2020
 * Supports generate IDA and Ghidra scripts to help IDA and Ghidra better analyze il2cpp files
 * Supports generate structures header file
-* Supports Android memory dumped `libil2cpp.so` file to bypass 99% protection
+* Supports Android memory dumped `libil2cpp.so` file to bypass protection
+* Support bypassing simple PE protection
 
 ## Usage
 
@@ -82,13 +83,19 @@ Available options:
 
 Make sure you choose the correct file. Sometimes games may obfuscate this file for content protection purposes and so on. Deobfuscating of such files is beyond the scope of this program, so please **DO NOT** file an issue regarding to deobfuscating.
 
+If your file is `libil2cpp.so` and you have a rooted Android phone, you can try my other project [Riru-Il2CppDumper](https://github.com/Perfare/Riru-Il2CppDumper), it can bypass this protection.
+
 #### `ERROR: Can't use auto mode to process file, try manual mode.`
 
-Make sure the executable is not protected, you can open a new issue and upload the file, I will try to solve.
+Please note that the executable file for the PC platform is `GameAssembly.dll` or `*Assembly.dll`
+
+You can open a new issue and upload the file, I will try to solve.
 
 #### `ERROR: This file may be protected.`
 
-Il2CppDumper detected that the executable file has been protected, use `GameGuardian` to dump `libil2cpp.so` from the game memory, then use Il2CppDumper to load and follow the prompts, can bypass 99% protection
+Il2CppDumper detected that the executable file has been protected, use `GameGuardian` to dump `libil2cpp.so` from the game memory, then use Il2CppDumper to load and follow the prompts, can bypass most protections.
+
+If you have a rooted Android phone, you can try my other project [Riru-Il2CppDumper](https://github.com/Perfare/Riru-Il2CppDumper), it can bypass almost all protections.
 
 ## Credits
 

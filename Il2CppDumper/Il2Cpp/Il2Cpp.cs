@@ -46,8 +46,6 @@ namespace Il2CppDumper
 
         protected bool AutoPlusInit(ulong codeRegistration, ulong metadataRegistration)
         {
-            Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-            Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
             if (codeRegistration != 0 && metadataRegistration != 0)
             {
                 if (Version == 24.2f)
@@ -61,12 +59,15 @@ namespace Il2CppDumper
                         Version = 24.3f;
                         codeRegistration -= Is32Bit ? 8u : 16u;
                         Console.WriteLine($"Change il2cpp version to: {Version}");
-                        Console.WriteLine("Actual CodeRegistration : {0:x}", codeRegistration);
                     }
                 }
+                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
                 Init(codeRegistration, metadataRegistration);
                 return true;
             }
+            Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+            Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
             return false;
         }
 

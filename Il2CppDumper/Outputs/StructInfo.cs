@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Il2CppDumper
 {
@@ -10,7 +6,7 @@ namespace Il2CppDumper
     {
         public string TypeName;
         public bool IsValueType;
-        public List<string> Parents = new List<string>();
+        public string Parent;
         public List<StructFieldInfo> Fields = new List<StructFieldInfo>();
         public List<StructFieldInfo> StaticFields = new List<StructFieldInfo>();
         public List<StructVTableMethodInfo> VTableMethod = new List<StructVTableMethodInfo>();
@@ -22,6 +18,7 @@ namespace Il2CppDumper
         public string FieldTypeName;
         public string FieldName;
         public bool IsValueType;
+        public bool IsCustomType;
     }
 
     public class StructVTableMethodInfo

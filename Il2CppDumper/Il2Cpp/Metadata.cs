@@ -252,7 +252,7 @@ namespace Il2CppDumper
             }
         }
 
-        internal string ReadString(int numChars)
+        public string ReadString(int numChars)
         {
             var start = Position;
             // UTF8 takes up to 4 bytes per character

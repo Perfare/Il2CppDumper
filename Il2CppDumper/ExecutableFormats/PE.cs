@@ -44,6 +44,16 @@ namespace Il2CppDumper
             sections = ReadClassArray<SectionHeader>(fileHeader.NumberOfSections);
         }
 
+        public void LoadFromMemory(ulong addr)
+        {
+            imageBase = addr;
+            foreach (var section in sections)
+            {
+                section.PointerToRawData = section.VirtualAddress;
+                section.SizeOfRawData = section.VirtualSize;
+            }
+        }
+
         public override ulong MapVATR(ulong absAddr)
         {
             var addr = absAddr - imageBase;

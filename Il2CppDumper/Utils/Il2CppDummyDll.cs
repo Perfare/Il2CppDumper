@@ -48,6 +48,10 @@ namespace Il2CppDumper
             metadataOffsetAttribute.Fields.Add(new FieldDefinition("Offset", FieldAttributes.Public, stringTypeReference));
             types.Add(metadataOffsetAttribute);
             CreateDefaultConstructor(metadataOffsetAttribute);
+            var tokenAttribute = new TypeDefinition(namespaceName, "TokenAttribute", (TypeAttributes)0x100001, attributeTypeReference);
+            tokenAttribute.Fields.Add(new FieldDefinition("Token", FieldAttributes.Public, stringTypeReference));
+            types.Add(tokenAttribute);
+            CreateDefaultConstructor(tokenAttribute);
             return assemblyDefinition;
         }
 

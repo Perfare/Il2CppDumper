@@ -116,6 +116,27 @@ namespace Il2CppDumper
                     var typeDef = metadata.typeDefs[index];
                     var typeDefinition = typeDefinitionDic[index];
 
+                    //补充泛型参数
+                    if (typeDef.genericContainerIndex >= 0)
+                    {
+                        var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
+                        for (int i = 0; i < genericContainer.type_argc; i++)
+                        {
+                            var genericParameterIndex = genericContainer.genericParameterStart + i;
+                            if (!genericParameterDic.TryGetValue(genericParameterIndex, out var genericParameter))
+                            {
+                                CreateGenericParameter(genericParameterIndex, typeDefinition);
+                            }
+                            else
+                            {
+                                if (!typeDefinition.GenericParameters.Contains(genericParameter))
+                                {
+                                    typeDefinition.GenericParameters.Add(genericParameter);
+                                }
+                            }
+                        }
+                    }
+
                     //field
                     var fieldEnd = typeDef.fieldStart + typeDef.field_count;
                     for (var i = typeDef.fieldStart; i < fieldEnd; ++i)
@@ -304,29 +325,6 @@ namespace Il2CppDumper
                             eventDefinition.InvokeMethod = methodDefinitionDic[typeDef.methodStart + eventDef.raise];
                         typeDefinition.Events.Add(eventDefinition);
                         eventDefinitionDic.Add(i, eventDefinition);
-                    }
-                    //补充泛型参数
-                    if (typeDef.genericContainerIndex >= 0)
-                    {
-                        var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
-                        if (genericContainer.type_argc > typeDefinition.GenericParameters.Count)
-                        {
-                            for (int i = 0; i < genericContainer.type_argc; i++)
-                            {
-                                var genericParameterIndex = genericContainer.genericParameterStart + i;
-                                if (!genericParameterDic.TryGetValue(genericParameterIndex, out var genericParameter))
-                                {
-                                    CreateGenericParameter(genericParameterIndex, typeDefinition);
-                                }
-                                else
-                                {
-                                    if (!typeDefinition.GenericParameters.Contains(genericParameter))
-                                    {
-                                        typeDefinition.GenericParameters.Add(genericParameter);
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
             }

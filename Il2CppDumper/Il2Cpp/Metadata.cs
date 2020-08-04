@@ -14,8 +14,6 @@ namespace Il2CppDumper
         public Il2CppMethodDefinition[] methodDefs;
         public Il2CppParameterDefinition[] parameterDefs;
         public Il2CppFieldDefinition[] fieldDefs;
-        //private Il2CppFieldDefaultValue[] fieldDefaultValues;
-        //private Il2CppParameterDefaultValue[] parameterDefaultValues;
         private Dictionary<int, Il2CppFieldDefaultValue> fieldDefaultValuesDic;
         private Dictionary<int, Il2CppParameterDefaultValue> parameterDefaultValuesDic;
         public Il2CppPropertyDefinition[] propertyDefs;
@@ -47,7 +45,7 @@ namespace Il2CppDumper
                 throw new InvalidDataException("ERROR: Metadata file supplied is not valid metadata file.");
             }
             var version = ReadInt32();
-            if (version < 16 || version > 24)
+            if (version < 16 || version > 27)
             {
                 throw new NotSupportedException($"ERROR: Metadata file supplied is not a supported version[{version}].");
             }
@@ -86,7 +84,7 @@ namespace Il2CppDumper
             genericParameters = ReadMetadataClassArray<Il2CppGenericParameter>(metadataHeader.genericParametersOffset, metadataHeader.genericParametersCount);
             constraintIndices = ReadClassArray<int>(metadataHeader.genericParameterConstraintsOffset, metadataHeader.genericParameterConstraintsCount / 4);
             vtableMethods = ReadClassArray<uint>(metadataHeader.vtableMethodsOffset, metadataHeader.vtableMethodsCount / 4);
-            if (Version > 16)
+            if (Version > 16 && Version < 27) //TODO
             {
                 stringLiterals = ReadMetadataClassArray<Il2CppStringLiteral>(metadataHeader.stringLiteralOffset, metadataHeader.stringLiteralCount);
                 metadataUsageLists = ReadMetadataClassArray<Il2CppMetadataUsageList>(metadataHeader.metadataUsageListsOffset, metadataHeader.metadataUsageListsCount);
@@ -205,6 +203,10 @@ namespace Il2CppDumper
 
         public uint GetDecodedMethodIndex(uint index)
         {
+            if (Version >= 27)
+            {
+                return (index & 0x1FFFFFFEU) >> 1;
+            }
             return index & 0x1FFFFFFFU;
         }
 

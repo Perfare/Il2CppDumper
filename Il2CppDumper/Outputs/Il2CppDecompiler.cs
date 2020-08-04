@@ -31,11 +31,11 @@ namespace Il2CppDumper
                 writer.Write($"// Image {imageIndex}: {metadata.GetStringFromIndex(imageDef.nameIndex)} - {imageDef.typeStart}\n");
             }
             //dump type
-            for (var imageIndex = 0; imageIndex < metadata.imageDefs.Length; imageIndex++)
+            foreach (var imageDef in metadata.imageDefs)
             {
                 try
                 {
-                    var imageDef = metadata.imageDefs[imageIndex];
+                    var imageName = metadata.GetStringFromIndex(imageDef.nameIndex);
                     var typeEnd = imageDef.typeStart + imageDef.typeCount;
                     for (int typeDefIndex = imageDef.typeStart; typeDefIndex < typeEnd; typeDefIndex++)
                     {
@@ -244,7 +244,7 @@ namespace Il2CppDumper
                                 }
                                 if (config.DumpMethodOffset)
                                 {
-                                    var methodPointer = il2Cpp.GetMethodPointer(methodDef, imageIndex);
+                                    var methodPointer = il2Cpp.GetMethodPointer(imageName, methodDef);
                                     if (methodPointer > 0)
                                     {
                                         var fixedMethodPointer = il2Cpp.GetRVA(methodPointer);
@@ -379,20 +379,21 @@ namespace Il2CppDumper
             writer.Close();
         }
 
-        public string GetCustomAttribute(Il2CppImageDefinition image, int customAttributeIndex, uint token, string padding = "")
+        public string GetCustomAttribute(Il2CppImageDefinition imageDef, int customAttributeIndex, uint token, string padding = "")
         {
             if (il2Cpp.Version < 21)
                 return string.Empty;
-            var attributeIndex = metadata.GetCustomAttributeIndex(image, customAttributeIndex, token);
+            var attributeIndex = metadata.GetCustomAttributeIndex(imageDef, customAttributeIndex, token);
             if (attributeIndex >= 0)
             {
+                var imageName = metadata.GetStringFromIndex(imageDef.nameIndex);
+                var methodPointer = il2Cpp.GetCustomAttributeGenerator(imageName, attributeIndex, attributeIndex - imageDef.customAttributeStart);
+                var fixedMethodPointer = il2Cpp.GetRVA(methodPointer);
                 var attributeTypeRange = metadata.attributeTypeRanges[attributeIndex];
                 var sb = new StringBuilder();
                 for (var i = 0; i < attributeTypeRange.count; i++)
                 {
                     var typeIndex = metadata.attributeTypes[attributeTypeRange.start + i];
-                    var methodPointer = il2Cpp.customAttributeGenerators[attributeIndex];
-                    var fixedMethodPointer = il2Cpp.GetRVA(methodPointer);
                     sb.AppendFormat("{0}[{1}] // RVA: 0x{2:X} Offset: 0x{3:X} VA: 0x{4:X}\n",
                         padding,
                         executor.GetTypeName(il2Cpp.types[typeIndex], false, false),

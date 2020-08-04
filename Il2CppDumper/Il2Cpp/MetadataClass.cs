@@ -54,13 +54,13 @@ namespace Il2CppDumper
         public int imagesCount;
         public int assembliesOffset; // Il2CppAssemblyDefinition
         public int assembliesCount;
-        [Version(Min = 19)]
+        [Version(Min = 19, Max = 24.3f)]
         public uint metadataUsageListsOffset; // Il2CppMetadataUsageList
-        [Version(Min = 19)]
+        [Version(Min = 19, Max = 24.3f)]
         public int metadataUsageListsCount;
-        [Version(Min = 19)]
+        [Version(Min = 19, Max = 24.3f)]
         public uint metadataUsagePairsOffset; // Il2CppMetadataUsagePair
-        [Version(Min = 19)]
+        [Version(Min = 19, Max = 24.3f)]
         public int metadataUsagePairsCount;
         [Version(Min = 19)]
         public uint fieldRefsOffset; // Il2CppFieldRef
@@ -90,6 +90,10 @@ namespace Il2CppDumper
         public int windowsRuntimeTypeNamesOffset; // Il2CppWindowsRuntimeTypeNamePair
         [Version(Min = 23)]
         public int windowsRuntimeTypeNamesSize;
+        [Version(Min = 27)]
+        public int windowsRuntimeStringsOffset; // const char*
+        [Version(Min = 27)]
+        public int windowsRuntimeStringsSize;
         [Version(Min = 24)]
         public int exportedTypeDefinitionsOffset; // TypeDefinitionIndex
         [Version(Min = 24)]
@@ -126,6 +130,7 @@ namespace Il2CppDumper
         [Version(Max = 24)]
         public int customAttributeIndex;
         public int byvalTypeIndex;
+        [Version(Max = 24.3f)]
         public int byrefTypeIndex;
 
         public int declaringTypeIndex;
@@ -176,6 +181,9 @@ namespace Il2CppDumper
         // 05 - is_blittable;
         // 06 - is_import_or_windows_runtime;
         // 07-10 - One of nine possible PackingSize values (0, 1, 2, 4, 8, 16, 32, 64, or 128)
+        // 11 - PackingSize is default
+        // 12 - ClassSize is default
+        // 13-16 - One of nine possible PackingSize values (0, 1, 2, 4, 8, 16, 32, 64, or 128) - the specified packing size (even for explicit layouts)
         public uint bitfield;
         [Version(Min = 19)]
         public uint token;

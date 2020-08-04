@@ -176,6 +176,10 @@ namespace Il2CppDumper
 
         public ulong FindMetadataRegistration()
         {
+            if (il2Cpp.Version < 19 || il2Cpp.Version >= 27)
+            {
+                return 0;
+            }
             if (il2Cpp.Is32Bit)
             {
                 return FindMetadataRegistration32Bit();
@@ -347,15 +351,17 @@ namespace Il2CppDumper
         }
 
         private static readonly byte[] featureBytes2019 = { 0x6D, 0x73, 0x63, 0x6F, 0x72, 0x6C, 0x69, 0x62, 0x2E, 0x64, 0x6C, 0x6C, 0x00 };
+        private static readonly byte[] featureBytes2020dot2 = { 0x41, 0x73, 0x73, 0x65, 0x6D, 0x62, 0x6C, 0x79, 0x2D, 0x43, 0x53, 0x68, 0x61, 0x72, 0x70, 0x2E, 0x64, 0x6C, 0x6C, 0x00 };
 
         private ulong FindCodeRegistration32Bit2019()
         {
+            var featureBytes = il2Cpp.Version >= 27 ? featureBytes2020dot2 : featureBytes2019;
             var secs = il2Cpp is Elf ? exec : data;
             foreach (var sec in secs)
             {
                 il2Cpp.Position = sec.offset;
                 var buff = il2Cpp.ReadBytes((int)(sec.offsetEnd - sec.offset));
-                foreach (var index in buff.Search(featureBytes2019))
+                foreach (var index in buff.Search(featureBytes))
                 {
                     var va = (ulong)index + sec.address;
                     foreach (var dataSec in data)
@@ -385,10 +391,6 @@ namespace Il2CppDumper
                                                     if (il2Cpp.ReadUInt32() == va3)
                                                     {
                                                         var offset4 = offset3 - dataSec3.offset + dataSec3.address;
-                                                        if (il2Cpp.Version > 24.2f)
-                                                        {
-                                                            return offset4 - 60ul;
-                                                        }
                                                         return offset4 - 52ul;
                                                     }
                                                 }
@@ -409,12 +411,13 @@ namespace Il2CppDumper
 
         private ulong FindCodeRegistration64Bit2019()
         {
+            var featureBytes = il2Cpp.Version >= 27 ? featureBytes2020dot2 : featureBytes2019;
             var secs = il2Cpp is Elf64 ? exec : data;
             foreach (var sec in secs)
             {
                 il2Cpp.Position = sec.offset;
                 var buff = il2Cpp.ReadBytes((int)(sec.offsetEnd - sec.offset));
-                foreach (var index in buff.Search(featureBytes2019))
+                foreach (var index in buff.Search(featureBytes))
                 {
                     var va = (ulong)index + sec.address;
                     foreach (var dataSec in data)
@@ -444,10 +447,6 @@ namespace Il2CppDumper
                                                     if (il2Cpp.ReadUInt64() == va3)
                                                     {
                                                         var offset4 = offset3 - dataSec3.offset + dataSec3.address;
-                                                        if (il2Cpp.Version > 24.2f)
-                                                        {
-                                                            return offset4 - 120ul;
-                                                        }
                                                         return offset4 - 104ul;
                                                     }
                                                 }

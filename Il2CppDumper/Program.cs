@@ -235,7 +235,7 @@ namespace Il2CppDumper
             if (config.GenerateDummyDll)
             {
                 Console.WriteLine("Generate dummy dll...");
-                DummyAssemblyExporter.Export(metadata, il2Cpp, outputDir);
+                DummyAssemblyExporter.Export(executor, outputDir);
                 Console.WriteLine("Done!");
             }
         }

@@ -27,9 +27,9 @@ namespace Il2CppDumper
         public Dictionary<Il2CppMethodSpec, ulong> methodSpecGenericMethodPointers = new Dictionary<Il2CppMethodSpec, ulong>();
         private bool fieldOffsetsArePointers;
         protected long maxMetadataUsages;
-        private Il2CppCodeGenModule[] codeGenModules;
-        public ulong[][] codeGenModuleMethodPointers;
-        public Dictionary<int, Dictionary<uint, Il2CppRGCTXDefinition[]>> rgctxsDictionary = new Dictionary<int, Dictionary<uint, Il2CppRGCTXDefinition[]>>();
+        private Dictionary<string, Il2CppCodeGenModule> codeGenModules;
+        public Dictionary<string, ulong[]> codeGenModuleMethodPointers;
+        public Dictionary<string, Dictionary<uint, Il2CppRGCTXDefinition[]>> rgctxsDictionary;
 
         public abstract ulong MapVATR(ulong uiAddr);
         public abstract bool Search();
@@ -86,8 +86,11 @@ namespace Il2CppDumper
             pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
             genericMethodPointers = MapVATR<ulong>(pCodeRegistration.genericMethodPointers, pCodeRegistration.genericMethodPointersCount);
             invokerPointers = MapVATR<ulong>(pCodeRegistration.invokerPointers, pCodeRegistration.invokerPointersCount);
-            customAttributeGenerators = MapVATR<ulong>(pCodeRegistration.customAttributeGenerators, pCodeRegistration.customAttributeCount);
-            if (Version > 16)
+            if (Version < 27)
+            {
+                customAttributeGenerators = MapVATR<ulong>(pCodeRegistration.customAttributeGenerators, pCodeRegistration.customAttributeCount);
+            }
+            if (Version > 16 && Version < 27)
             {
                 metadataUsages = MapVATR<ulong>(pMetadataRegistration.metadataUsages, maxMetadataUsages);
             }
@@ -125,24 +128,27 @@ namespace Il2CppDumper
             if (Version >= 24.2f)
             {
                 var pCodeGenModules = MapVATR<ulong>(pCodeRegistration.codeGenModules, pCodeRegistration.codeGenModulesCount);
-                codeGenModules = new Il2CppCodeGenModule[pCodeGenModules.Length];
-                codeGenModuleMethodPointers = new ulong[pCodeGenModules.Length][];
-                for (int i = 0; i < pCodeGenModules.Length; i++)
+                codeGenModules = new Dictionary<string, Il2CppCodeGenModule>(pCodeGenModules.Length, StringComparer.Ordinal);
+                codeGenModuleMethodPointers = new Dictionary<string, ulong[]>(pCodeGenModules.Length, StringComparer.Ordinal);
+                rgctxsDictionary = new Dictionary<string, Dictionary<uint, Il2CppRGCTXDefinition[]>>(pCodeGenModules.Length, StringComparer.Ordinal);
+                foreach (var pCodeGenModule in pCodeGenModules)
                 {
-                    var codeGenModule = MapVATR<Il2CppCodeGenModule>(pCodeGenModules[i]);
-                    codeGenModules[i] = codeGenModule;
+                    var codeGenModule = MapVATR<Il2CppCodeGenModule>(pCodeGenModule);
+                    var moduleName = ReadStringToNull(MapVATR(codeGenModule.moduleName));
+                    codeGenModules.Add(moduleName, codeGenModule);
+                    ulong[] methodPointers;
                     try
                     {
-                        var name = ReadStringToNull(MapVATR(codeGenModule.moduleName));
-                        codeGenModuleMethodPointers[i] = MapVATR<ulong>(codeGenModule.methodPointers, codeGenModule.methodPointerCount);
+                        methodPointers = MapVATR<ulong>(codeGenModule.methodPointers, codeGenModule.methodPointerCount);
                     }
                     catch
                     {
-                        codeGenModuleMethodPointers[i] = new ulong[codeGenModule.methodPointerCount];
+                        methodPointers = new ulong[codeGenModule.methodPointerCount];
                     }
+                    codeGenModuleMethodPointers.Add(moduleName, methodPointers);
 
                     var rgctxsDefDictionary = new Dictionary<uint, Il2CppRGCTXDefinition[]>();
-                    rgctxsDictionary.Add(i, rgctxsDefDictionary);
+                    rgctxsDictionary.Add(moduleName, rgctxsDefDictionary);
                     if (codeGenModule.rgctxsCount > 0)
                     {
                         var rgctxs = MapVATR<Il2CppRGCTXDefinition>(codeGenModule.rgctxs, codeGenModule.rgctxsCount);
@@ -231,12 +237,12 @@ namespace Il2CppDumper
             return typeDic[pointer];
         }
 
-        public ulong GetMethodPointer(Il2CppMethodDefinition methodDef, int imageIndex)
+        public ulong GetMethodPointer(string imageName, Il2CppMethodDefinition methodDef)
         {
             if (Version >= 24.2f)
             {
                 var methodToken = methodDef.token;
-                var ptrs = codeGenModuleMethodPointers[imageIndex];
+                var ptrs = codeGenModuleMethodPointers[imageName];
                 var methodPointerIndex = methodToken & 0x00FFFFFFu;
                 return ptrs[methodPointerIndex - 1];
             }
@@ -254,6 +260,17 @@ namespace Il2CppDumper
         public virtual ulong GetRVA(ulong pointer)
         {
             return pointer;
+        }
+
+        public ulong GetCustomAttributeGenerator(string imageName, int attributeIndex, int generatorIndex)
+        {
+            if (Version >= 27)
+            {
+                var customAttributeCacheGenerator = codeGenModules[imageName].customAttributeCacheGenerator;
+                Position = MapVATR(customAttributeCacheGenerator) + PointerSize * (ulong)generatorIndex;
+                return ReadPointer();
+            }
+            return customAttributeGenerators[attributeIndex];
         }
     }
 }

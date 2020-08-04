@@ -12,18 +12,20 @@ namespace Il2CppDumper
     {
         public List<AssemblyDefinition> Assemblies = new List<AssemblyDefinition>();
 
+        private Il2CppExecutor executor;
         private Metadata metadata;
         private Il2Cpp il2Cpp;
-        private Dictionary<long, TypeDefinition> typeDefinitionDic = new Dictionary<long, TypeDefinition>();
+        private Dictionary<Il2CppTypeDefinition, TypeDefinition> typeDefinitionDic = new Dictionary<Il2CppTypeDefinition, TypeDefinition>();
         private Dictionary<long, GenericParameter> genericParameterDic = new Dictionary<long, GenericParameter>();
         private MethodDefinition attributeAttribute;
         private TypeReference stringType;
         private Dictionary<string, MethodDefinition> knownAttributes = new Dictionary<string, MethodDefinition>();
 
-        public DummyAssemblyGenerator(Metadata metadata, Il2Cpp il2Cpp)
+        public DummyAssemblyGenerator(Il2CppExecutor il2CppExecutor)
         {
-            this.metadata = metadata;
-            this.il2Cpp = il2Cpp;
+            executor = il2CppExecutor;
+            metadata = il2CppExecutor.metadata;
+            il2Cpp = il2CppExecutor.il2Cpp;
 
             //Il2CppDummyDll
             var il2CppDummyDll = Il2CppDummyDll.Create();
@@ -68,13 +70,13 @@ namespace Il2CppDumper
                     TypeDefinition typeDefinition;
                     if (typeDef.declaringTypeIndex != -1)//nested types
                     {
-                        typeDefinition = typeDefinitionDic[index];
+                        typeDefinition = typeDefinitionDic[typeDef];
                     }
                     else
                     {
                         typeDefinition = new TypeDefinition(namespaceName, typeName, (TypeAttributes)typeDef.flags);
                         moduleDefinition.Types.Add(typeDefinition);
-                        typeDefinitionDic.Add(index, typeDefinition);
+                        typeDefinitionDic.Add(typeDef, typeDefinition);
                     }
                     //nestedtype
                     for (int i = 0; i < typeDef.nested_type_count; i++)
@@ -83,7 +85,7 @@ namespace Il2CppDumper
                         var nestedTypeDef = metadata.typeDefs[nestedIndex];
                         var nestedTypeDefinition = new TypeDefinition(metadata.GetStringFromIndex(nestedTypeDef.namespaceIndex), metadata.GetStringFromIndex(nestedTypeDef.nameIndex), (TypeAttributes)nestedTypeDef.flags);
                         typeDefinition.NestedTypes.Add(nestedTypeDefinition);
-                        typeDefinitionDic.Add(nestedIndex, nestedTypeDefinition);
+                        typeDefinitionDic.Add(nestedTypeDef, nestedTypeDefinition);
                     }
                 }
             }
@@ -91,11 +93,11 @@ namespace Il2CppDumper
             for (var index = 0; index < metadata.typeDefs.Length; ++index)
             {
                 var typeDef = metadata.typeDefs[index];
-                var typeDefinition = typeDefinitionDic[index];
-                
-                var customAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
-                customAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{typeDef.token:X}")));
-                typeDefinition.CustomAttributes.Add(customAttribute);
+                var typeDefinition = typeDefinitionDic[typeDef];
+
+                var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
+                customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{typeDef.token:X}")));
+                typeDefinition.CustomAttributes.Add(customTokenAttribute);
 
                 //genericParameter
                 if (typeDef.genericContainerIndex >= 0)
@@ -116,6 +118,7 @@ namespace Il2CppDumper
                     var parentTypeRef = GetTypeReference(typeDefinition, parentType);
                     typeDefinition.BaseType = parentTypeRef;
                 }
+
                 //interfaces
                 for (int i = 0; i < typeDef.interfaces_count; i++)
                 {
@@ -125,14 +128,14 @@ namespace Il2CppDumper
                 }
             }
             //处理field, method, property等等
-            for (var imageIndex = 0; imageIndex < metadata.imageDefs.Length; imageIndex++)
+            foreach (var imageDef in metadata.imageDefs)
             {
-                var imageDef = metadata.imageDefs[imageIndex];
+                var imageName = metadata.GetStringFromIndex(imageDef.nameIndex);
                 var typeEnd = imageDef.typeStart + imageDef.typeCount;
                 for (int index = imageDef.typeStart; index < typeEnd; index++)
                 {
                     var typeDef = metadata.typeDefs[index];
-                    var typeDefinition = typeDefinitionDic[index];
+                    var typeDefinition = typeDefinitionDic[typeDef];
 
                     //field
                     var fieldEnd = typeDef.fieldStart + typeDef.field_count;
@@ -145,11 +148,11 @@ namespace Il2CppDumper
                         var fieldDefinition = new FieldDefinition(fieldName, (FieldAttributes)fieldType.attrs, fieldTypeRef);
                         typeDefinition.Fields.Add(fieldDefinition);
                         fieldDefinitionDic.Add(i, fieldDefinition);
-                        
+
                         var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
                         customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{fieldDef.token:X}")));
                         fieldDefinition.CustomAttributes.Add(customTokenAttribute);
-                        
+
                         //fieldDefault
                         if (metadata.GetFieldDefaultValueFromIndex(i, out var fieldDefault) && fieldDefault.dataIndex != -1)
                         {
@@ -201,11 +204,11 @@ namespace Il2CppDumper
                         var methodReturnType = il2Cpp.types[methodDef.returnType];
                         var returnType = GetTypeReferenceWithByRef(methodDefinition, methodReturnType);
                         methodDefinition.ReturnType = returnType;
-                        
+
                         var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
                         customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{methodDef.token:X}")));
                         methodDefinition.CustomAttributes.Add(customTokenAttribute);
-                        
+
                         if (methodDefinition.HasBody && typeDefinition.BaseType?.FullName != "System.MulticastDelegate")
                         {
                             var ilprocessor = methodDefinition.Body.GetILProcessor();
@@ -256,7 +259,7 @@ namespace Il2CppDumper
                             }
                         }
                         //methodAddress
-                        var methodPointer = il2Cpp.GetMethodPointer(methodDef, imageIndex);
+                        var methodPointer = il2Cpp.GetMethodPointer(imageName, methodDef);
                         if (methodPointer > 0)
                         {
                             var customAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(addressAttribute));
@@ -302,7 +305,7 @@ namespace Il2CppDumper
                         };
                         typeDefinition.Properties.Add(propertyDefinition);
                         propertyDefinitionDic.Add(i, propertyDefinition);
-                        
+
                         var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
                         customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{propertyDef.token:X}")));
                         propertyDefinition.CustomAttributes.Add(customTokenAttribute);
@@ -324,7 +327,7 @@ namespace Il2CppDumper
                             eventDefinition.InvokeMethod = methodDefinitionDic[typeDef.methodStart + eventDef.raise];
                         typeDefinition.Events.Add(eventDefinition);
                         eventDefinitionDic.Add(i, eventDefinition);
-                        
+
                         var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
                         customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{eventDef.token:X}")));
                         eventDefinition.CustomAttributes.Add(customTokenAttribute);
@@ -341,7 +344,7 @@ namespace Il2CppDumper
                     for (int index = imageDef.typeStart; index < typeEnd; index++)
                     {
                         var typeDef = metadata.typeDefs[index];
-                        var typeDefinition = typeDefinitionDic[index];
+                        var typeDefinition = typeDefinitionDic[typeDef];
                         //typeAttribute
                         CreateCustomAttribute(imageDef, typeDef.customAttributeIndex, typeDef.token, typeDefinition.Module, typeDefinition.CustomAttributes);
 
@@ -455,7 +458,8 @@ namespace Il2CppDumper
                 case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
                 case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
                     {
-                        var typeDefinition = typeDefinitionDic[il2CppType.data.klassIndex];
+                        var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
+                        var typeDefinition = typeDefinitionDic[typeDef];
                         return moduleDefinition.ImportReference(typeDefinition);
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY:
@@ -467,7 +471,8 @@ namespace Il2CppDumper
                 case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
                     {
                         var genericClass = il2Cpp.MapVATR<Il2CppGenericClass>(il2CppType.data.generic_class);
-                        var typeDefinition = typeDefinitionDic[genericClass.typeDefinitionIndex];
+                        var typeDef = executor.GetGenericClassTypeDefinition(genericClass);
+                        var typeDefinition = typeDefinitionDic[typeDef];
                         var genericInstanceType = new GenericInstanceType(moduleDefinition.ImportReference(typeDefinition));
                         var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(genericClass.context.class_inst);
                         var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
@@ -586,7 +591,8 @@ namespace Il2CppDumper
                 {
                     var attributeTypeIndex = metadata.attributeTypes[attributeTypeRange.start + i];
                     var attributeType = il2Cpp.types[attributeTypeIndex];
-                    var typeDefinition = typeDefinitionDic[attributeType.data.klassIndex];
+                    var typeDef = metadata.typeDefs[attributeType.data.klassIndex];
+                    var typeDefinition = typeDefinitionDic[typeDef];
                     if (knownAttributes.TryGetValue(typeDefinition.FullName, out var methodDefinition))
                     {
                         var customAttribute = new CustomAttribute(moduleDefinition.ImportReference(methodDefinition));

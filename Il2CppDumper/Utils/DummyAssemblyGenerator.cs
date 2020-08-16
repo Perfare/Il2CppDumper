@@ -67,26 +67,26 @@ namespace Il2CppDumper
                     var typeDef = metadata.typeDefs[index];
                     var namespaceName = metadata.GetStringFromIndex(typeDef.namespaceIndex);
                     var typeName = metadata.GetStringFromIndex(typeDef.nameIndex);
-                    TypeDefinition typeDefinition;
-                    if (typeDef.declaringTypeIndex != -1)//nested types
+                    var typeDefinition = new TypeDefinition(namespaceName, typeName, (TypeAttributes)typeDef.flags);
+                    typeDefinitionDic.Add(typeDef, typeDefinition);
+                    if (typeDef.declaringTypeIndex == -1)
                     {
-                        typeDefinition = typeDefinitionDic[typeDef];
-                    }
-                    else
-                    {
-                        typeDefinition = new TypeDefinition(namespaceName, typeName, (TypeAttributes)typeDef.flags);
                         moduleDefinition.Types.Add(typeDefinition);
-                        typeDefinitionDic.Add(typeDef, typeDefinition);
                     }
-                    //nestedtype
-                    for (int i = 0; i < typeDef.nested_type_count; i++)
-                    {
-                        var nestedIndex = metadata.nestedTypeIndices[typeDef.nestedTypesStart + i];
-                        var nestedTypeDef = metadata.typeDefs[nestedIndex];
-                        var nestedTypeDefinition = new TypeDefinition(metadata.GetStringFromIndex(nestedTypeDef.namespaceIndex), metadata.GetStringFromIndex(nestedTypeDef.nameIndex), (TypeAttributes)nestedTypeDef.flags);
-                        typeDefinition.NestedTypes.Add(nestedTypeDefinition);
-                        typeDefinitionDic.Add(nestedTypeDef, nestedTypeDefinition);
-                    }
+                }
+            }
+            for (var index = 0; index < metadata.typeDefs.Length; ++index)
+            {
+                var typeDef = metadata.typeDefs[index];
+                var typeDefinition = typeDefinitionDic[typeDef];
+
+                //nestedtype
+                for (int i = 0; i < typeDef.nested_type_count; i++)
+                {
+                    var nestedIndex = metadata.nestedTypeIndices[typeDef.nestedTypesStart + i];
+                    var nestedTypeDef = metadata.typeDefs[nestedIndex];
+                    var nestedTypeDefinition = typeDefinitionDic[nestedTypeDef];
+                    typeDefinition.NestedTypes.Add(nestedTypeDefinition);
                 }
             }
             //提前处理

@@ -268,7 +268,7 @@ namespace Il2CppDumper
             {
                 var customAttributeCacheGenerator = codeGenModules[imageName].customAttributeCacheGenerator;
                 Position = MapVATR(customAttributeCacheGenerator) + PointerSize * (ulong)generatorIndex;
-                return ReadPointer();
+                return ReadUIntPtr();
             }
             return customAttributeGenerators[attributeIndex];
         }

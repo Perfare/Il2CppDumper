@@ -219,7 +219,12 @@ namespace Il2CppDumper
             return Encoding.UTF8.GetString(bytes.ToArray());
         }
 
-        public ulong ReadPointer()
+        public long ReadIntPtr()
+        {
+            return Is32Bit ? ReadInt32() : ReadInt64();
+        }
+
+        public ulong ReadUIntPtr()
         {
             return Is32Bit ? ReadUInt32() : ReadUInt64();
         }

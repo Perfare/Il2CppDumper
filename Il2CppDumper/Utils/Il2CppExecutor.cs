@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Il2CppDumper
 {
@@ -28,11 +29,28 @@ namespace Il2CppDumper
             {25,"UIntPtr"},
             {28,"object"},
         };
+        public ulong[] customAttributeGenerators;
 
         public Il2CppExecutor(Metadata metadata, Il2Cpp il2Cpp)
         {
             this.metadata = metadata;
             this.il2Cpp = il2Cpp;
+
+            if (il2Cpp.Version >= 27)
+            {
+                customAttributeGenerators = new ulong[metadata.imageDefs.Sum(x => x.customAttributeCount)];
+                foreach (var imageDef in metadata.imageDefs)
+                {
+                    var imageDefName = metadata.GetStringFromIndex(imageDef.nameIndex);
+                    var codeGenModule = il2Cpp.codeGenModules[imageDefName];
+                    var pointers = il2Cpp.ReadClassArray<ulong>(il2Cpp.MapVATR(codeGenModule.customAttributeCacheGenerator), imageDef.customAttributeCount);
+                    pointers.CopyTo(customAttributeGenerators, imageDef.customAttributeStart);
+                }
+            }
+            else
+            {
+                customAttributeGenerators = il2Cpp.customAttributeGenerators;
+            }
         }
 
         public string GetTypeName(Il2CppType il2CppType, bool addNamespace, bool is_nested)

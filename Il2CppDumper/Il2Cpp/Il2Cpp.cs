@@ -27,7 +27,7 @@ namespace Il2CppDumper
         public Dictionary<Il2CppMethodSpec, ulong> methodSpecGenericMethodPointers = new Dictionary<Il2CppMethodSpec, ulong>();
         private bool fieldOffsetsArePointers;
         protected long maxMetadataUsages;
-        private Dictionary<string, Il2CppCodeGenModule> codeGenModules;
+        public Dictionary<string, Il2CppCodeGenModule> codeGenModules;
         public Dictionary<string, ulong[]> codeGenModuleMethodPointers;
         public Dictionary<string, Dictionary<uint, Il2CppRGCTXDefinition[]>> rgctxsDictionary;
 
@@ -260,17 +260,6 @@ namespace Il2CppDumper
         public virtual ulong GetRVA(ulong pointer)
         {
             return pointer;
-        }
-
-        public ulong GetCustomAttributeGenerator(string imageName, int attributeIndex, int generatorIndex)
-        {
-            if (Version >= 27)
-            {
-                var customAttributeCacheGenerator = codeGenModules[imageName].customAttributeCacheGenerator;
-                Position = MapVATR(customAttributeCacheGenerator) + PointerSize * (ulong)generatorIndex;
-                return ReadUIntPtr();
-            }
-            return customAttributeGenerators[attributeIndex];
         }
     }
 }

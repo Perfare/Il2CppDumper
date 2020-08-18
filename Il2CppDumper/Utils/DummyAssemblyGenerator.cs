@@ -600,7 +600,7 @@ namespace Il2CppDumper
                     }
                     else
                     {
-                        var methodPointer = il2Cpp.customAttributeGenerators[attributeIndex];
+                        var methodPointer = executor.customAttributeGenerators[attributeIndex];
                         var fixedMethodPointer = il2Cpp.GetRVA(methodPointer);
                         var customAttribute = new CustomAttribute(moduleDefinition.ImportReference(attributeAttribute));
                         var name = new CustomAttributeNamedArgument("Name", new CustomAttributeArgument(stringType, typeDefinition.Name));

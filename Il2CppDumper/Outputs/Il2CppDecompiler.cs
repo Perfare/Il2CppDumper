@@ -386,8 +386,7 @@ namespace Il2CppDumper
             var attributeIndex = metadata.GetCustomAttributeIndex(imageDef, customAttributeIndex, token);
             if (attributeIndex >= 0)
             {
-                var imageName = metadata.GetStringFromIndex(imageDef.nameIndex);
-                var methodPointer = il2Cpp.GetCustomAttributeGenerator(imageName, attributeIndex, attributeIndex - imageDef.customAttributeStart);
+                var methodPointer = executor.customAttributeGenerators[attributeIndex];
                 var fixedMethodPointer = il2Cpp.GetRVA(methodPointer);
                 var attributeTypeRange = metadata.attributeTypeRanges[attributeIndex];
                 var sb = new StringBuilder();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Newtonsoft.Json;
 #if NETFRAMEWORK
 using System.Windows.Forms;
@@ -187,15 +188,16 @@ namespace Il2CppDumper
             try
             {
                 var flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length);
-#if NETFRAMEWORK
-                if (!flag && il2Cpp is PE)
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    Console.WriteLine("Use custom PE loader");
-                    il2Cpp = PELoader.Load(il2cppPath);
-                    il2Cpp.SetProperties(version, metadata.maxMetadataUsages);
-                    flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length);
+                    if (!flag && il2Cpp is PE)
+                    {
+                        Console.WriteLine("Use custom PE loader");
+                        il2Cpp = PELoader.Load(il2cppPath);
+                        il2Cpp.SetProperties(version, metadata.maxMetadataUsages);
+                        flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length);
+                    }
                 }
-#endif
                 if (!flag)
                 {
                     flag = il2Cpp.Search();

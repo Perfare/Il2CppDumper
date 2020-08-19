@@ -265,9 +265,19 @@ namespace Il2CppDumper
                             if (CheckPointerRangeDataRa(pointer))
                             {
                                 var pointers = il2Cpp.ReadClassArray<ulong>(pointer, typeDefinitionsCount);
-                                if (CheckPointerRangeDataVa(pointers))
+                                if (il2Cpp is ElfBase)
                                 {
-                                    return addr - il2Cpp.PointerSize * 10 - section.offset + section.address;
+                                    if (CheckPointerRangeExecVa(pointers))
+                                    {
+                                        return addr - il2Cpp.PointerSize * 10 - section.offset + section.address;
+                                    }
+                                }
+                                else
+                                {
+                                    if (CheckPointerRangeDataVa(pointers))
+                                    {
+                                        return addr - il2Cpp.PointerSize * 10 - section.offset + section.address;
+                                    }
                                 }
                             }
                         }
@@ -306,7 +316,7 @@ namespace Il2CppDumper
         {
             var featureBytes = il2Cpp.Version >= 27 ? featureBytes2020dot2 : featureBytes2019;
             var secs = data;
-            if (il2Cpp is Elf || il2Cpp is Elf64)
+            if (il2Cpp is ElfBase)
             {
                 secs = exec;
             }

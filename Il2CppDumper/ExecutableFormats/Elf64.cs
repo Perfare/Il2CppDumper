@@ -6,7 +6,7 @@ using static Il2CppDumper.ElfConstants;
 
 namespace Il2CppDumper
 {
-    public sealed class Elf64 : Il2Cpp
+    public sealed class Elf64 : ElfBase
     {
         private Elf64_Ehdr elfHeader;
         private Elf64_Phdr[] programSegment;
@@ -14,8 +14,6 @@ namespace Il2CppDumper
         private Elf64_Sym[] symbolTable;
         private Elf64_Shdr[] sectionTable;
         private Elf64_Phdr pt_dynamic;
-        private bool isDumped;
-        private ulong dumpAddr;
 
         public Elf64(Stream stream) : base(stream)
         {
@@ -23,26 +21,20 @@ namespace Il2CppDumper
             programSegment = ReadClassArray<Elf64_Phdr>(elfHeader.e_phoff, elfHeader.e_phnum);
             if (!CheckSection())
             {
-                Console.WriteLine("Detected this may be a dump file.");
-                Console.WriteLine("Input dump address or input 0 to force continue:");
-                dumpAddr = Convert.ToUInt64(Console.ReadLine(), 16);
-                if (dumpAddr != 0)
-                {
-                    isDumped = true;
-                }
+                GetDumpAddress();
             }
-            if (isDumped)
+            if (IsDumped)
             {
                 FixedProgramSegment();
             }
             pt_dynamic = programSegment.First(x => x.p_type == PT_DYNAMIC);
             dynamicSection = ReadClassArray<Elf64_Dyn>(pt_dynamic.p_offset, (long)pt_dynamic.p_filesz / 16L);
-            if (isDumped)
+            if (IsDumped)
             {
                 FixedDynamicSection();
             }
             ReadSymbol();
-            if (!isDumped)
+            if (!IsDumped)
             {
                 RelocationProcessing();
                 if (CheckProtection())
@@ -232,9 +224,9 @@ namespace Il2CppDumper
 
         public override ulong GetRVA(ulong pointer)
         {
-            if (isDumped)
+            if (IsDumped)
             {
-                return pointer - dumpAddr;
+                return pointer - DumpAddr;
             }
             return pointer;
         }
@@ -247,7 +239,7 @@ namespace Il2CppDumper
                 var phdr = programSegment[i];
                 phdr.p_offset = phdr.p_vaddr;
                 Write(phdr.p_offset);
-                phdr.p_vaddr += dumpAddr;
+                phdr.p_vaddr += DumpAddr;
                 Write(phdr.p_vaddr);
                 Position += 8;
                 phdr.p_filesz = phdr.p_memsz;
@@ -274,7 +266,7 @@ namespace Il2CppDumper
                     case DT_JMPREL:
                     case DT_INIT_ARRAY:
                     case DT_FINI_ARRAY:
-                        dyn.d_un += dumpAddr;
+                        dyn.d_un += DumpAddr;
                         Write(dyn.d_un);
                         break;
                 }

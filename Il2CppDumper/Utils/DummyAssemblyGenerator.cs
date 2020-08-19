@@ -16,7 +16,7 @@ namespace Il2CppDumper
         private Metadata metadata;
         private Il2Cpp il2Cpp;
         private Dictionary<Il2CppTypeDefinition, TypeDefinition> typeDefinitionDic = new Dictionary<Il2CppTypeDefinition, TypeDefinition>();
-        private Dictionary<long, GenericParameter> genericParameterDic = new Dictionary<long, GenericParameter>();
+        private Dictionary<Il2CppGenericParameter, GenericParameter> genericParameterDic = new Dictionary<Il2CppGenericParameter, GenericParameter>();
         private MethodDefinition attributeAttribute;
         private TypeReference stringType;
         private Dictionary<string, MethodDefinition> knownAttributes = new Dictionary<string, MethodDefinition>();
@@ -106,7 +106,8 @@ namespace Il2CppDumper
                     for (int i = 0; i < genericContainer.type_argc; i++)
                     {
                         var genericParameterIndex = genericContainer.genericParameterStart + i;
-                        var genericParameter = CreateGenericParameter(genericParameterIndex, typeDefinition);
+                        var param = metadata.genericParameters[genericParameterIndex];
+                        var genericParameter = CreateGenericParameter(param, typeDefinition);
                         typeDefinition.GenericParameters.Add(genericParameter);
                     }
                 }
@@ -197,7 +198,8 @@ namespace Il2CppDumper
                             for (int j = 0; j < genericContainer.type_argc; j++)
                             {
                                 var genericParameterIndex = genericContainer.genericParameterStart + j;
-                                var genericParameter = CreateGenericParameter(genericParameterIndex, methodDefinition);
+                                var param = metadata.genericParameters[genericParameterIndex];
+                                var genericParameter = CreateGenericParameter(param, methodDefinition);
                                 methodDefinition.GenericParameters.Add(genericParameter);
                             }
                         }
@@ -458,7 +460,7 @@ namespace Il2CppDumper
                 case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
                 case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
                     {
-                        var typeDef = metadata.typeDefs[il2CppType.data.klassIndex];
+                        var typeDef = executor.GetTypeDefinitionFromIl2CppType(il2CppType);
                         var typeDefinition = typeDefinitionDic[typeDef];
                         return moduleDefinition.ImportReference(typeDefinition);
                     }
@@ -492,15 +494,15 @@ namespace Il2CppDumper
                     {
                         if (memberReference is MethodDefinition methodDefinition)
                         {
-                            return CreateGenericParameter(il2CppType.data.genericParameterIndex, methodDefinition.DeclaringType);
+                            return CreateGenericParameter(executor.GetGenericParameteFromIl2CppType(il2CppType), methodDefinition.DeclaringType);
                         }
                         var typeDefinition = (TypeDefinition)memberReference;
-                        return CreateGenericParameter(il2CppType.data.genericParameterIndex, typeDefinition);
+                        return CreateGenericParameter(executor.GetGenericParameteFromIl2CppType(il2CppType), typeDefinition);
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_MVAR:
                     {
                         var methodDefinition = (MethodDefinition)memberReference;
-                        return CreateGenericParameter(il2CppType.data.genericParameterIndex, methodDefinition);
+                        return CreateGenericParameter(executor.GetGenericParameteFromIl2CppType(il2CppType), methodDefinition);
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
                     {
@@ -591,7 +593,7 @@ namespace Il2CppDumper
                 {
                     var attributeTypeIndex = metadata.attributeTypes[attributeTypeRange.start + i];
                     var attributeType = il2Cpp.types[attributeTypeIndex];
-                    var typeDef = metadata.typeDefs[attributeType.data.klassIndex];
+                    var typeDef = executor.GetTypeDefinitionFromIl2CppType(attributeType);
                     var typeDefinition = typeDefinitionDic[typeDef];
                     if (knownAttributes.TryGetValue(typeDefinition.FullName, out var methodDefinition))
                     {
@@ -615,15 +617,14 @@ namespace Il2CppDumper
             }
         }
 
-        private GenericParameter CreateGenericParameter(long genericParameterIndex, IGenericParameterProvider iGenericParameterProvider)
+        private GenericParameter CreateGenericParameter(Il2CppGenericParameter param, IGenericParameterProvider iGenericParameterProvider)
         {
-            if (!genericParameterDic.TryGetValue(genericParameterIndex, out var genericParameter))
+            if (!genericParameterDic.TryGetValue(param, out var genericParameter))
             {
-                var param = metadata.genericParameters[genericParameterIndex];
                 var genericName = metadata.GetStringFromIndex(param.nameIndex);
                 genericParameter = new GenericParameter(genericName, iGenericParameterProvider);
                 genericParameter.Attributes = (GenericParameterAttributes)param.flags;
-                genericParameterDic.Add(genericParameterIndex, genericParameter);
+                genericParameterDic.Add(param, genericParameter);
                 for (int i = 0; i < param.constraintsCount; ++i)
                 {
                     var il2CppType = il2Cpp.types[metadata.constraintIndices[param.constraintsStart + i]];

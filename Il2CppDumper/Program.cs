@@ -176,6 +176,12 @@ namespace Il2CppDumper
             var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.Version;
             il2Cpp.SetProperties(version, metadata.maxMetadataUsages);
             Console.WriteLine($"Il2Cpp Version: {il2Cpp.Version}");
+            if (il2Cpp.Version >= 27 && il2Cpp is ElfBase elf && elf.IsDumped)
+            {
+                Console.WriteLine("Input global-metadata.dat dump address:");
+                metadata.Address = Convert.ToUInt64(Console.ReadLine(), 16);
+            }
+
 
             Console.WriteLine("Searching...");
             try

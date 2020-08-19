@@ -157,6 +157,10 @@ namespace Il2CppDumper
             /// </summary>
             public long klassIndex => (long)dummy;
             /// <summary>
+            /// for VALUETYPE and CLASS at runtime
+            /// </summary>
+            public ulong typeHandle => dummy;
+            /// <summary>
             /// for PTR and SZARRAY
             /// </summary>
             public ulong type => dummy;
@@ -168,6 +172,10 @@ namespace Il2CppDumper
             /// for VAR and MVAR
             /// </summary>
             public long genericParameterIndex => (long)dummy;
+            /// <summary>
+            /// for VAR and MVAR at runtime
+            /// </summary>
+            public ulong genericParameterHandle => dummy;
             /// <summary>
             /// for GENERICINST
             /// </summary>

@@ -281,7 +281,7 @@ namespace Il2CppDumper
         {
             if (il2Cpp.Version >= 27 && il2Cpp is ElfBase elf && elf.IsDumped)
             {
-                var offset = il2CppType.data.genericParameterHandle - metadata.Address - metadata.header.genericParameterConstraintsOffset;
+                var offset = il2CppType.data.genericParameterHandle - metadata.Address - metadata.header.genericParametersOffset;
                 var index = offset / (ulong)metadata.SizeOf(typeof(Il2CppGenericParameter));
                 return metadata.genericParameters[index];
             }

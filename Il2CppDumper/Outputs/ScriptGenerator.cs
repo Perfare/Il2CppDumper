@@ -27,7 +27,7 @@ namespace Il2CppDumper
         private StringBuilder methodInfoHeader = new StringBuilder();
         private static HashSet<string> keyword = new HashSet<string>(StringComparer.Ordinal)
         { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "near", "far", "flat", "default", "_ds", "interrupt", "inline",
-            "unsigned", "signed", "asm", "if", "case", "break", "continue", "do", "new"};
+            "unsigned", "signed", "asm", "if", "case", "break", "continue", "do", "new", "_", "short", "union"};
 
         public ScriptGenerator(Il2CppExecutor il2CppExecutor)
         {
@@ -738,7 +738,8 @@ namespace Il2CppDumper
             {
                 var parentStructName = info.Parent + "_o";
                 pre.Append(RecursionStructInfo(structInfoWithStructName[parentStructName]));
-                sb.Append($"struct {info.TypeName}_Fields : {info.Parent}_Fields{{\n");
+                sb.Append($"struct {info.TypeName}_Fields {{\n");
+                sb.Append($"\t{info.Parent}_Fields _;\n");
             }
             else
             {

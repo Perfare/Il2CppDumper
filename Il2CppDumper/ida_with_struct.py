@@ -33,6 +33,13 @@ hpath = idaapi.ask_file(False, '*.h', 'il2cpp.h from Il2cppdumper')
 parse_decls(open(hpath, 'rb').read(), 0)
 data = json.loads(open(path, 'rb').read().decode('utf-8'))
 
+if "Addresses" in data and "Addresses" in processFields:
+	addresses = data["Addresses"]
+	for index in range(len(addresses) - 1):
+		start = get_addr(addresses[index])
+		end = get_addr(addresses[index + 1])
+		make_function(start, end)
+
 if "ScriptMethod" in data and "ScriptMethod" in processFields:
 	scriptMethods = data["ScriptMethod"]
 	for scriptMethod in scriptMethods:
@@ -75,13 +82,6 @@ if "ScriptMetadataMethod" in data and "ScriptMetadataMethod" in processFields:
 		set_name(addr, name)
 		idc.set_cmt(addr, name, 1)
 		idc.set_cmt(addr, '{0:X}'.format(methodAddr), 0)
-
-if "Addresses" in data and "Addresses" in processFields:
-	addresses = data["Addresses"]
-	for index in range(len(addresses) - 1):
-		start = get_addr(addresses[index])
-		end = get_addr(addresses[index + 1])
-		make_function(start, end)
 
 print 'Script finished!'
 

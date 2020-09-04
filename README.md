@@ -16,6 +16,23 @@ Unity il2cpp reverse engineer
 * Supports Android memory dumped `libil2cpp.so` file to bypass protection
 * Support bypassing simple PE protection
 
+## Build
+
+Just build it the normal way. In case it fails or you have non-standard .NET environment, see below.
+
+### .NET Core only (useful on Linux)
+
+```sh
+dotnet build -f netcoreapp3.1 -c Release
+```
+
+### Mono (using .NET Framework and mono-msbuild)
+
+```sh
+nuget restore
+msbuild /p:TargetFramework=net472,Configuration=Release
+```
+
 ## Usage
 
 Run `Il2CppDumper.exe` and choose the il2cpp executable file and `global-metadata.dat` file, then enter the information as prompted

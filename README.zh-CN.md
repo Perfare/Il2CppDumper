@@ -14,6 +14,23 @@ Unity il2cpp逆向工程
 * 支持从内存dump的`libil2cpp.so`文件以绕过保护
 * 支持绕过简单的PE保护
 
+## 编译
+
+直接按照普通.NET项目的编译方法编译即可。如遇到问题或者你的.NET环境非标准，请参考以下：
+
+### 仅针对.NET Core（适用于Linux环境）
+
+```sh
+dotnet build -f netcoreapp3.1 -c Release
+```
+
+### Mono（使用Mono的.NET Framework和msbuild实现）
+
+```sh
+nuget restore
+msbuild /p:TargetFramework=net472,Configuration=Release
+```
+
 ## 使用说明
 
 直接运行Il2CppDumper.exe并依次选择il2cpp的可执行文件和global-metadata.dat文件，然后根据提示输入相应信息。

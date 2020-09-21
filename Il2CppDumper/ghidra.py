@@ -21,7 +21,11 @@ def set_name(addr, name):
 	createLabel(addr, name, True, USER_DEFINED)
 
 def make_function(start, end):
-	next_func_start = getFunctionAfter(start).getEntryPoint()
+        get_func = getFunctionAfter(start)
+        if get_func is None:
+          print("None, skipping...)
+          return
+	next_func_start = get_func.getEntryPoint()
 	if next_func_start < end:
 		end = next_func_start
 	body = createAddressSet()

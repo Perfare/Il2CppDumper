@@ -23,7 +23,7 @@ def set_name(addr, name):
 def make_function(start, end):
         get_func = getFunctionAfter(start)
         if get_func is None:
-          print("None, skipping...)
+          print("None, skipping...")
           return
 	next_func_start = get_func.getEntryPoint()
 	if next_func_start < end:

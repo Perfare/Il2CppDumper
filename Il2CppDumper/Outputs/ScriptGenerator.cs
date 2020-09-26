@@ -733,21 +733,18 @@ namespace Il2CppDumper
 
             var sb = new StringBuilder();
             var pre = new StringBuilder();
-            Stack<string> parents = new Stack<string>();
-            List<StructFieldInfo> allFields = new List<StructFieldInfo>();
+
             if (info.Parent != null)
             {
-                string parent = info.Parent;
-                while ( ! String.IsNullOrEmpty(parent) ) {
-                    var parentStructName = parent + "_o";
-                    pre.Append(RecursionStructInfo(structInfoWithStructName[parentStructName]));
-                    parents.Push(parent);
-                    parent = structInfoWithStructName[parent + "_o"].Parent;
-                }
-                sb.Append($"struct {info.TypeName}_Fields {{\n");
+                var parentStructName = info.Parent + "_o";
+                pre.Append(RecursionStructInfo(structInfoWithStructName[parentStructName]));
+                // C++ style
+                //sb.Append($"struct {info.TypeName}_Fields : {info.Parent}_Fields {{\n");
                 // C style
-                //sb.Append($"struct {info.TypeName}_Fields {{\n");
-                //sb.Append($"\t{info.Parent}_Fields _;\n");
+                sb.Append($"struct {info.TypeName}_Fields {{\n");
+                if (structInfoWithStructName[parentStructName].Fields.Count() != 0) {
+                    sb.Append($"\t{info.Parent}_Fields _;\n");
+                }
             }
             else
             {
@@ -767,14 +764,7 @@ namespace Il2CppDumper
                     sb.Append($"struct {info.TypeName}_Fields {{\n");
                 }
             }
-            while ( parents.Count > 0 ) 
-            {
-                string parent = parents.Pop();
-                allFields.AddRange(structInfoWithStructName[parent + "_o"].Fields);
-            }
-            allFields.AddRange(info.Fields);
-
-            foreach (var field in allFields)
+            foreach (var field in info.Fields)
             {
                 if (field.IsValueType)
                 {

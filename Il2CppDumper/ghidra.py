@@ -58,18 +58,22 @@ def set_sig(addr, name, sig):
 	# shows error dialog if unable to create (e.g., if types are not found)
 	# These can be numerous. Might be better to find a different way.
 	# Maybe see what parseSignature calls and use that instead?
+	# Nope, we can just use this form that makes us handle exceptions 
+	# ourselves
 	# Should we include the type creation and/or import of header here rather
-	# than to be performed separately? Like ida_with_struct script?
+	# than to be performed separately? Or do like ida_with_struct script?
 	# see also warnings in main ghidra console window
 	try: 
 		typeSig = CParserUtils.parseSignature(None, currentProgram, sig, False)
 	except ghidra.app.util.cparser.C.ParseException as e:
 		print("Error: Unable to parse")
 		print(sig)
-		print("Exception type: " + type(e))
 		print("Last eval'd token: " + e.currentToken.toString())
 		print("Error message: " + e.getMessage())
-		raise
+		print("Attempting to modify variable names...")
+		newSig = sig.replace(", ","ext, ").replace("\)","ext\)")
+		set_sig(addr,name,newSig)
+		return
 	if typeSig is None:
 		print("Unable to parse function " + name + " with signature '" + sig + "'")
 	else:
@@ -78,7 +82,7 @@ def set_sig(addr, name, sig):
 
 f = askFile("script.json from Il2cppdumper", "Open")
 data = json.loads(open(f.absolutePath, 'rb').read().decode('utf-8'))
-
+ 
 if "ScriptMethod" in data and "ScriptMethod" in processFields:
 	scriptMethods = data["ScriptMethod"]
 	for scriptMethod in scriptMethods:

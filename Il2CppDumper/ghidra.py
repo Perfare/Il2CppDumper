@@ -48,14 +48,9 @@ def make_function(start, end):
 		func.setBody(body)
 
 def set_sig(addr, name, sig):
-	# Should we include the type creation and/or import of header here rather
-	# than to be performed separately? Like ida_with_struct script?
-	# see also warnings in main ghidra console window
 	try: 
 		typeSig = CParserUtils.parseSignature(None, currentProgram, sig, False)
 	except ghidra.app.util.cparser.C.ParseException:
-		# sig wasn't able to be parsed; it could be a parameter name
-		# that's reserved, an unidentified type, or something else
 		print("Warning: Unable to parse")
 		print(sig)
 		print("Attempting to modify...")
@@ -128,4 +123,3 @@ if "ScriptMethod" in data and "ScriptMethod" in processFields:
 		set_sig(addr, name, sig)
 
 print 'Script finished!'
-

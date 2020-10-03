@@ -25,13 +25,6 @@ def set_name(addr, name):
 
 def set_type(addr, type):
 	# Requires types (il2cpp.h) to be imported first
-	# still shows error dialog for type not found, not ideal, makes unusable
-	# if there are lots
-	#typeSig = CParserUtils.parseSignature(None, currentProgram, type + " a()")
-	#if typeSig is None:
-	#	print("ERROR: Unable to parse type " + type)
-	#else:
-	#	createData(addr, typeSig.getReturnType())
 	newType = type.replace("*"," *").replace("  "," ").strip()
 	dataTypes = getDataTypes(newType)
 	if len(dataTypes) == 0:
@@ -55,34 +48,33 @@ def make_function(start, end):
 		func.setBody(body)
 
 def set_sig(addr, name, sig):
-	# shows error dialog if unable to create (e.g., if types are not found)
-	# These can be numerous. Might be better to find a different way.
-	# Maybe see what parseSignature calls and use that instead?
-	# Nope, we can just use this form that makes us handle exceptions 
-	# ourselves
 	# Should we include the type creation and/or import of header here rather
-	# than to be performed separately? Or do like ida_with_struct script?
+	# than to be performed separately? Like ida_with_struct script?
 	# see also warnings in main ghidra console window
 	try: 
 		typeSig = CParserUtils.parseSignature(None, currentProgram, sig, False)
-	except ghidra.app.util.cparser.C.ParseException as e:
-		print("Error: Unable to parse")
+	except ghidra.app.util.cparser.C.ParseException:
+		# sig wasn't able to be parsed; it could be a parameter name
+		# that's reserved, an unidentified type, or something else
+		print("Warning: Unable to parse")
 		print(sig)
-		print("Last eval'd token: " + e.currentToken.toString())
-		print("Error message: " + e.getMessage())
-		print("Attempting to modify variable names...")
-		newSig = sig.replace(", ","ext, ").replace("\)","ext\)")
-		set_sig(addr,name,newSig)
-		return
-	if typeSig is None:
-		print("Unable to parse function " + name + " with signature '" + sig + "'")
-	else:
+		print("Attempting to modify...")
+		# try to fix by renaming the parameters
+		try:
+			newSig = sig.replace(", ","ext, ").replace("\)","ext\)")
+			typeSig = CParserUtils.parseSignature(None, currentProgram, newSig, False)
+		except:
+			print("Warning: also unable to parse")
+			print(newSig)
+			print("Skipping.")
+			return
+	if typeSig is not None:
 		typeSig.setName(name)
 		ApplyFunctionSignatureCmd(addr, typeSig, USER_DEFINED, False, True).applyTo(currentProgram)
 
 f = askFile("script.json from Il2cppdumper", "Open")
 data = json.loads(open(f.absolutePath, 'rb').read().decode('utf-8'))
- 
+
 if "ScriptMethod" in data and "ScriptMethod" in processFields:
 	scriptMethods = data["ScriptMethod"]
 	for scriptMethod in scriptMethods:

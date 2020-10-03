@@ -27,12 +27,24 @@ def set_type(addr, type):
 	# Requires types (il2cpp.h) to be imported first
 	newType = type.replace("*"," *").replace("  "," ").strip()
 	dataTypes = getDataTypes(newType)
+	addrType = None
 	if len(dataTypes) == 0:
-		print("Could not identify type " + type + "(parsed as '" + newType + "')")
+		if newType == newType[:-2] + " *":
+			baseType = newType[:-2]
+			dataTypes = getDataTypes(baseType)
+			if len(dataTypes) == 1:
+				dtm = currentProgram.getDataTypeManager()
+				pointerType = dtm.getPointer(dataTypes[0])
+				addrType = dtm.addDataType(pointerType, None)
 	elif len(dataTypes) > 1:
 		print("Conflicting data types found for type " + type + "(parsed as '" + newType + "')")
+		return
 	else:
-		createData(addr, dataTypes[0])
+		addrType = dataTypes[0]
+	if addrType is None:
+		print("Could not identify type " + type + "(parsed as '" + newType + "')")
+	else:
+		createData(addr, addrType)
 
 def make_function(start, end):
 	next_func_start = getFunctionAfter(start).getEntryPoint()

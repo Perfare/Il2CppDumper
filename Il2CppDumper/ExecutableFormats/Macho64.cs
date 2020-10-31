@@ -70,6 +70,10 @@ namespace Il2CppDumper
         public override ulong MapVATR(ulong uiAddr)
         {
             var section = sections.First(x => uiAddr >= x.addr && uiAddr <= x.end);
+            if (section.sectname == "__bss")
+            {
+                throw new Exception();
+            }
             return uiAddr - (section.addr - section.offset);
         }
 

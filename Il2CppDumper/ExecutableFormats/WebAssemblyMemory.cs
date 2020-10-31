@@ -33,9 +33,9 @@ namespace Il2CppDumper
             var bss = new SearchSection
             {
                 offset = Length,
-                offsetEnd = 1024 + 2159056, //STATICTOP
+                offsetEnd = long.MaxValue, //hack
                 address = Length,
-                addressEnd = 1024 + 2159056 //STATICTOP
+                addressEnd = long.MaxValue //hack
             };
             var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
             plusSearch.SetSection(SearchSectionType.Exec, exec);

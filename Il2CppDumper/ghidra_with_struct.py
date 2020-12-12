@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import json
 
+from ghidra.app.util.cparser.C import CParserUtils
+from ghidra.app.cmd.function import ApplyFunctionSignatureCmd
+
 processFields = [
 	"ScriptMethod",
 	"ScriptString",
@@ -20,10 +23,53 @@ def set_name(addr, name):
 	name = name.replace(' ', '-')
 	createLabel(addr, name, True, USER_DEFINED)
 
+def set_type(addr, type):
+	# Requires types (il2cpp.h) to be imported first
+	newType = type.replace("*"," *").replace("  "," ").strip()
+	dataTypes = getDataTypes(newType)
+	addrType = None
+	if len(dataTypes) == 0:
+		if newType == newType[:-2] + " *":
+			baseType = newType[:-2]
+			dataTypes = getDataTypes(baseType)
+			if len(dataTypes) == 1:
+				dtm = currentProgram.getDataTypeManager()
+				pointerType = dtm.getPointer(dataTypes[0])
+				addrType = dtm.addDataType(pointerType, None)
+	elif len(dataTypes) > 1:
+		print("Conflicting data types found for type " + type + "(parsed as '" + newType + "')")
+		return
+	else:
+		addrType = dataTypes[0]
+	if addrType is None:
+		print("Could not identify type " + type + "(parsed as '" + newType + "')")
+	else:
+		createData(addr, addrType)
+
 def make_function(start):
 	func = getFunctionAt(start)
 	if func is None:
 		createFunction(start, None)
+
+def set_sig(addr, name, sig):
+	try: 
+		typeSig = CParserUtils.parseSignature(None, currentProgram, sig, False)
+	except ghidra.app.util.cparser.C.ParseException:
+		print("Warning: Unable to parse")
+		print(sig)
+		print("Attempting to modify...")
+		# try to fix by renaming the parameters
+		try:
+			newSig = sig.replace(", ","ext, ").replace("\)","ext\)")
+			typeSig = CParserUtils.parseSignature(None, currentProgram, newSig, False)
+		except:
+			print("Warning: also unable to parse")
+			print(newSig)
+			print("Skipping.")
+			return
+	if typeSig is not None:
+		typeSig.setName(name)
+		ApplyFunctionSignatureCmd(addr, typeSig, USER_DEFINED, False, True).applyTo(currentProgram)
 
 f = askFile("script.json from Il2cppdumper", "Open")
 data = json.loads(open(f.absolutePath, 'rb').read().decode('utf-8'))
@@ -62,6 +108,8 @@ if "ScriptMetadata" in data and "ScriptMetadata" in processFields:
 		set_name(addr, name)
 		setEOLComment(addr, name)
 		monitor.incrementProgress(1)
+		if scriptMetadata["Signature"]:
+			set_type(addr, scriptMetadata["Signature"].encode("utf-8"))
 
 if "ScriptMetadataMethod" in data and "ScriptMetadataMethod" in processFields:
 	scriptMetadataMethods = data["ScriptMetadataMethod"]
@@ -83,5 +131,13 @@ if "Addresses" in data and "Addresses" in processFields:
 		start = get_addr(addresses[index])
 		make_function(start)
 		monitor.incrementProgress(1)
+
+if "ScriptMethod" in data and "ScriptMethod" in processFields:
+	scriptMethods = data["ScriptMethod"]
+	for scriptMethod in scriptMethods:
+		addr = get_addr(scriptMethod["Address"])
+		sig = scriptMethod["Signature"][:-1].encode("utf-8")
+		name = scriptMethod["Name"].encode("utf-8")
+		set_sig(addr, name, sig)
 
 print 'Script finished!'

@@ -20,18 +20,10 @@ def set_name(addr, name):
 	name = name.replace(' ', '-')
 	createLabel(addr, name, True, USER_DEFINED)
 
-def make_function(start, end):
-	next_func_start = getFunctionAfter(start).getEntryPoint()
-	if next_func_start < end:
-		end = next_func_start
-	body = createAddressSet()
-	body.addRange(start, end.subtract(1))
-	functionManager.deleteAddressRange(start, end.subtract(1), getMonitor())
+def make_function(start):
 	func = getFunctionAt(start)
 	if func is None:
-		functionManager.createFunction(None, start, body, USER_DEFINED)
-	else:
-		func.setBody(body)
+		createFunction(start, None)
 
 f = askFile("script.json from Il2cppdumper", "Open")
 data = json.loads(open(f.absolutePath, 'rb').read().decode('utf-8'))
@@ -89,8 +81,7 @@ if "Addresses" in data and "Addresses" in processFields:
 	monitor.setMessage("Addresses")
 	for index in range(len(addresses) - 1):
 		start = get_addr(addresses[index])
-		end = get_addr(addresses[index + 1])
-		make_function(start, end)
+		make_function(start)
 		monitor.incrementProgress(1)
 
 print 'Script finished!'

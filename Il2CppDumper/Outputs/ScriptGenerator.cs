@@ -25,6 +25,7 @@ namespace Il2CppDumper
         private List<ulong> genericClassList = new List<ulong>();
         private StringBuilder arrayClassHeader = new StringBuilder();
         private StringBuilder methodInfoHeader = new StringBuilder();
+        private static HashSet<ulong> methodInfoCache = new HashSet<ulong>();
         private static HashSet<string> keyword = new HashSet<string>(StringComparer.Ordinal)
         { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "near", "far", "flat", "default", "_ds", "interrupt", "inline",
             "unsigned", "signed", "asm", "if", "case", "break", "continue", "do", "new", "_", "short", "union"};
@@ -137,10 +138,13 @@ namespace Il2CppDumper
                                     var scriptMethod = new ScriptMethod();
                                     json.ScriptMethod.Add(scriptMethod);
                                     scriptMethod.Address = il2Cpp.GetRVA(genericMethodPointer);
-                                    var methodInfoName = $"MethodInfo_{scriptMethod.Address}";
+                                    var methodInfoName = $"MethodInfo_{scriptMethod.Address:X}";
                                     var structTypeName = structNameDic[typeDef];
                                     var rgctxs = GenerateRGCTX(imageName, methodDef);
-                                    GenerateMethodInfo(methodInfoName, structTypeName, rgctxs);
+                                    if (methodInfoCache.Add(genericMethodPointer))
+                                    {
+                                        GenerateMethodInfo(methodInfoName, structTypeName, rgctxs);
+                                    }
                                     (var methodSpecTypeName, var methodSpecMethodName) = executor.GetMethodSpecName(methodSpec, true);
                                     var methodFullName = methodSpecTypeName + "$$" + methodSpecMethodName;
                                     scriptMethod.Name = methodFullName;

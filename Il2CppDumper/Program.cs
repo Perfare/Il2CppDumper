@@ -233,10 +233,10 @@ namespace Il2CppDumper
             var decompiler = new Il2CppDecompiler(executor);
             decompiler.Decompile(config, outputDir);
             Console.WriteLine("Done!");
-            if (config.GenerateScript)
+            if (config.GenerateStruct)
             {
-                Console.WriteLine("Generate script...");
-                var scriptGenerator = new ScriptGenerator(executor);
+                Console.WriteLine("Generate struct...");
+                var scriptGenerator = new StructGenerator(executor);
                 scriptGenerator.WriteScript(outputDir);
                 Console.WriteLine("Done!");
             }

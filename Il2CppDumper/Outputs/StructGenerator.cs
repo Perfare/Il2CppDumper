@@ -9,7 +9,7 @@ using static Il2CppDumper.Il2CppConstants;
 
 namespace Il2CppDumper
 {
-    public class ScriptGenerator
+    public class StructGenerator
     {
         private Il2CppExecutor executor;
         private Metadata metadata;
@@ -30,7 +30,7 @@ namespace Il2CppDumper
         { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "near", "far", "flat", "default", "_ds", "interrupt", "inline",
             "unsigned", "signed", "asm", "if", "case", "break", "continue", "do", "new", "_", "short", "union"};
 
-        public ScriptGenerator(Il2CppExecutor il2CppExecutor)
+        public StructGenerator(Il2CppExecutor il2CppExecutor)
         {
             executor = il2CppExecutor;
             metadata = il2CppExecutor.metadata;

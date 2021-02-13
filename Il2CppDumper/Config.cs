@@ -10,7 +10,7 @@
         public bool DumpMethodOffset = true;
         public bool DumpTypeDefIndex = true;
         public bool GenerateDummyDll = true;
-        public bool GenerateScript = true;
+        public bool GenerateStruct = true;
         public bool RequireAnyKey = true;
         public bool ForceIl2CppVersion = false;
         public float ForceVersion = 24.3f;

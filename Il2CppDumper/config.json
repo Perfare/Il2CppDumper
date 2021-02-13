@@ -7,7 +7,7 @@
   "DumpMethodOffset": true,
   "DumpTypeDefIndex": true,
   "GenerateDummyDll": true,
-  "GenerateScript": true,
+  "GenerateStruct": true,
   "RequireAnyKey": true,
   "ForceIl2CppVersion": false,
   "ForceVersion": 16

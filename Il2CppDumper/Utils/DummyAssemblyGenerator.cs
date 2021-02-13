@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Mono.Cecil;
+﻿using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Il2CppDumper
 {
@@ -21,7 +20,7 @@ namespace Il2CppDumper
         private TypeReference stringType;
         private Dictionary<string, MethodDefinition> knownAttributes = new Dictionary<string, MethodDefinition>();
 
-        public DummyAssemblyGenerator(Il2CppExecutor il2CppExecutor)
+        public DummyAssemblyGenerator(Il2CppExecutor il2CppExecutor, bool addToken)
         {
             executor = il2CppExecutor;
             metadata = il2CppExecutor.metadata;
@@ -95,9 +94,12 @@ namespace Il2CppDumper
                 var typeDef = metadata.typeDefs[index];
                 var typeDefinition = typeDefinitionDic[typeDef];
 
-                var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
-                customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{typeDef.token:X}")));
-                typeDefinition.CustomAttributes.Add(customTokenAttribute);
+                if (addToken)
+                {
+                    var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
+                    customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{typeDef.token:X}")));
+                    typeDefinition.CustomAttributes.Add(customTokenAttribute);
+                }
 
                 //genericParameter
                 if (typeDef.genericContainerIndex >= 0)
@@ -150,9 +152,12 @@ namespace Il2CppDumper
                         typeDefinition.Fields.Add(fieldDefinition);
                         fieldDefinitionDic.Add(i, fieldDefinition);
 
-                        var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
-                        customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{fieldDef.token:X}")));
-                        fieldDefinition.CustomAttributes.Add(customTokenAttribute);
+                        if (addToken)
+                        {
+                            var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
+                            customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{fieldDef.token:X}")));
+                            fieldDefinition.CustomAttributes.Add(customTokenAttribute);
+                        }
 
                         //fieldDefault
                         if (metadata.GetFieldDefaultValueFromIndex(i, out var fieldDefault) && fieldDefault.dataIndex != -1)
@@ -207,9 +212,12 @@ namespace Il2CppDumper
                         var returnType = GetTypeReferenceWithByRef(methodDefinition, methodReturnType);
                         methodDefinition.ReturnType = returnType;
 
-                        var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
-                        customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{methodDef.token:X}")));
-                        methodDefinition.CustomAttributes.Add(customTokenAttribute);
+                        if (addToken)
+                        {
+                            var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
+                            customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{methodDef.token:X}")));
+                            methodDefinition.CustomAttributes.Add(customTokenAttribute);
+                        }
 
                         if (methodDefinition.HasBody && typeDefinition.BaseType?.FullName != "System.MulticastDelegate")
                         {
@@ -308,9 +316,12 @@ namespace Il2CppDumper
                         typeDefinition.Properties.Add(propertyDefinition);
                         propertyDefinitionDic.Add(i, propertyDefinition);
 
-                        var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
-                        customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{propertyDef.token:X}")));
-                        propertyDefinition.CustomAttributes.Add(customTokenAttribute);
+                        if (addToken)
+                        {
+                            var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
+                            customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{propertyDef.token:X}")));
+                            propertyDefinition.CustomAttributes.Add(customTokenAttribute);
+                        }
                     }
                     //event
                     var eventEnd = typeDef.eventStart + typeDef.event_count;
@@ -330,9 +341,12 @@ namespace Il2CppDumper
                         typeDefinition.Events.Add(eventDefinition);
                         eventDefinitionDic.Add(i, eventDefinition);
 
-                        var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
-                        customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{eventDef.token:X}")));
-                        eventDefinition.CustomAttributes.Add(customTokenAttribute);
+                        if (addToken)
+                        {
+                            var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
+                            customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{eventDef.token:X}")));
+                            eventDefinition.CustomAttributes.Add(customTokenAttribute);
+                        }
                     }
                 }
             }

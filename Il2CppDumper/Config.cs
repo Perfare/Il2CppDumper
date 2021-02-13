@@ -11,6 +11,7 @@
         public bool DumpTypeDefIndex = true;
         public bool GenerateDummyDll = true;
         public bool GenerateStruct = true;
+        public bool DummyDllAddToken = true;
         public bool RequireAnyKey = true;
         public bool ForceIl2CppVersion = false;
         public float ForceVersion = 24.3f;

@@ -618,14 +618,21 @@ namespace Il2CppDumper
                 {
                     methodDef = metadata.methodDefs[index];
                 }
-                dic[methodDef.slot] = methodDef;
+                if (methodDef.slot != ushort.MaxValue)
+                {
+                    dic[methodDef.slot] = methodDef;
+                }
             }
-            foreach (var i in dic)
+            if (typeDef.vtable_count > 0)
             {
-                var methodInfo = new StructVTableMethodInfo();
-                structInfo.VTableMethod.Add(methodInfo);
-                var methodDef = i.Value;
-                methodInfo.MethodName = $"_{methodDef.slot}_{FixName(metadata.GetStringFromIndex(methodDef.nameIndex))}";
+                structInfo.VTableMethod = new StructVTableMethodInfo[dic.Last().Key + 1];
+                foreach (var i in dic)
+                {
+                    var methodInfo = new StructVTableMethodInfo();
+                    structInfo.VTableMethod[i.Key] = methodInfo;
+                    var methodDef = i.Value;
+                    methodInfo.MethodName = $"{FixName(metadata.GetStringFromIndex(methodDef.nameIndex))}";
+                }
             }
         }
 
@@ -842,9 +849,19 @@ namespace Il2CppDumper
             sb.Append("};\n");
 
             sb.Append($"struct {info.TypeName}_VTable {{\n");
-            foreach (var method in info.VTableMethod)
+            for (int i = 0; i < info.VTableMethod.Length; i++)
             {
-                sb.Append($"\tVirtualInvokeData {method.MethodName};\n");
+                sb.Append($"\tVirtualInvokeData _{i}_");
+                var method = info.VTableMethod[i];
+                if (method != null)
+                {
+                    sb.Append(method.MethodName);
+                }
+                else
+                {
+                    sb.Append("unknown");
+                }
+                sb.Append(";\n");
             }
             sb.Append("};\n");
 

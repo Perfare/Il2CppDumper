@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Il2CppDumper
 {
@@ -9,7 +10,7 @@ namespace Il2CppDumper
         public string Parent;
         public List<StructFieldInfo> Fields = new List<StructFieldInfo>();
         public List<StructFieldInfo> StaticFields = new List<StructFieldInfo>();
-        public List<StructVTableMethodInfo> VTableMethod = new List<StructVTableMethodInfo>();
+        public StructVTableMethodInfo[] VTableMethod = Array.Empty<StructVTableMethodInfo>();
         public List<StructRGCTXInfo> RGCTXs = new List<StructRGCTXInfo>();
     }
 

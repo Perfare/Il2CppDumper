@@ -33,7 +33,7 @@ namespace Il2CppDumper
 
         public abstract ulong MapVATR(ulong uiAddr);
         public abstract bool Search();
-        public abstract bool PlusSearch(int methodCount, int typeDefinitionsCount);
+        public abstract bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount);
         public abstract bool SymbolSearch();
 
         protected Il2Cpp(Stream stream) : base(stream) { }
@@ -74,6 +74,16 @@ namespace Il2CppDumper
         public virtual void Init(ulong codeRegistration, ulong metadataRegistration)
         {
             pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
+            if (Version == 27f)
+            {
+                if (pCodeRegistration.reversePInvokeWrapperCount > 0x30000) //TODO
+                {
+                    Version = 27.1f;
+                    codeRegistration -= PointerSize;
+                    Console.WriteLine($"Change il2cpp version to: {Version}");
+                    pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
+                }
+            }
             if (Version == 24.2f)
             {
                 if (pCodeRegistration.codeGenModules == 0) //TODO

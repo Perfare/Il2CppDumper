@@ -78,7 +78,7 @@ namespace Il2CppDumper
             return false;
         }
 
-        public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
+        public override bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount)
         {
             var dataList = new List<Elf64_Phdr>();
             var execList = new List<Elf64_Phdr>();
@@ -104,7 +104,7 @@ namespace Il2CppDumper
             }
             var data = dataList.ToArray();
             var exec = execList.ToArray();
-            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages, imageCount);
             plusSearch.SetSection(SearchSectionType.Exec, exec);
             plusSearch.SetSection(SearchSectionType.Data, data);
             plusSearch.SetSection(SearchSectionType.Bss, data);

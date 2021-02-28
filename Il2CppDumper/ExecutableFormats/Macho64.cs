@@ -223,13 +223,13 @@ namespace Il2CppDumper
             return false;
         }
 
-        public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
+        public override bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount)
         {
             var data = sections.Where(x => x.sectname == "__const" || x.sectname == "__cstring" || x.sectname == "__data").ToArray();
             var code = sections.Where(x => x.flags == 0x80000400).ToArray();
             var bss = sections.Where(x => x.flags == 1u).ToArray();
 
-            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages, imageCount);
             plusSearch.SetSection(SearchSectionType.Exec, code);
             plusSearch.SetSection(SearchSectionType.Data, data);
             plusSearch.SetSection(SearchSectionType.Bss, bss);

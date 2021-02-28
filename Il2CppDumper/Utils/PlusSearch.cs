@@ -10,16 +10,18 @@ namespace Il2CppDumper
         private int methodCount;
         private int typeDefinitionsCount;
         private long maxMetadataUsages;
+        private int imageCount;
         private List<SearchSection> exec;
         private List<SearchSection> data;
         private List<SearchSection> bss;
 
-        public PlusSearch(Il2Cpp il2Cpp, int methodCount, int typeDefinitionsCount, long maxMetadataUsages)
+        public PlusSearch(Il2Cpp il2Cpp, int methodCount, int typeDefinitionsCount, long maxMetadataUsages, int imageCount)
         {
             this.il2Cpp = il2Cpp;
             this.methodCount = methodCount;
             this.typeDefinitionsCount = typeDefinitionsCount;
             this.maxMetadataUsages = maxMetadataUsages;
+            this.imageCount = imageCount;
         }
 
         public void SetSection(SearchSectionType type, Elf32_Phdr[] sections)
@@ -309,12 +311,10 @@ namespace Il2CppDumper
             return pointers.All(x => bss.Any(y => x >= y.address && x <= y.addressEnd));
         }
 
-        private static readonly byte[] featureBytes2019 = { 0x6D, 0x73, 0x63, 0x6F, 0x72, 0x6C, 0x69, 0x62, 0x2E, 0x64, 0x6C, 0x6C, 0x00 };
-        private static readonly byte[] featureBytes2020dot2 = { 0x41, 0x73, 0x73, 0x65, 0x6D, 0x62, 0x6C, 0x79, 0x2D, 0x43, 0x53, 0x68, 0x61, 0x72, 0x70, 0x2E, 0x64, 0x6C, 0x6C, 0x00 };
+        private static readonly byte[] featureBytes = { 0x6D, 0x73, 0x63, 0x6F, 0x72, 0x6C, 0x69, 0x62, 0x2E, 0x64, 0x6C, 0x6C, 0x00 }; //mscorlib.dll
 
         private ulong FindCodeRegistration2019()
         {
-            var featureBytes = il2Cpp.Version >= 27 ? featureBytes2020dot2 : featureBytes2019;
             var secs = data;
             if (il2Cpp is ElfBase)
             {
@@ -327,45 +327,38 @@ namespace Il2CppDumper
                 foreach (var index in buff.Search(featureBytes))
                 {
                     var va = (ulong)index + sec.address;
-                    foreach (var dataSec in data)
+                    va = FindReference(va);
+                    if (va != 0ul)
                     {
-                        il2Cpp.Position = dataSec.offset;
-                        while (il2Cpp.Position < dataSec.offsetEnd)
+                        va = FindReference(va);
+                        if (va != 0ul)
                         {
-                            var offset = il2Cpp.Position;
-                            if (il2Cpp.ReadUIntPtr() == va)
+                            for (int i = 0; i < imageCount; i++)
                             {
-                                var va2 = offset - dataSec.offset + dataSec.address;
-                                foreach (var dataSec2 in data)
+                                var va2 = FindReference(va - (ulong)i * il2Cpp.PointerSize);
+                                if (va2 != 0ul)
                                 {
-                                    il2Cpp.Position = dataSec2.offset;
-                                    while (il2Cpp.Position < dataSec2.offsetEnd)
-                                    {
-                                        var offset2 = il2Cpp.Position;
-                                        if (il2Cpp.ReadUIntPtr() == va2)
-                                        {
-                                            var va3 = offset2 - dataSec2.offset + dataSec2.address;
-                                            foreach (var dataSec3 in data)
-                                            {
-                                                il2Cpp.Position = dataSec3.offset;
-                                                while (il2Cpp.Position < dataSec3.offsetEnd)
-                                                {
-                                                    var offset3 = il2Cpp.Position;
-                                                    if (il2Cpp.ReadUIntPtr() == va3)
-                                                    {
-                                                        var offset4 = offset3 - dataSec3.offset + dataSec3.address;
-                                                        return offset4 - il2Cpp.PointerSize * 13;
-                                                    }
-                                                }
-                                            }
-
-                                        }
-                                        il2Cpp.Position = offset2 + il2Cpp.PointerSize;
-                                    }
+                                    return va2 - il2Cpp.PointerSize * 13;
                                 }
                             }
-                            il2Cpp.Position = offset + il2Cpp.PointerSize;
                         }
+                    }
+                }
+            }
+            return 0ul;
+        }
+
+        private ulong FindReference(ulong addr)
+        {
+            foreach (var dataSec in data)
+            {
+                il2Cpp.Position = dataSec.offset;
+                while (il2Cpp.Position < dataSec.offsetEnd)
+                {
+                    var offset = il2Cpp.Position;
+                    if (il2Cpp.ReadUIntPtr() == addr)
+                    {
+                        return offset - dataSec.offset + dataSec.address; ;
                     }
                 }
             }

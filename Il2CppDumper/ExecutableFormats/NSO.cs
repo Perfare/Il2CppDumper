@@ -101,9 +101,9 @@ namespace Il2CppDumper
             return false;
         }
 
-        public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
+        public override bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount)
         {
-            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages, imageCount);
             plusSearch.SetSection(SearchSectionType.Exec, header.TextSegment);
             plusSearch.SetSection(SearchSectionType.Data, header.DataSegment, header.RoDataSegment);
             plusSearch.SetSection(SearchSectionType.Bss, header.BssSegment);

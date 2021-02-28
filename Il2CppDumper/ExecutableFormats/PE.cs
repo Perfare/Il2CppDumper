@@ -72,7 +72,7 @@ namespace Il2CppDumper
             return false;
         }
 
-        public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
+        public override bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount)
         {
             var execList = new List<SectionHeader>();
             var dataList = new List<SectionHeader>();
@@ -89,7 +89,7 @@ namespace Il2CppDumper
                         break;
                 }
             }
-            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages, imageCount);
             var data = dataList.ToArray();
             var exec = execList.ToArray();
             plusSearch.SetSection(SearchSectionType.Exec, imageBase, exec);

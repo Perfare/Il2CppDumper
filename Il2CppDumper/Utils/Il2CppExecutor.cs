@@ -234,7 +234,7 @@ namespace Il2CppDumper
         public Il2CppRGCTXDefinition[] GetRGCTXDefinition(string imageName, Il2CppTypeDefinition typeDef)
         {
             Il2CppRGCTXDefinition[] collection = null;
-            if (il2Cpp.Version >= 24.2f)
+            if (il2Cpp.Version >= 24.2)
             {
                 il2Cpp.rgctxsDictionary[imageName].TryGetValue(typeDef.token, out collection);
             }
@@ -252,7 +252,7 @@ namespace Il2CppDumper
         public Il2CppRGCTXDefinition[] GetRGCTXDefinition(string imageName, Il2CppMethodDefinition methodDef)
         {
             Il2CppRGCTXDefinition[] collection = null;
-            if (il2Cpp.Version >= 24.2f)
+            if (il2Cpp.Version >= 24.2)
             {
                 il2Cpp.rgctxsDictionary[imageName].TryGetValue(methodDef.token, out collection);
             }

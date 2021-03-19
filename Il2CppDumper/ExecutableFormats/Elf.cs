@@ -106,7 +106,7 @@ namespace Il2CppDumper
                 uint codeRegistration = 0;
                 uint metadataRegistration = 0;
                 var result = (uint)resultList[0];
-                if (Version < 24f)
+                if (Version < 24)
                 {
                     if (elfHeader.e_machine == EM_ARM)
                     {
@@ -118,7 +118,7 @@ namespace Il2CppDumper
                         metadataRegistration = ReadUInt32();
                     }
                 }
-                else if (Version >= 24f)
+                else if (Version >= 24)
                 {
                     if (elfHeader.e_machine == EM_ARM)
                     {

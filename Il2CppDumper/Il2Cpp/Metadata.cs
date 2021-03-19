@@ -56,7 +56,7 @@ namespace Il2CppDumper
             {
                 if (header.stringLiteralOffset == 264)
                 {
-                    Version = 24.2f;
+                    Version = 24.2;
                     header = ReadClass<Il2CppGlobalMetadataHeader>(0);
                 }
                 else
@@ -64,7 +64,7 @@ namespace Il2CppDumper
                     imageDefs = ReadMetadataClassArray<Il2CppImageDefinition>(header.imagesOffset, header.imagesCount);
                     if (imageDefs.Any(x => x.token != 1))
                     {
-                        Version = 24.1f;
+                        Version = 24.1;
                     }
                 }
             }
@@ -114,7 +114,7 @@ namespace Il2CppDumper
                     }
                 }
             }
-            if (Version <= 24.1f)
+            if (Version <= 24.1)
             {
                 rgctxEntries = ReadMetadataClassArray<Il2CppRGCTXDefinition>(header.rgctxEntriesOffset, header.rgctxEntriesCount);
             }

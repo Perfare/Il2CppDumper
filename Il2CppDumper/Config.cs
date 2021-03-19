@@ -14,6 +14,6 @@
         public bool DummyDllAddToken = true;
         public bool RequireAnyKey = true;
         public bool ForceIl2CppVersion = false;
-        public float ForceVersion = 24.3f;
+        public double ForceVersion = 24.3;
     }
 }

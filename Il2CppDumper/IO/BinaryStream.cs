@@ -9,7 +9,7 @@ namespace Il2CppDumper
 {
     public class BinaryStream : IDisposable
     {
-        public float Version;
+        public double Version;
         public bool Is32Bit;
         private Stream stream;
         private BinaryReader reader;

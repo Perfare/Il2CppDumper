@@ -46,21 +46,21 @@ namespace Il2CppDumper
         public int interfaceOffsetsCount;
         public uint typeDefinitionsOffset; // Il2CppTypeDefinition
         public int typeDefinitionsCount;
-        [Version(Max = 24.1f)]
+        [Version(Max = 24.1)]
         public uint rgctxEntriesOffset; // Il2CppRGCTXDefinition
-        [Version(Max = 24.1f)]
+        [Version(Max = 24.1)]
         public int rgctxEntriesCount;
         public uint imagesOffset; // Il2CppImageDefinition
         public int imagesCount;
         public int assembliesOffset; // Il2CppAssemblyDefinition
         public int assembliesCount;
-        [Version(Min = 19, Max = 24.4f)]
+        [Version(Min = 19, Max = 24.4)]
         public uint metadataUsageListsOffset; // Il2CppMetadataUsageList
-        [Version(Min = 19, Max = 24.4f)]
+        [Version(Min = 19, Max = 24.4)]
         public int metadataUsageListsCount;
-        [Version(Min = 19, Max = 24.4f)]
+        [Version(Min = 19, Max = 24.4)]
         public uint metadataUsagePairsOffset; // Il2CppMetadataUsagePair
-        [Version(Min = 19, Max = 24.4f)]
+        [Version(Min = 19, Max = 24.4)]
         public int metadataUsagePairsCount;
         [Version(Min = 19)]
         public uint fieldRefsOffset; // Il2CppFieldRef
@@ -117,9 +117,9 @@ namespace Il2CppDumper
         [Version(Min = 19)]
         public uint token;
 
-        [Version(Min = 24.1f)]
+        [Version(Min = 24.1)]
         public int customAttributeStart;
-        [Version(Min = 24.1f)]
+        [Version(Min = 24.1)]
         public uint customAttributeCount;
     }
 
@@ -130,16 +130,16 @@ namespace Il2CppDumper
         [Version(Max = 24)]
         public int customAttributeIndex;
         public int byvalTypeIndex;
-        [Version(Max = 24.4f)]
+        [Version(Max = 24.4)]
         public int byrefTypeIndex;
 
         public int declaringTypeIndex;
         public int parentIndex;
         public int elementTypeIndex; // we can probably remove this one. Only used for enums
 
-        [Version(Max = 24.1f)]
+        [Version(Max = 24.1)]
         public int rgctxStartIndex;
-        [Version(Max = 24.1f)]
+        [Version(Max = 24.1)]
         public int rgctxCount;
 
         public int genericContainerIndex;
@@ -201,15 +201,15 @@ namespace Il2CppDumper
         [Version(Max = 24)]
         public int customAttributeIndex;
         public int genericContainerIndex;
-        [Version(Max = 24.1f)]
+        [Version(Max = 24.1)]
         public int methodIndex;
-        [Version(Max = 24.1f)]
+        [Version(Max = 24.1)]
         public int invokerIndex;
-        [Version(Max = 24.1f)]
+        [Version(Max = 24.1)]
         public int delegateWrapperIndex;
-        [Version(Max = 24.1f)]
+        [Version(Max = 24.1)]
         public int rgctxStartIndex;
-        [Version(Max = 24.1f)]
+        [Version(Max = 24.1)]
         public int rgctxCount;
         public uint token;
         public ushort flags;
@@ -258,7 +258,7 @@ namespace Il2CppDumper
 
     public class Il2CppCustomAttributeTypeRange
     {
-        [Version(Min = 24.1f)]
+        [Version(Min = 24.1)]
         public uint token;
         public int start;
         public int count;

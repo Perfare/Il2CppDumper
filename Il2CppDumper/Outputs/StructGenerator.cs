@@ -106,7 +106,7 @@ namespace Il2CppDumper
                                 var thisType = ParseType(il2Cpp.types[typeDef.byvalTypeIndex]);
                                 parameterStrs.Add($"{thisType} __this");
                             }
-                            else if (il2Cpp.Version <= 24f)
+                            else if (il2Cpp.Version <= 24)
                             {
                                 parameterStrs.Add($"Il2CppObject* __this");
                             }
@@ -183,7 +183,7 @@ namespace Il2CppDumper
                                         }
                                         parameterStrs.Add($"{thisType} __this");
                                     }
-                                    else if (il2Cpp.Version <= 24f)
+                                    else if (il2Cpp.Version <= 24)
                                     {
                                         parameterStrs.Add($"Il2CppObject* __this");
                                     }
@@ -298,7 +298,7 @@ namespace Il2CppDumper
                 }
             }
             List<ulong> orderedPointers;
-            if (il2Cpp.Version >= 24.2f)
+            if (il2Cpp.Version >= 24.2)
             {
                 orderedPointers = new List<ulong>();
                 foreach (var pair in il2Cpp.codeGenModuleMethodPointers)
@@ -348,23 +348,23 @@ namespace Il2CppDumper
             sb.Append(HeaderConstants.GenericHeader);
             switch (il2Cpp.Version)
             {
-                case 22f:
+                case 22:
                     sb.Append(HeaderConstants.HeaderV22);
                     break;
-                case 23f:
-                case 24f:
+                case 23:
+                case 24:
                     sb.Append(HeaderConstants.HeaderV240);
                     break;
-                case 24.1f:
+                case 24.1:
                     sb.Append(HeaderConstants.HeaderV241);
                     break;
-                case 24.2f:
-                case 24.3f:
-                case 24.4f: //TODO
+                case 24.2:
+                case 24.3:
+                case 24.4: //TODO
                     sb.Append(HeaderConstants.HeaderV242);
                     break;
-                case 27f:
-                case 27.1f: //TODO
+                case 27:
+                case 27.1: //TODO
                     sb.Append(HeaderConstants.HeaderV27);
                     break;
                 default:
@@ -1142,7 +1142,7 @@ namespace Il2CppDumper
             methodInfoHeader.Append($"\tIl2CppMethodPointer methodPointer;\n");
             methodInfoHeader.Append($"\tvoid* invoker_method;\n");
             methodInfoHeader.Append($"\tconst char* name;\n");
-            if (il2Cpp.Version <= 24f)
+            if (il2Cpp.Version <= 24)
             {
                 methodInfoHeader.Append($"\t{structTypeName}_c *declaring_type;\n");
             }
@@ -1165,7 +1165,7 @@ namespace Il2CppDumper
             methodInfoHeader.Append($"\t\tconst void* genericMethod;\n");
             methodInfoHeader.Append($"\t\tconst void* genericContainer;\n");
             methodInfoHeader.Append($"\t}};\n");
-            if (il2Cpp.Version <= 24f)
+            if (il2Cpp.Version <= 24)
             {
                 methodInfoHeader.Append($"\tint32_t customAttributeIndex;\n");
             }

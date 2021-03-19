@@ -89,16 +89,23 @@ namespace Il2CppDumper
                 ShowHelp();
                 return;
             }
-            try
+            if (metadataPath == null)
             {
-                if (Init(il2cppPath, metadataPath, out var metadata, out var il2Cpp))
-                {
-                    Dump(metadata, il2Cpp, outputDir);
-                }
+                Console.WriteLine($"ERROR: Metadata file not found or encrypted.");
             }
-            catch (Exception e)
+            else
             {
-                Console.WriteLine(e);
+                try
+                {
+                    if (Init(il2cppPath, metadataPath, out var metadata, out var il2Cpp))
+                    {
+                        Dump(metadata, il2Cpp, outputDir);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
             }
             if (config.RequireAnyKey)
             {

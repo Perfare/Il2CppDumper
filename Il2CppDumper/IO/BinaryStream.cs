@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -16,7 +17,7 @@ namespace Il2CppDumper
         private MethodInfo readClass;
         private MethodInfo readClassArray;
         private Dictionary<Type, MethodInfo> genericMethodCache = new Dictionary<Type, MethodInfo>();
-        private Dictionary<FieldInfo, VersionAttribute> attributeCache = new Dictionary<FieldInfo, VersionAttribute>();
+        private Dictionary<FieldInfo, VersionAttribute[]> attributeCache = new Dictionary<FieldInfo, VersionAttribute[]>();
 
         public BinaryStream(Stream input)
         {
@@ -146,18 +147,29 @@ namespace Il2CppDumper
                 var t = new T();
                 foreach (var i in t.GetType().GetFields())
                 {
-                    if (!attributeCache.TryGetValue(i, out var versionAttribute))
+                    if (!attributeCache.TryGetValue(i, out var versionAttributes))
                     {
                         if (Attribute.IsDefined(i, typeof(VersionAttribute)))
                         {
-                            versionAttribute = i.GetCustomAttribute<VersionAttribute>();
-                            attributeCache.Add(i, versionAttribute);
+                            versionAttributes = i.GetCustomAttributes<VersionAttribute>().ToArray();
+                            attributeCache.Add(i, versionAttributes);
                         }
                     }
-                    if (versionAttribute != null)
+                    if (versionAttributes?.Length > 0)
                     {
-                        if (Version < versionAttribute.Min || Version > versionAttribute.Max)
+                        var read = false;
+                        foreach (var versionAttribute in versionAttributes)
+                        {
+                            if (Version >= versionAttribute.Min && Version <= versionAttribute.Max)
+                            {
+                                read = true;
+                                break;
+                            }
+                        }
+                        if (!read)
+                        {
                             continue;
+                        }
                     }
                     var fieldType = i.FieldType;
                     if (fieldType.IsPrimitive)

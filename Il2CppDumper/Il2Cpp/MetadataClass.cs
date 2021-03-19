@@ -54,13 +54,13 @@ namespace Il2CppDumper
         public int imagesCount;
         public int assembliesOffset; // Il2CppAssemblyDefinition
         public int assembliesCount;
-        [Version(Min = 19, Max = 24.3f)]
+        [Version(Min = 19, Max = 24.4f)]
         public uint metadataUsageListsOffset; // Il2CppMetadataUsageList
-        [Version(Min = 19, Max = 24.3f)]
+        [Version(Min = 19, Max = 24.4f)]
         public int metadataUsageListsCount;
-        [Version(Min = 19, Max = 24.3f)]
+        [Version(Min = 19, Max = 24.4f)]
         public uint metadataUsagePairsOffset; // Il2CppMetadataUsagePair
-        [Version(Min = 19, Max = 24.3f)]
+        [Version(Min = 19, Max = 24.4f)]
         public int metadataUsagePairsCount;
         [Version(Min = 19)]
         public uint fieldRefsOffset; // Il2CppFieldRef
@@ -130,7 +130,7 @@ namespace Il2CppDumper
         [Version(Max = 24)]
         public int customAttributeIndex;
         public int byvalTypeIndex;
-        [Version(Max = 24.3f)]
+        [Version(Max = 24.4f)]
         public int byrefTypeIndex;
 
         public int declaringTypeIndex;

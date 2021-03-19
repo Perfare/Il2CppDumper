@@ -51,14 +51,23 @@ namespace Il2CppDumper
                 if (Version == 24.2f)
                 {
                     pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
-                    pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
-                    genericMethodTable = MapVATR<Il2CppGenericMethodFunctionsDefinitions>(pMetadataRegistration.genericMethodTable, pMetadataRegistration.genericMethodTableCount);
-                    var genericMethodPointersCount = genericMethodTable.Max(x => x.indices.methodIndex) + 1;
-                    if (pCodeRegistration.reversePInvokeWrapperCount == genericMethodPointersCount)
+                    if (pCodeRegistration.reversePInvokeWrapperCount > 0x30000) //TODO
                     {
-                        Version = 24.3f;
-                        codeRegistration -= Is32Bit ? 8u : 16u;
+                        Version = 24.4f;
+                        codeRegistration -= PointerSize * 3;
                         Console.WriteLine($"Change il2cpp version to: {Version}");
+                    }
+                    else
+                    {
+                        pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
+                        genericMethodTable = MapVATR<Il2CppGenericMethodFunctionsDefinitions>(pMetadataRegistration.genericMethodTable, pMetadataRegistration.genericMethodTableCount);
+                        var genericMethodPointersCount = genericMethodTable.Max(x => x.indices.methodIndex) + 1;
+                        if (pCodeRegistration.reversePInvokeWrapperCount == genericMethodPointersCount)
+                        {
+                            Version = 24.3f;
+                            codeRegistration -= Is32Bit ? 8u : 16u;
+                            Console.WriteLine($"Change il2cpp version to: {Version}");
+                        }
                     }
                 }
                 Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
@@ -81,16 +90,28 @@ namespace Il2CppDumper
                     Version = 27.1f;
                     codeRegistration -= PointerSize;
                     Console.WriteLine($"Change il2cpp version to: {Version}");
+                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                     pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
                 }
             }
             if (Version == 24.2f)
             {
-                if (pCodeRegistration.codeGenModules == 0) //TODO
+                if (pCodeRegistration.reversePInvokeWrapperCount > 0x30000) //TODO
                 {
-                    Version = 24.3f;
+                    Version = 24.4f;
+                    codeRegistration -= PointerSize * 3;
                     Console.WriteLine($"Change il2cpp version to: {Version}");
+                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
                     pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
+                }
+                else
+                {
+                    if (pCodeRegistration.codeGenModules == 0) //TODO
+                    {
+                        Version = 24.3f;
+                        Console.WriteLine($"Change il2cpp version to: {Version}");
+                        pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
+                    }
                 }
             }
             pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);

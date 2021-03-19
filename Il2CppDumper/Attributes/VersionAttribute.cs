@@ -2,7 +2,7 @@
 
 namespace Il2CppDumper
 {
-    [AttributeUsage(AttributeTargets.Field)]
+    [AttributeUsage(AttributeTargets.Field, AllowMultiple = true)]
     class VersionAttribute : Attribute
     {
         public float Min { get; set; } = 0;

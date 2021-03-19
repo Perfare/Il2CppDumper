@@ -358,7 +358,7 @@ namespace Il2CppDumper
                     var offset = il2Cpp.Position;
                     if (il2Cpp.ReadUIntPtr() == addr)
                     {
-                        return offset - dataSec.offset + dataSec.address; ;
+                        return offset - dataSec.offset + dataSec.address;
                     }
                 }
             }

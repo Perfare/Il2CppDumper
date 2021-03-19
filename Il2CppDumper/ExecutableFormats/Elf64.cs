@@ -59,7 +59,7 @@ namespace Il2CppDumper
                 {
                     return false;
                 }
-                return true; ;
+                return true;
             }
             catch
             {

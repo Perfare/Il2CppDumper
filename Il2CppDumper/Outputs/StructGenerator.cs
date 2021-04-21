@@ -475,10 +475,13 @@ namespace Il2CppDumper
             scriptMetadataMethod.Address = il2Cpp.GetRVA(address);
             (var methodSpecTypeName, var methodSpecMethodName) = executor.GetMethodSpecName(methodSpec, true);
             scriptMetadataMethod.Name = "Method$" + methodSpecTypeName + "." + methodSpecMethodName + "()";
-            var genericMethodPointer = il2Cpp.methodSpecGenericMethodPointers[methodSpec];
-            if (genericMethodPointer > 0)
+            if (il2Cpp.methodSpecGenericMethodPointers.ContainsKey(methodSpec))
             {
-                scriptMetadataMethod.MethodAddress = il2Cpp.GetRVA(genericMethodPointer);
+                var genericMethodPointer = il2Cpp.methodSpecGenericMethodPointers[methodSpec];
+                if (genericMethodPointer > 0)
+                {
+                    scriptMetadataMethod.MethodAddress = il2Cpp.GetRVA(genericMethodPointer);
+                }
             }
         }
 

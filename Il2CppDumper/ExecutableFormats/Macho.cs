@@ -51,7 +51,6 @@ namespace Il2CppDumper
                             section.offset = ReadUInt32();
                             Position += 12; //skip align, reloff, nreloc
                             section.flags = ReadUInt32();
-                            section.end = section.addr + section.size;
                             Position += 8; //skip reserved1, reserved2
                         }
                         break;
@@ -75,10 +74,16 @@ namespace Il2CppDumper
             customAttributeGenerators = customAttributeGenerators.Select(x => x - 1).ToArray();
         }
 
-        public override ulong MapVATR(ulong uiAddr)
+        public override ulong MapVATR(ulong addr)
         {
-            var section = sections.First(x => uiAddr >= x.addr && uiAddr <= x.end);
-            return uiAddr - (section.addr - section.offset);
+            var section = sections.First(x => addr >= x.addr && addr <= x.addr + x.size);
+            return addr - section.addr + section.offset;
+        }
+
+        public override ulong MapRTVA(ulong addr)
+        {
+            var section = sections.First(x => addr >= x.offset && addr <= x.offset + x.size);
+            return addr - section.offset + section.addr;
         }
 
         public override bool Search()

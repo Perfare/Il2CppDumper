@@ -96,6 +96,12 @@ namespace Il2CppDumper
             return addr - segment.MemoryOffset + segment.FileOffset;
         }
 
+        public override ulong MapRTVA(ulong addr)
+        {
+            var segment = segments.First(x => addr >= x.FileOffset && addr <= x.FileOffset + x.DecompressedSize);
+            return addr - segment.FileOffset + segment.MemoryOffset;
+        }
+
         public override bool Search()
         {
             return false;

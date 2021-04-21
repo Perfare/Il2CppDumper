@@ -350,4 +350,15 @@ namespace Il2CppDumper
         public Il2CppRGCTXDataType type;
         public Il2CppRGCTXDefinitionData data;
     }
+
+    public enum Il2CppMetadataUsage
+    {
+        kIl2CppMetadataUsageInvalid,
+        kIl2CppMetadataUsageTypeInfo,
+        kIl2CppMetadataUsageIl2CppType,
+        kIl2CppMetadataUsageMethodDef,
+        kIl2CppMetadataUsageFieldInfo,
+        kIl2CppMetadataUsageStringLiteral,
+        kIl2CppMetadataUsageMethodRef,
+    };
 }

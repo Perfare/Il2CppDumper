@@ -19,12 +19,12 @@ namespace Il2CppDumper
         public Il2CppPropertyDefinition[] propertyDefs;
         public Il2CppCustomAttributeTypeRange[] attributeTypeRanges;
         private Dictionary<Il2CppImageDefinition, Dictionary<uint, int>> attributeTypeRangesDic;
-        private Il2CppStringLiteral[] stringLiterals;
+        public Il2CppStringLiteral[] stringLiterals;
         private Il2CppMetadataUsageList[] metadataUsageLists;
         private Il2CppMetadataUsagePair[] metadataUsagePairs;
         public int[] attributeTypes;
         public int[] interfaceIndices;
-        public Dictionary<uint, SortedDictionary<uint, uint>> metadataUsageDic;
+        public Dictionary<Il2CppMetadataUsage, SortedDictionary<uint, uint>> metadataUsageDic;
         public long maxMetadataUsages;
         public int[] nestedTypeIndices;
         public Il2CppEventDefinition[] eventDefs;
@@ -85,15 +85,17 @@ namespace Il2CppDumper
             genericParameters = ReadMetadataClassArray<Il2CppGenericParameter>(header.genericParametersOffset, header.genericParametersCount);
             constraintIndices = ReadClassArray<int>(header.genericParameterConstraintsOffset, header.genericParameterConstraintsCount / 4);
             vtableMethods = ReadClassArray<uint>(header.vtableMethodsOffset, header.vtableMethodsCount / 4);
-            if (Version > 16 && Version < 27) //TODO
+            stringLiterals = ReadMetadataClassArray<Il2CppStringLiteral>(header.stringLiteralOffset, header.stringLiteralCount);
+            if (Version > 16)
             {
-                stringLiterals = ReadMetadataClassArray<Il2CppStringLiteral>(header.stringLiteralOffset, header.stringLiteralCount);
-                metadataUsageLists = ReadMetadataClassArray<Il2CppMetadataUsageList>(header.metadataUsageListsOffset, header.metadataUsageListsCount);
-                metadataUsagePairs = ReadMetadataClassArray<Il2CppMetadataUsagePair>(header.metadataUsagePairsOffset, header.metadataUsagePairsCount);
-
-                ProcessingMetadataUsage();
-
                 fieldRefs = ReadMetadataClassArray<Il2CppFieldRef>(header.fieldRefsOffset, header.fieldRefsCount);
+                if (Version < 27)
+                {
+                    metadataUsageLists = ReadMetadataClassArray<Il2CppMetadataUsageList>(header.metadataUsageListsOffset, header.metadataUsageListsCount);
+                    metadataUsagePairs = ReadMetadataClassArray<Il2CppMetadataUsagePair>(header.metadataUsagePairsOffset, header.metadataUsagePairsCount);
+
+                    ProcessingMetadataUsage();
+                }
             }
             if (Version > 20)
             {
@@ -178,10 +180,10 @@ namespace Il2CppDumper
 
         private void ProcessingMetadataUsage()
         {
-            metadataUsageDic = new Dictionary<uint, SortedDictionary<uint, uint>>();
-            for (uint i = 1; i <= 6u; i++)
+            metadataUsageDic = new Dictionary<Il2CppMetadataUsage, SortedDictionary<uint, uint>>();
+            for (uint i = 1; i <= 6; i++)
             {
-                metadataUsageDic[i] = new SortedDictionary<uint, uint>();
+                metadataUsageDic[(Il2CppMetadataUsage)i] = new SortedDictionary<uint, uint>();
             }
             foreach (var metadataUsageList in metadataUsageLists)
             {
@@ -191,7 +193,7 @@ namespace Il2CppDumper
                     var metadataUsagePair = metadataUsagePairs[offset];
                     var usage = GetEncodedIndexType(metadataUsagePair.encodedSourceIndex);
                     var decodedIndex = GetDecodedMethodIndex(metadataUsagePair.encodedSourceIndex);
-                    metadataUsageDic[usage][metadataUsagePair.destinationIndex] = decodedIndex;
+                    metadataUsageDic[(Il2CppMetadataUsage)usage][metadataUsagePair.destinationIndex] = decodedIndex;
                 }
             }
             maxMetadataUsages = metadataUsageDic.Max(x => x.Value.Max(y => y.Key)) + 1;

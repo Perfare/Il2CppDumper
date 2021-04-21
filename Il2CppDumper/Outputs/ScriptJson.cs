@@ -13,7 +13,7 @@ namespace Il2CppDumper
         public List<ScriptString> ScriptString = new List<ScriptString>();
         public List<ScriptMetadata> ScriptMetadata = new List<ScriptMetadata>();
         public List<ScriptMetadataMethod> ScriptMetadataMethod = new List<ScriptMetadataMethod>();
-        public List<ulong> Addresses = new List<ulong>();
+        public ulong[] Addresses;
     }
 
     public class ScriptMethod

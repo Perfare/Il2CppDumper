@@ -14,6 +14,11 @@ namespace Il2CppDumper
             return addr;
         }
 
+        public override ulong MapRTVA(ulong addr)
+        {
+            return addr;
+        }
+
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount)
         {
             var exec = new SearchSection

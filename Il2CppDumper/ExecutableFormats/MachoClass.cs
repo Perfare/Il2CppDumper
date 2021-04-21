@@ -12,7 +12,6 @@ namespace Il2CppDumper
         public uint size;
         public uint offset;
         public uint flags;
-        public uint end;
     }
 
     public class MachoSection64Bit
@@ -22,7 +21,6 @@ namespace Il2CppDumper
         public ulong size;
         public ulong offset;
         public uint flags;
-        public ulong end;
     }
 
     public class Fat

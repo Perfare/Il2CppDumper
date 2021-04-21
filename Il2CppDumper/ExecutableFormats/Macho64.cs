@@ -50,7 +50,6 @@ namespace Il2CppDumper
                             section.offset = ReadUInt32();
                             Position += 12; //skip align, reloff, nreloc
                             section.flags = ReadUInt32();
-                            section.end = section.addr + section.size;
                             Position += 12; //skip reserved1, reserved2, reserved3
                         }
                         break;
@@ -67,14 +66,24 @@ namespace Il2CppDumper
             }
         }
 
-        public override ulong MapVATR(ulong uiAddr)
+        public override ulong MapVATR(ulong addr)
         {
-            var section = sections.First(x => uiAddr >= x.addr && uiAddr <= x.end);
+            var section = sections.First(x => addr >= x.addr && addr <= x.addr + x.size);
             if (section.sectname == "__bss")
             {
                 throw new Exception();
             }
-            return uiAddr - (section.addr - section.offset);
+            return addr - section.addr + section.offset;
+        }
+
+        public override ulong MapRTVA(ulong addr)
+        {
+            var section = sections.First(x => addr >= x.offset && addr <= x.offset + x.size);
+            if (section.sectname == "__bss")
+            {
+                throw new Exception();
+            }
+            return addr - section.offset + section.addr;
         }
 
         public override bool Search()

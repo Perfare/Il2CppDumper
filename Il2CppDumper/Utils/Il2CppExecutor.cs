@@ -43,8 +43,11 @@ namespace Il2CppDumper
                 {
                     var imageDefName = metadata.GetStringFromIndex(imageDef.nameIndex);
                     var codeGenModule = il2Cpp.codeGenModules[imageDefName];
-                    var pointers = il2Cpp.ReadClassArray<ulong>(il2Cpp.MapVATR(codeGenModule.customAttributeCacheGenerator), imageDef.customAttributeCount);
-                    pointers.CopyTo(customAttributeGenerators, imageDef.customAttributeStart);
+                    if (imageDef.customAttributeCount > 0)
+                    {
+                        var pointers = il2Cpp.ReadClassArray<ulong>(il2Cpp.MapVATR(codeGenModule.customAttributeCacheGenerator), imageDef.customAttributeCount);
+                        pointers.CopyTo(customAttributeGenerators, imageDef.customAttributeStart);
+                    }
                 }
             }
             else

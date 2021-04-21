@@ -75,7 +75,11 @@ namespace Il2CppDumper
 
         public override ulong MapRTVA(ulong addr)
         {
-            var phdr = programSegment.First(x => addr >= x.p_offset && addr <= x.p_offset + x.p_filesz);
+            var phdr = programSegment.FirstOrDefault(x => addr >= x.p_offset && addr <= x.p_offset + x.p_filesz);
+            if (phdr == null)
+            {
+                return 0;
+            }
             return addr - phdr.p_offset + phdr.p_vaddr;
         }
 

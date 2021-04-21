@@ -261,50 +261,53 @@ namespace Il2CppDumper
                             if (metadataValue == ((usage << 29) | (decodedIndex << 1)) + 1)
                             {
                                 var va = il2Cpp.MapRTVA(addr);
-                                switch ((Il2CppMetadataUsage)usage)
+                                if (va > 0)
                                 {
-                                    case Il2CppMetadataUsage.kIl2CppMetadataUsageInvalid:
-                                        break;
-                                    case Il2CppMetadataUsage.kIl2CppMetadataUsageTypeInfo:
-                                        if (decodedIndex < il2Cpp.types.Length)
-                                        {
-                                            AddMetadataUsageTypeInfo(json, decodedIndex, va);
-                                        }
-                                        break;
-                                    case Il2CppMetadataUsage.kIl2CppMetadataUsageIl2CppType:
-                                        if (decodedIndex < il2Cpp.types.Length)
-                                        {
-                                            AddMetadataUsageIl2CppType(json, decodedIndex, va);
-                                        }
-                                        break;
-                                    case Il2CppMetadataUsage.kIl2CppMetadataUsageMethodDef:
-                                        if (decodedIndex < metadata.methodDefs.Length)
-                                        {
-                                            AddMetadataUsageMethodDef(json, decodedIndex, va);
-                                        }
-                                        break;
-                                    case Il2CppMetadataUsage.kIl2CppMetadataUsageFieldInfo:
-                                        if (decodedIndex < metadata.fieldRefs.Length)
-                                        {
-                                            AddMetadataUsageFieldInfo(json, decodedIndex, va);
-                                        }
-                                        break;
-                                    case Il2CppMetadataUsage.kIl2CppMetadataUsageStringLiteral:
-                                        if (decodedIndex < metadata.stringLiterals.Length)
-                                        {
-                                            AddMetadataUsageStringLiteral(json, decodedIndex, va);
-                                        }
-                                        break;
-                                    case Il2CppMetadataUsage.kIl2CppMetadataUsageMethodRef:
-                                        if (decodedIndex < il2Cpp.methodSpecs.Length)
-                                        {
-                                            AddMetadataUsageMethodRef(json, decodedIndex, va);
-                                        }
-                                        break;
-                                }
-                                if (il2Cpp.Position != position)
-                                {
-                                    il2Cpp.Position = position;
+                                    switch ((Il2CppMetadataUsage)usage)
+                                    {
+                                        case Il2CppMetadataUsage.kIl2CppMetadataUsageInvalid:
+                                            break;
+                                        case Il2CppMetadataUsage.kIl2CppMetadataUsageTypeInfo:
+                                            if (decodedIndex < il2Cpp.types.Length)
+                                            {
+                                                AddMetadataUsageTypeInfo(json, decodedIndex, va);
+                                            }
+                                            break;
+                                        case Il2CppMetadataUsage.kIl2CppMetadataUsageIl2CppType:
+                                            if (decodedIndex < il2Cpp.types.Length)
+                                            {
+                                                AddMetadataUsageIl2CppType(json, decodedIndex, va);
+                                            }
+                                            break;
+                                        case Il2CppMetadataUsage.kIl2CppMetadataUsageMethodDef:
+                                            if (decodedIndex < metadata.methodDefs.Length)
+                                            {
+                                                AddMetadataUsageMethodDef(json, decodedIndex, va);
+                                            }
+                                            break;
+                                        case Il2CppMetadataUsage.kIl2CppMetadataUsageFieldInfo:
+                                            if (decodedIndex < metadata.fieldRefs.Length)
+                                            {
+                                                AddMetadataUsageFieldInfo(json, decodedIndex, va);
+                                            }
+                                            break;
+                                        case Il2CppMetadataUsage.kIl2CppMetadataUsageStringLiteral:
+                                            if (decodedIndex < metadata.stringLiterals.Length)
+                                            {
+                                                AddMetadataUsageStringLiteral(json, decodedIndex, va);
+                                            }
+                                            break;
+                                        case Il2CppMetadataUsage.kIl2CppMetadataUsageMethodRef:
+                                            if (decodedIndex < il2Cpp.methodSpecs.Length)
+                                            {
+                                                AddMetadataUsageMethodRef(json, decodedIndex, va);
+                                            }
+                                            break;
+                                    }
+                                    if (il2Cpp.Position != position)
+                                    {
+                                        il2Cpp.Position = position;
+                                    }
                                 }
                             }
                         }

@@ -36,6 +36,7 @@ namespace Il2CppDumper
         public abstract bool Search();
         public abstract bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount);
         public abstract bool SymbolSearch();
+        public abstract SectionHelper GetSectionHelper(int methodCount, int typeDefinitionsCount, int imageCount);
 
         protected Il2Cpp(Stream stream) : base(stream) { }
 

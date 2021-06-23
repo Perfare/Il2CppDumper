@@ -4,18 +4,18 @@ using System.Linq;
 
 namespace Il2CppDumper
 {
-    public class PlusSearch
+    public class SectionHelper
     {
         private Il2Cpp il2Cpp;
         private int methodCount;
         private int typeDefinitionsCount;
         private long maxMetadataUsages;
         private int imageCount;
-        private List<SearchSection> exec;
-        private List<SearchSection> data;
-        private List<SearchSection> bss;
+        public List<SearchSection> exec;
+        public List<SearchSection> data;
+        public List<SearchSection> bss;
 
-        public PlusSearch(Il2Cpp il2Cpp, int methodCount, int typeDefinitionsCount, long maxMetadataUsages, int imageCount)
+        public SectionHelper(Il2Cpp il2Cpp, int methodCount, int typeDefinitionsCount, long maxMetadataUsages, int imageCount)
         {
             this.il2Cpp = il2Cpp;
             this.methodCount = methodCount;
@@ -255,7 +255,7 @@ namespace Il2CppDumper
             foreach (var section in data)
             {
                 il2Cpp.Position = section.offset;
-                while (il2Cpp.Position < section.offsetEnd)
+                while (il2Cpp.Position < section.offsetEnd - il2Cpp.PointerSize)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadIntPtr() == typeDefinitionsCount)
@@ -353,7 +353,7 @@ namespace Il2CppDumper
             foreach (var dataSec in data)
             {
                 il2Cpp.Position = dataSec.offset;
-                while (il2Cpp.Position < dataSec.offsetEnd)
+                while (il2Cpp.Position < dataSec.offsetEnd - il2Cpp.PointerSize)
                 {
                     var offset = il2Cpp.Position;
                     if (il2Cpp.ReadUIntPtr() == addr)

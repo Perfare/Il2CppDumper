@@ -311,5 +311,10 @@ namespace Il2CppDumper
                 return metadata.genericParameters[il2CppType.data.genericParameterIndex];
             }
         }
+
+        public SectionHelper GetSectionHelper()
+        {
+            return il2Cpp.GetSectionHelper(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length, metadata.imageDefs.Length);
+        }
     }
 }

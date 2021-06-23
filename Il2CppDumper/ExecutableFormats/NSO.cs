@@ -113,12 +113,9 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount)
         {
-            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages, imageCount);
-            plusSearch.SetSection(SearchSectionType.Exec, header.TextSegment);
-            plusSearch.SetSection(SearchSectionType.Data, header.DataSegment, header.RoDataSegment);
-            plusSearch.SetSection(SearchSectionType.Bss, header.BssSegment);
-            var codeRegistration = plusSearch.FindCodeRegistration();
-            var metadataRegistration = plusSearch.FindMetadataRegistration();
+            var sectionHelper = GetSectionHelper(methodCount, typeDefinitionsCount, imageCount);
+            var codeRegistration = sectionHelper.FindCodeRegistration();
+            var metadataRegistration = sectionHelper.FindMetadataRegistration();
             return AutoPlusInit(codeRegistration, metadataRegistration);
         }
 
@@ -213,6 +210,15 @@ namespace Il2CppDumper
                 return new NSO(unCompressedStream);
             }
             return this;
+        }
+
+        public override SectionHelper GetSectionHelper(int methodCount, int typeDefinitionsCount, int imageCount)
+        {
+            var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, maxMetadataUsages, imageCount);
+            sectionHelper.SetSection(SearchSectionType.Exec, header.TextSegment);
+            sectionHelper.SetSection(SearchSectionType.Data, header.DataSegment, header.RoDataSegment);
+            sectionHelper.SetSection(SearchSectionType.Bss, header.BssSegment);
+            return sectionHelper;
         }
     }
 }

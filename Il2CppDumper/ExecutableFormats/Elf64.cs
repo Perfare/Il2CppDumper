@@ -90,36 +90,9 @@ namespace Il2CppDumper
 
         public override bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount)
         {
-            var dataList = new List<Elf64_Phdr>();
-            var execList = new List<Elf64_Phdr>();
-            foreach (var phdr in programSegment)
-            {
-                if (phdr.p_memsz != 0ul)
-                {
-                    switch (phdr.p_flags)
-                    {
-                        case 1u: //PF_X
-                        case 3u:
-                        case 5u:
-                        case 7u:
-                            execList.Add(phdr);
-                            break;
-                        case 2u: //PF_W && PF_R
-                        case 4u:
-                        case 6u:
-                            dataList.Add(phdr);
-                            break;
-                    }
-                }
-            }
-            var data = dataList.ToArray();
-            var exec = execList.ToArray();
-            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages, imageCount);
-            plusSearch.SetSection(SearchSectionType.Exec, exec);
-            plusSearch.SetSection(SearchSectionType.Data, data);
-            plusSearch.SetSection(SearchSectionType.Bss, data);
-            var codeRegistration = plusSearch.FindCodeRegistration();
-            var metadataRegistration = plusSearch.FindMetadataRegistration();
+            var sectionHelper = GetSectionHelper(methodCount, typeDefinitionsCount, imageCount);
+            var codeRegistration = sectionHelper.FindCodeRegistration();
+            var metadataRegistration = sectionHelper.FindMetadataRegistration();
             return AutoPlusInit(codeRegistration, metadataRegistration);
         }
 
@@ -281,6 +254,39 @@ namespace Il2CppDumper
                         break;
                 }
             }
+        }
+
+        public override SectionHelper GetSectionHelper(int methodCount, int typeDefinitionsCount, int imageCount)
+        {
+            var dataList = new List<Elf64_Phdr>();
+            var execList = new List<Elf64_Phdr>();
+            foreach (var phdr in programSegment)
+            {
+                if (phdr.p_memsz != 0ul)
+                {
+                    switch (phdr.p_flags)
+                    {
+                        case 1u: //PF_X
+                        case 3u:
+                        case 5u:
+                        case 7u:
+                            execList.Add(phdr);
+                            break;
+                        case 2u: //PF_W && PF_R
+                        case 4u:
+                        case 6u:
+                            dataList.Add(phdr);
+                            break;
+                    }
+                }
+            }
+            var data = dataList.ToArray();
+            var exec = execList.ToArray();
+            var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, maxMetadataUsages, imageCount);
+            sectionHelper.SetSection(SearchSectionType.Exec, exec);
+            sectionHelper.SetSection(SearchSectionType.Data, data);
+            sectionHelper.SetSection(SearchSectionType.Bss, data);
+            return sectionHelper;
         }
     }
 }

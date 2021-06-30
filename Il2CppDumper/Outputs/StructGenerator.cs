@@ -27,8 +27,10 @@ namespace Il2CppDumper
         private StringBuilder methodInfoHeader = new StringBuilder();
         private static HashSet<ulong> methodInfoCache = new HashSet<ulong>();
         private static HashSet<string> keyword = new HashSet<string>(StringComparer.Ordinal)
-        { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "near", "far", "flat", "default", "_ds", "interrupt", "inline",
-            "unsigned", "signed", "asm", "if", "case", "break", "continue", "do", "new", "_", "short", "union"};
+        { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "flat", "default", "_ds", "interrupt",
+            "unsigned", "signed", "asm", "if", "case", "break", "continue", "do", "new", "_", "short", "union", "class"};
+        private static HashSet<string> specialKeywords = new HashSet<string>(StringComparer.Ordinal)
+        { "inline", "near", "far" };
 
         public StructGenerator(Il2CppExecutor il2CppExecutor)
         {
@@ -494,6 +496,11 @@ namespace Il2CppDumper
             {
                 str = "_" + str;
             }
+            else if (specialKeywords.Contains(str))
+            {
+                str = "_" + str + "_";
+            }
+            
             if (Regex.IsMatch(str, "^[0-9]"))
             {
                 return "_" + str;

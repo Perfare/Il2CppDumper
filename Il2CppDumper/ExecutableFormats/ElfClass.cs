@@ -172,6 +172,7 @@ namespace Il2CppDumper
         public const int DT_JMPREL = 23;
         public const int DT_INIT_ARRAY = 25;
         public const int DT_FINI_ARRAY = 26;
+        public const int DT_GNU_HASH = 0x6ffffef5;
 
         public const uint SHT_LOUSER = 0x80000000;
 

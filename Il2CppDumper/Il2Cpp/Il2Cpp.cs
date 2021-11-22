@@ -48,73 +48,71 @@ namespace Il2CppDumper
 
         protected bool AutoPlusInit(ulong codeRegistration, ulong metadataRegistration)
         {
-            if (codeRegistration != 0 && metadataRegistration != 0)
+            if (codeRegistration != 0)
             {
-                if (Version == 24.2)
+                if (Version >= 24.2)
                 {
                     pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
-                    if (pCodeRegistration.reversePInvokeWrapperCount > 0x30000) //TODO
+                    if (Version == 27)
                     {
-                        Version = 24.4;
-                        codeRegistration -= PointerSize * 3;
-                        Console.WriteLine($"Change il2cpp version to: {Version}");
+                        if (pCodeRegistration.reversePInvokeWrapperCount > 0x30000) //TODO
+                        {
+                            Version = 27.1;
+                            codeRegistration -= PointerSize;
+                            Console.WriteLine($"Change il2cpp version to: {Version}");
+                        }
                     }
-                    else
+                    if (Version == 24.4)
                     {
-                        pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
-                        genericMethodTable = MapVATR<Il2CppGenericMethodFunctionsDefinitions>(pMetadataRegistration.genericMethodTable, pMetadataRegistration.genericMethodTableCount);
-                        var genericMethodPointersCount = genericMethodTable.Max(x => x.indices.methodIndex) + 1;
-                        if (pCodeRegistration.reversePInvokeWrapperCount == genericMethodPointersCount)
+                        codeRegistration -= PointerSize * 2;
+                        if (pCodeRegistration.reversePInvokeWrapperCount > 0x30000) //TODO
+                        {
+                            Version = 24.5;
+                            codeRegistration -= PointerSize;
+                            Console.WriteLine($"Change il2cpp version to: {Version}");
+                        }
+                    }
+                    if (Version == 24.2)
+                    {
+                        if (pCodeRegistration.interopDataCount == 0) //TODO
                         {
                             Version = 24.3;
-                            codeRegistration -= Is32Bit ? 8u : 16u;
+                            codeRegistration -= PointerSize * 2;
                             Console.WriteLine($"Change il2cpp version to: {Version}");
                         }
                     }
                 }
-                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                Init(codeRegistration, metadataRegistration);
-                return true;
             }
             Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
             Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+            if (codeRegistration != 0 && metadataRegistration != 0)
+            {
+                Init(codeRegistration, metadataRegistration);
+                return true;
+            }
             return false;
         }
 
         public virtual void Init(ulong codeRegistration, ulong metadataRegistration)
         {
             pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
-            if (Version == 27)
+            if (Version == 27 && pCodeRegistration.invokerPointersCount > 0x100000) //TODO
             {
-                if (pCodeRegistration.reversePInvokeWrapperCount > 0x30000) //TODO
-                {
-                    Version = 27.1;
-                    codeRegistration -= PointerSize;
-                    Console.WriteLine($"Change il2cpp version to: {Version}");
-                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                    pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
-                }
+                Version = 27.1;
+                Console.WriteLine($"Change il2cpp version to: {Version}");
+                pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
             }
-            if (Version == 24.2)
+            if (Version == 24.4 && pCodeRegistration.invokerPointersCount > 0x100000) //TODO
             {
-                if (pCodeRegistration.reversePInvokeWrapperCount > 0x30000) //TODO
-                {
-                    Version = 24.4;
-                    codeRegistration -= PointerSize * 3;
-                    Console.WriteLine($"Change il2cpp version to: {Version}");
-                    Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                    pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
-                }
-                else
-                {
-                    if (pCodeRegistration.codeGenModules == 0) //TODO
-                    {
-                        Version = 24.3;
-                        Console.WriteLine($"Change il2cpp version to: {Version}");
-                        pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
-                    }
-                }
+                Version = 24.5;
+                Console.WriteLine($"Change il2cpp version to: {Version}");
+                pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
+            }
+            if (Version == 24.2 && pCodeRegistration.codeGenModules == 0) //TODO
+            {
+                Version = 24.3;
+                Console.WriteLine($"Change il2cpp version to: {Version}");
+                pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
             }
             pMetadataRegistration = MapVATR<Il2CppMetadataRegistration>(metadataRegistration);
             genericMethodPointers = MapVATR<ulong>(pCodeRegistration.genericMethodPointers, pCodeRegistration.genericMethodPointersCount);

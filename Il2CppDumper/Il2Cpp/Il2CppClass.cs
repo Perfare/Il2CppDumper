@@ -30,14 +30,14 @@ namespace Il2CppDumper
         public ulong ccwMarshalingFunctions;
         public long genericMethodPointersCount;
         public ulong genericMethodPointers;
-        [Version(Min = 24.4, Max = 24.4)]
+        [Version(Min = 24.5, Max = 24.5)]
         [Version(Min = 27.1)]
         public ulong genericAdjustorThunks;
         public long invokerPointersCount;
         public ulong invokerPointers;
-        [Version(Max = 24.4)]
+        [Version(Max = 24.5)]
         public long customAttributeCount;
-        [Version(Max = 24.4)]
+        [Version(Max = 24.5)]
         public ulong customAttributeGenerators;
         [Version(Min = 21, Max = 22)]
         public long guidCount;
@@ -188,7 +188,7 @@ namespace Il2CppDumper
 
     public class Il2CppGenericClass
     {
-        [Version(Max = 24.4)]
+        [Version(Max = 24.5)]
         public long typeDefinitionIndex;    /* the generic type definition */
         [Version(Min = 27)]
         public ulong type;        /* the generic type definition */
@@ -230,7 +230,7 @@ namespace Il2CppDumper
     {
         public int methodIndex;
         public int invokerIndex;
-        [Version(Min = 24.4, Max = 24.4)]
+        [Version(Min = 24.5, Max = 24.5)]
         [Version(Min = 27.1)]
         public int adjustorThunk;
     };
@@ -247,10 +247,10 @@ namespace Il2CppDumper
         public ulong moduleName;
         public long methodPointerCount;
         public ulong methodPointers;
-        [Version(Min = 24.4, Max = 24.4)]
+        [Version(Min = 24.5, Max = 24.5)]
         [Version(Min = 27.1)]
         public long adjustorThunkCount;
-        [Version(Min = 24.4, Max = 24.4)]
+        [Version(Min = 24.5, Max = 24.5)]
         [Version(Min = 27.1)]
         public ulong adjustorThunks;
         public ulong invokerIndices;

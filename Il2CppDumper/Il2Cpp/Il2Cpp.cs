@@ -55,7 +55,7 @@ namespace Il2CppDumper
                     pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
                     if (Version == 27)
                     {
-                        if (pCodeRegistration.reversePInvokeWrapperCount > 0x30000) //TODO
+                        if (pCodeRegistration.reversePInvokeWrapperCount > 0x100000) //TODO
                         {
                             Version = 27.1;
                             codeRegistration -= PointerSize;
@@ -65,7 +65,7 @@ namespace Il2CppDumper
                     if (Version == 24.4)
                     {
                         codeRegistration -= PointerSize * 2;
-                        if (pCodeRegistration.reversePInvokeWrapperCount > 0x30000) //TODO
+                        if (pCodeRegistration.reversePInvokeWrapperCount > 0x100000) //TODO
                         {
                             Version = 24.5;
                             codeRegistration -= PointerSize;

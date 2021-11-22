@@ -387,11 +387,12 @@ namespace Il2CppDumper
                 case 24.2:
                 case 24.3:
                 case 24.4:
-                case 24.5: //TODO
+                case 24.5:
                     sb.Append(HeaderConstants.HeaderV242);
                     break;
                 case 27:
-                case 27.1: //TODO
+                case 27.1:
+                case 27.2:
                     sb.Append(HeaderConstants.HeaderV27);
                     break;
                 default:
@@ -501,7 +502,7 @@ namespace Il2CppDumper
             {
                 str = "_" + str + "_";
             }
-            
+
             if (Regex.IsMatch(str, "^[0-9]"))
             {
                 return "_" + str;
@@ -768,23 +769,32 @@ namespace Il2CppDumper
                     var structRGCTXInfo = new StructRGCTXInfo();
                     structInfo.RGCTXs.Add(structRGCTXInfo);
                     structRGCTXInfo.Type = definitionData.type;
+                    Il2CppRGCTXDefinitionData rgctxDefData;
+                    if (il2Cpp.Version >= 27.2)
+                    {
+                        rgctxDefData = il2Cpp.MapVATR<Il2CppRGCTXDefinitionData>(definitionData._data);
+                    }
+                    else
+                    {
+                        rgctxDefData = definitionData.data;
+                    }
                     switch (definitionData.type)
                     {
                         case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_TYPE:
                             {
-                                var il2CppType = il2Cpp.types[definitionData.data.typeIndex];
+                                var il2CppType = il2Cpp.types[rgctxDefData.typeIndex];
                                 structRGCTXInfo.TypeName = FixName(executor.GetTypeName(il2CppType, true, false));
                                 break;
                             }
                         case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_CLASS:
                             {
-                                var il2CppType = il2Cpp.types[definitionData.data.typeIndex];
+                                var il2CppType = il2Cpp.types[rgctxDefData.typeIndex];
                                 structRGCTXInfo.ClassName = FixName(executor.GetTypeName(il2CppType, true, false));
                                 break;
                             }
                         case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_METHOD:
                             {
-                                var methodSpec = il2Cpp.methodSpecs[definitionData.data.methodIndex];
+                                var methodSpec = il2Cpp.methodSpecs[rgctxDefData.methodIndex];
                                 (var methodSpecTypeName, var methodSpecMethodName) = executor.GetMethodSpecName(methodSpec, true);
                                 structRGCTXInfo.MethodName = FixName(methodSpecTypeName + "." + methodSpecMethodName);
                                 break;
@@ -805,23 +815,32 @@ namespace Il2CppDumper
                     var structRGCTXInfo = new StructRGCTXInfo();
                     rgctxs.Add(structRGCTXInfo);
                     structRGCTXInfo.Type = definitionData.type;
+                    Il2CppRGCTXDefinitionData rgctxDefData;
+                    if (il2Cpp.Version >= 27.2)
+                    {
+                        rgctxDefData = il2Cpp.MapVATR<Il2CppRGCTXDefinitionData>(definitionData._data);
+                    }
+                    else
+                    {
+                        rgctxDefData = definitionData.data;
+                    }
                     switch (definitionData.type)
                     {
                         case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_TYPE:
                             {
-                                var il2CppType = il2Cpp.types[definitionData.data.typeIndex];
+                                var il2CppType = il2Cpp.types[rgctxDefData.typeIndex];
                                 structRGCTXInfo.TypeName = FixName(executor.GetTypeName(il2CppType, true, false));
                                 break;
                             }
                         case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_CLASS:
                             {
-                                var il2CppType = il2Cpp.types[definitionData.data.typeIndex];
+                                var il2CppType = il2Cpp.types[rgctxDefData.typeIndex];
                                 structRGCTXInfo.ClassName = FixName(executor.GetTypeName(il2CppType, true, false));
                                 break;
                             }
                         case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_METHOD:
                             {
-                                var methodSpec = il2Cpp.methodSpecs[definitionData.data.methodIndex];
+                                var methodSpec = il2Cpp.methodSpecs[rgctxDefData.methodIndex];
                                 (var methodSpecTypeName, var methodSpecMethodName) = executor.GetMethodSpecName(methodSpec, true);
                                 structRGCTXInfo.MethodName = FixName(methodSpecTypeName + "." + methodSpecMethodName);
                                 break;

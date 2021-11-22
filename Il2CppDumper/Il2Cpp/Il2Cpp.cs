@@ -102,6 +102,24 @@ namespace Il2CppDumper
                 Console.WriteLine($"Change il2cpp version to: {Version}");
                 pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
             }
+            if (Version == 27.1)
+            {
+                var pCodeGenModules = MapVATR<ulong>(pCodeRegistration.codeGenModules, pCodeRegistration.codeGenModulesCount);
+                foreach (var pCodeGenModule in pCodeGenModules)
+                {
+                    var codeGenModule = MapVATR<Il2CppCodeGenModule>(pCodeGenModule);
+                    if (codeGenModule.rgctxsCount > 0)
+                    {
+                        var rgctxs = MapVATR<Il2CppRGCTXDefinition>(codeGenModule.rgctxs, codeGenModule.rgctxsCount);
+                        if (rgctxs.All(x => x.data.rgctxDataDummy > 0x100000))
+                        {
+                            Version = 27.2;
+                            Console.WriteLine($"Change il2cpp version to: {Version}");
+                        }
+                        break;
+                    }
+                }
+            }
             if (Version == 24.4 && pCodeRegistration.invokerPointersCount > 0x100000) //TODO
             {
                 Version = 24.5;

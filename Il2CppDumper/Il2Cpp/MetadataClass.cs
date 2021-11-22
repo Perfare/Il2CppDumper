@@ -348,7 +348,10 @@ namespace Il2CppDumper
     public class Il2CppRGCTXDefinition
     {
         public Il2CppRGCTXDataType type;
+        [Version(Max = 27.1)]
         public Il2CppRGCTXDefinitionData data;
+        [Version(Min = 27.2)]
+        public ulong _data;
     }
 
     public enum Il2CppMetadataUsage

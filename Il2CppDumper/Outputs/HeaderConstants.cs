@@ -35,6 +35,11 @@ union Il2CppRGCTXData
     Il2CppClass* klass;
 };
 
+struct Il2CppRuntimeInterfaceOffsetPair
+{
+    Il2CppClass* interfaceType;
+    int32_t offset;
+};
 ";
 
         public readonly static string HeaderV27 =
@@ -60,7 +65,7 @@ union Il2CppRGCTXData
     void* methods;
     Il2CppClass** nestedTypes;
     Il2CppClass** implementedInterfaces;
-    void* interfaceOffsets;
+    Il2CppRuntimeInterfaceOffsetPair* interfaceOffsets;
 };
 
 struct Il2CppClass_2
@@ -167,7 +172,7 @@ struct MethodInfo
     void* methods;
     Il2CppClass** nestedTypes;
     Il2CppClass** implementedInterfaces;
-    void* interfaceOffsets;
+    Il2CppRuntimeInterfaceOffsetPair* interfaceOffsets;
 };
 
 struct Il2CppClass_2
@@ -274,7 +279,7 @@ struct MethodInfo
     void* methods;
     Il2CppClass** nestedTypes;
     Il2CppClass** implementedInterfaces;
-    void* interfaceOffsets;
+    Il2CppRuntimeInterfaceOffsetPair* interfaceOffsets;
 };
 
 struct Il2CppClass_2
@@ -379,7 +384,7 @@ struct MethodInfo
     void* methods;
     Il2CppClass** nestedTypes;
     Il2CppClass** implementedInterfaces;
-    void* interfaceOffsets;
+    Il2CppRuntimeInterfaceOffsetPair* interfaceOffsets;
 };
 
 struct Il2CppClass_2
@@ -483,7 +488,7 @@ struct MethodInfo
     void* methods;
     Il2CppClass** nestedTypes;
     Il2CppClass** implementedInterfaces;
-    void* interfaceOffsets;
+    Il2CppRuntimeInterfaceOffsetPair* interfaceOffsets;
 };
 
 struct Il2CppClass_2

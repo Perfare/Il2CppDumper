@@ -969,49 +969,76 @@ namespace Il2CppDumper
             }
             sb.Append("};\n");
 
-            sb.Append($"struct {info.TypeName}_RGCTXs {{\n");
-            for (int i = 0; i < info.RGCTXs.Count; i++)
+            if (info.RGCTXs.Count > 0)
             {
-                var rgctx = info.RGCTXs[i];
-                switch (rgctx.Type)
+                sb.Append($"struct {info.TypeName}_RGCTXs {{\n");
+                for (int i = 0; i < info.RGCTXs.Count; i++)
                 {
-                    case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_TYPE:
-                        sb.Append($"\tIl2CppType* _{i}_{rgctx.TypeName};\n");
-                        break;
-                    case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_CLASS:
-                        sb.Append($"\tIl2CppClass* _{i}_{rgctx.ClassName};\n");
-                        break;
-                    case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_METHOD:
-                        sb.Append($"\tMethodInfo* _{i}_{rgctx.MethodName};\n");
-                        break;
+                    var rgctx = info.RGCTXs[i];
+                    switch (rgctx.Type)
+                    {
+                        case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_TYPE:
+                            sb.Append($"\tIl2CppType* _{i}_{rgctx.TypeName};\n");
+                            break;
+                        case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_CLASS:
+                            sb.Append($"\tIl2CppClass* _{i}_{rgctx.ClassName};\n");
+                            break;
+                        case Il2CppRGCTXDataType.IL2CPP_RGCTX_DATA_METHOD:
+                            sb.Append($"\tMethodInfo* _{i}_{rgctx.MethodName};\n");
+                            break;
+                    }
                 }
+                sb.Append("};\n");
             }
-            sb.Append("};\n");
 
-            sb.Append($"struct {info.TypeName}_VTable {{\n");
-            for (int i = 0; i < info.VTableMethod.Length; i++)
+            if (info.VTableMethod.Length > 0)
             {
-                sb.Append($"\tVirtualInvokeData _{i}_");
-                var method = info.VTableMethod[i];
-                if (method != null)
+                sb.Append($"struct {info.TypeName}_VTable {{\n");
+                for (int i = 0; i < info.VTableMethod.Length; i++)
                 {
-                    sb.Append(method.MethodName);
+                    sb.Append($"\tVirtualInvokeData _{i}_");
+                    var method = info.VTableMethod[i];
+                    if (method != null)
+                    {
+                        sb.Append(method.MethodName);
+                    }
+                    else
+                    {
+                        sb.Append("unknown");
+                    }
+                    sb.Append(";\n");
                 }
-                else
-                {
-                    sb.Append("unknown");
-                }
-                sb.Append(";\n");
+                sb.Append("};\n");
             }
-            sb.Append("};\n");
 
-            sb.Append($"struct {info.TypeName}_c {{\n" +
-                $"\tIl2CppClass_1 _1;\n" +
-                $"\tstruct {info.TypeName}_StaticFields* static_fields;\n" +
-                $"\t{info.TypeName}_RGCTXs* rgctx_data;\n" +
-                $"\tIl2CppClass_2 _2;\n" +
-                $"\t{info.TypeName}_VTable vtable;\n" +
-                $"}};\n");
+            sb.Append($"struct {info.TypeName}_c {{\n");
+            sb.Append($"\tIl2CppClass_1 _1;\n");
+            if (info.StaticFields.Count > 0)
+            {
+                sb.Append($"\tstruct {info.TypeName}_StaticFields* static_fields;\n");
+            }
+            else
+            {
+                sb.Append("\tvoid* static_fields;\n");
+            }
+            if (info.RGCTXs.Count > 0)
+            {
+                sb.Append($"\t{info.TypeName}_RGCTXs* rgctx_data;\n");
+            }
+            else
+            {
+                sb.Append("\tIl2CppRGCTXData* rgctx_data;\n");
+            }
+            sb.Append($"\tIl2CppClass_2 _2;\n");
+            if (info.VTableMethod.Length > 0)
+            {
+                sb.Append($"\t{info.TypeName}_VTable vtable;\n");
+            }
+            else
+            {
+                sb.Append("\tVirtualInvokeData vtable[32];\n");
+            }
+            sb.Append($"}};\n");
 
             sb.Append($"struct {info.TypeName}_o {{\n");
             if (!info.IsValueType)
@@ -1022,24 +1049,27 @@ namespace Il2CppDumper
             sb.Append($"\t{info.TypeName}_Fields fields;\n");
             sb.Append("};\n");
 
-            sb.Append($"struct {info.TypeName}_StaticFields {{\n");
-            foreach (var field in info.StaticFields)
+            if (info.StaticFields.Count > 0)
             {
-                if (field.IsValueType)
+                sb.Append($"struct {info.TypeName}_StaticFields {{\n");
+                foreach (var field in info.StaticFields)
                 {
-                    var fieldInfo = structInfoWithStructName[field.FieldTypeName];
-                    pre.Append(RecursionStructInfo(fieldInfo));
+                    if (field.IsValueType)
+                    {
+                        var fieldInfo = structInfoWithStructName[field.FieldTypeName];
+                        pre.Append(RecursionStructInfo(fieldInfo));
+                    }
+                    if (field.IsCustomType)
+                    {
+                        sb.Append($"\tstruct {field.FieldTypeName} {field.FieldName};\n");
+                    }
+                    else
+                    {
+                        sb.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
+                    }
                 }
-                if (field.IsCustomType)
-                {
-                    sb.Append($"\tstruct {field.FieldTypeName} {field.FieldName};\n");
-                }
-                else
-                {
-                    sb.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
-                }
+                sb.Append("};\n");
             }
-            sb.Append("};\n");
 
             return pre.Append(sb).ToString();
         }

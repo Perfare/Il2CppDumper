@@ -283,7 +283,11 @@ namespace Il2CppDumper
 
         public Il2CppType GetIl2CppType(ulong pointer)
         {
-            return typeDic[pointer];
+            if (!typeDic.TryGetValue(pointer, out var type))
+            {
+                return null;
+            }
+            return type;
         }
 
         public ulong GetMethodPointer(string imageName, Il2CppMethodDefinition methodDef)

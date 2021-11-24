@@ -275,6 +275,10 @@ namespace Il2CppDumper
             if (il2Cpp.Version >= 27)
             {
                 var il2CppType = il2Cpp.GetIl2CppType(genericClass.type);
+                if (il2CppType == null)
+                {
+                    return null;
+                }
                 return GetTypeDefinitionFromIl2CppType(il2CppType);
             }
             if (genericClass.typeDefinitionIndex == 4294967295 || genericClass.typeDefinitionIndex == -1)

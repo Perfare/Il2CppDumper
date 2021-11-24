@@ -333,12 +333,26 @@ namespace Il2CppDumper
                         va = FindReference(va);
                         if (va != 0ul)
                         {
-                            for (int i = 0; i < imageCount; i++)
+                            if (il2Cpp.Version >= 27)
                             {
-                                var va2 = FindReference(va - (ulong)i * il2Cpp.PointerSize);
-                                if (va2 != 0ul)
+                                for (int i = imageCount; i >= 0; i--)
                                 {
-                                    return va2 - il2Cpp.PointerSize * 13;
+                                    var va2 = FindReference(va - (ulong)i * il2Cpp.PointerSize);
+                                    if (va2 != 0ul)
+                                    {
+                                        return va2 - il2Cpp.PointerSize * 13;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                for (int i = 0; i < imageCount; i++)
+                                {
+                                    var va2 = FindReference(va - (ulong)i * il2Cpp.PointerSize);
+                                    if (va2 != 0ul)
+                                    {
+                                        return va2 - il2Cpp.PointerSize * 13;
+                                    }
                                 }
                             }
                         }

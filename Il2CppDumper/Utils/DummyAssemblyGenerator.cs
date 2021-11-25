@@ -269,23 +269,26 @@ namespace Il2CppDumper
                             }
                         }
                         //methodAddress
-                        var methodPointer = il2Cpp.GetMethodPointer(imageName, methodDef);
-                        if (methodPointer > 0)
+                        if (!methodDefinition.IsAbstract)
                         {
-                            var customAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(addressAttribute));
-                            var fixedMethodPointer = il2Cpp.GetRVA(methodPointer);
-                            var rva = new CustomAttributeNamedArgument("RVA", new CustomAttributeArgument(stringType, $"0x{fixedMethodPointer:X}"));
-                            var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{il2Cpp.MapVATR(methodPointer):X}"));
-                            var va = new CustomAttributeNamedArgument("VA", new CustomAttributeArgument(stringType, $"0x{methodPointer:X}"));
-                            customAttribute.Fields.Add(rva);
-                            customAttribute.Fields.Add(offset);
-                            customAttribute.Fields.Add(va);
-                            if (methodDef.slot != ushort.MaxValue)
+                            var methodPointer = il2Cpp.GetMethodPointer(imageName, methodDef);
+                            if (methodPointer > 0)
                             {
-                                var slot = new CustomAttributeNamedArgument("Slot", new CustomAttributeArgument(stringType, methodDef.slot.ToString()));
-                                customAttribute.Fields.Add(slot);
+                                var customAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(addressAttribute));
+                                var fixedMethodPointer = il2Cpp.GetRVA(methodPointer);
+                                var rva = new CustomAttributeNamedArgument("RVA", new CustomAttributeArgument(stringType, $"0x{fixedMethodPointer:X}"));
+                                var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{il2Cpp.MapVATR(methodPointer):X}"));
+                                var va = new CustomAttributeNamedArgument("VA", new CustomAttributeArgument(stringType, $"0x{methodPointer:X}"));
+                                customAttribute.Fields.Add(rva);
+                                customAttribute.Fields.Add(offset);
+                                customAttribute.Fields.Add(va);
+                                if (methodDef.slot != ushort.MaxValue)
+                                {
+                                    var slot = new CustomAttributeNamedArgument("Slot", new CustomAttributeArgument(stringType, methodDef.slot.ToString()));
+                                    customAttribute.Fields.Add(slot);
+                                }
+                                methodDefinition.CustomAttributes.Add(customAttribute);
                             }
-                            methodDefinition.CustomAttributes.Add(customAttribute);
                         }
                     }
                     //property

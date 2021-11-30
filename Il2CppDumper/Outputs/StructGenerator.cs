@@ -141,10 +141,10 @@ namespace Il2CppDumper
                         {
                             foreach (var methodSpec in methodSpecs)
                             {
-                                var methodTypeSignature = new List<Il2CppTypeEnum>();
                                 var genericMethodPointer = il2Cpp.methodSpecGenericMethodPointers[methodSpec];
                                 if (genericMethodPointer > 0)
                                 {
+                                    var methodTypeSignature = new List<Il2CppTypeEnum>();
                                     var scriptMethod = new ScriptMethod();
                                     json.ScriptMethod.Add(scriptMethod);
                                     scriptMethod.Address = il2Cpp.GetRVA(genericMethodPointer);

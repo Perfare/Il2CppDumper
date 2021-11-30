@@ -21,6 +21,7 @@ namespace Il2CppDumper
         public ulong Address;
         public string Name;
         public string Signature;
+        public string TypeSignature;
     }
 
     public class ScriptString

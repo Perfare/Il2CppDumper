@@ -356,7 +356,6 @@ namespace Il2CppDumper
             //第三遍，添加CustomAttribute
             if (il2Cpp.Version > 20)
             {
-                PrepareCustomAttribute();
                 foreach (var imageDef in metadata.imageDefs)
                 {
                     var typeEnd = imageDef.typeStart + imageDef.typeCount;
@@ -584,22 +583,6 @@ namespace Il2CppDumper
             }
         }
 
-        private void PrepareCustomAttribute()
-        {
-            foreach (var attributeName in knownAttributeNames)
-            {
-                foreach (var assemblyDefinition in Assemblies)
-                {
-                    var attributeType = assemblyDefinition.MainModule.GetType(attributeName);
-                    if (attributeType != null)
-                    {
-                        knownAttributes.Add(attributeName, attributeType.Methods.First(x => x.Name == ".ctor"));
-                        break;
-                    }
-                }
-            }
-        }
-
         private void CreateCustomAttribute(Il2CppImageDefinition imageDef, int customAttributeIndex, uint token, ModuleDefinition moduleDefinition, Collection<CustomAttribute> customAttributes)
         {
             var attributeIndex = metadata.GetCustomAttributeIndex(imageDef, customAttributeIndex, token);
@@ -612,12 +595,7 @@ namespace Il2CppDumper
                     var attributeType = il2Cpp.types[attributeTypeIndex];
                     var typeDef = executor.GetTypeDefinitionFromIl2CppType(attributeType);
                     var typeDefinition = typeDefinitionDic[typeDef];
-                    if (knownAttributes.TryGetValue(typeDefinition.FullName, out var methodDefinition))
-                    {
-                        var customAttribute = new CustomAttribute(moduleDefinition.ImportReference(methodDefinition));
-                        customAttributes.Add(customAttribute);
-                    }
-                    else
+                    if (!TryRestoreCustomAttribute(typeDefinition, moduleDefinition, customAttributes))
                     {
                         var methodPointer = executor.customAttributeGenerators[attributeIndex];
                         var fixedMethodPointer = il2Cpp.GetRVA(methodPointer);
@@ -632,6 +610,21 @@ namespace Il2CppDumper
                     }
                 }
             }
+        }
+
+        private bool TryRestoreCustomAttribute(TypeDefinition attributeType, ModuleDefinition moduleDefinition, Collection<CustomAttribute> customAttributes)
+        {
+            if (attributeType.Methods.Count == 1 && attributeType.Name != "CompilerGeneratedAttribute")
+            {
+                var methodDefinition = attributeType.Methods[0];
+                if (methodDefinition.Name == ".ctor" && methodDefinition.Parameters.Count == 0)
+                {
+                    var customAttribute = new CustomAttribute(moduleDefinition.ImportReference(methodDefinition));
+                    customAttributes.Add(customAttribute);
+                    return true;
+                }
+            }
+            return false;
         }
 
         private GenericParameter CreateGenericParameter(Il2CppGenericParameter param, IGenericParameterProvider iGenericParameterProvider)
@@ -650,32 +643,5 @@ namespace Il2CppDumper
             }
             return genericParameter;
         }
-
-        private static readonly string[] knownAttributeNames = new[]
-        {
-            //"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
-            "System.Runtime.CompilerServices.ExtensionAttribute",
-            "System.Runtime.CompilerServices.NullableAttribute",
-            "System.Runtime.CompilerServices.NullableContextAttribute",
-            "System.Runtime.CompilerServices.IsReadOnlyAttribute", //in关键字
-            "System.Diagnostics.DebuggerHiddenAttribute",
-            "System.Diagnostics.DebuggerStepThroughAttribute",
-            // Type attributes:
-            "System.FlagsAttribute",
-            "System.Runtime.CompilerServices.IsByRefLikeAttribute",
-            // Field attributes:
-            "System.NonSerializedAttribute",
-            // Method attributes:
-            "System.Runtime.InteropServices.PreserveSigAttribute",
-            // Parameter attributes:
-            "System.ParamArrayAttribute",
-            "System.Runtime.CompilerServices.CallerMemberNameAttribute",
-            "System.Runtime.CompilerServices.CallerFilePathAttribute",
-            "System.Runtime.CompilerServices.CallerLineNumberAttribute",
-            // Type parameter attributes:
-            "System.Runtime.CompilerServices.IsUnmanagedAttribute",
-            // Unity
-            "UnityEngine.SerializeField" //MonoBehaviour的反序列化
-        };
     }
 }

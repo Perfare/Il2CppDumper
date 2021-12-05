@@ -28,7 +28,7 @@ namespace Il2CppDumper
         private static HashSet<ulong> methodInfoCache = new HashSet<ulong>();
         private static HashSet<string> keyword = new HashSet<string>(StringComparer.Ordinal)
         { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "flat", "default", "_ds", "interrupt",
-            "unsigned", "signed", "asm", "if", "case", "break", "continue", "do", "new", "_", "short", "union", "class"};
+            "unsigned", "signed", "asm", "if", "case", "break", "continue", "do", "new", "_", "short", "union", "class", "namespace"};
         private static HashSet<string> specialKeywords = new HashSet<string>(StringComparer.Ordinal)
         { "inline", "near", "far" };
 

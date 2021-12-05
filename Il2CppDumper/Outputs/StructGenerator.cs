@@ -89,6 +89,7 @@ namespace Il2CppDumper
                         var methodPointer = il2Cpp.GetMethodPointer(imageName, methodDef);
                         if (methodPointer > 0)
                         {
+                            var methodTypeSignature = new List<Il2CppTypeEnum>();
                             var scriptMethod = new ScriptMethod();
                             json.ScriptMethod.Add(scriptMethod);
                             scriptMethod.Address = il2Cpp.GetRVA(methodPointer);
@@ -101,15 +102,18 @@ namespace Il2CppDumper
                             {
                                 returnType += "*";
                             }
+                            methodTypeSignature.Add(methodReturnType.byref == 1 ? Il2CppTypeEnum.IL2CPP_TYPE_PTR : methodReturnType.type);
                             var signature = $"{returnType} {FixName(methodFullName)} (";
                             var parameterStrs = new List<string>();
                             if ((methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
                             {
                                 var thisType = ParseType(il2Cpp.types[typeDef.byvalTypeIndex]);
+                                methodTypeSignature.Add(il2Cpp.types[typeDef.byvalTypeIndex].type);
                                 parameterStrs.Add($"{thisType} __this");
                             }
                             else if (il2Cpp.Version <= 24)
                             {
+                                methodTypeSignature.Add(Il2CppTypeEnum.IL2CPP_TYPE_PTR);
                                 parameterStrs.Add($"Il2CppObject* __this");
                             }
                             for (var j = 0; j < methodDef.parameterCount; j++)
@@ -122,12 +126,15 @@ namespace Il2CppDumper
                                 {
                                     parameterCType += "*";
                                 }
+                                methodTypeSignature.Add(parameterType.byref == 1 ? Il2CppTypeEnum.IL2CPP_TYPE_PTR : parameterType.type);
                                 parameterStrs.Add($"{parameterCType} {FixName(parameterName)}");
                             }
+                            methodTypeSignature.Add(Il2CppTypeEnum.IL2CPP_TYPE_PTR);
                             parameterStrs.Add("const MethodInfo* method");
                             signature += string.Join(", ", parameterStrs);
                             signature += ");";
                             scriptMethod.Signature = signature;
+                            scriptMethod.TypeSignature = GetMethodTypeSignature(methodTypeSignature);
                         }
                         //泛型实例函数
                         if (il2Cpp.methodDefinitionMethodSpecs.TryGetValue(i, out var methodSpecs))
@@ -137,6 +144,7 @@ namespace Il2CppDumper
                                 var genericMethodPointer = il2Cpp.methodSpecGenericMethodPointers[methodSpec];
                                 if (genericMethodPointer > 0)
                                 {
+                                    var methodTypeSignature = new List<Il2CppTypeEnum>();
                                     var scriptMethod = new ScriptMethod();
                                     json.ScriptMethod.Add(scriptMethod);
                                     scriptMethod.Address = il2Cpp.GetRVA(genericMethodPointer);
@@ -158,6 +166,7 @@ namespace Il2CppDumper
                                     {
                                         returnType += "*";
                                     }
+                                    methodTypeSignature.Add(methodReturnType.byref == 1 ? Il2CppTypeEnum.IL2CPP_TYPE_PTR : methodReturnType.type);
                                     var signature = $"{returnType} {FixName(methodFullName)} (";
                                     var parameterStrs = new List<string>();
                                     if ((methodDef.flags & METHOD_ATTRIBUTE_STATIC) == 0)
@@ -172,21 +181,25 @@ namespace Il2CppDumper
                                             if (nameGenericClassDic.TryGetValue(typeStructName, out var il2CppType))
                                             {
                                                 thisType = ParseType(il2CppType);
+                                                methodTypeSignature.Add(il2CppType.type);
                                             }
                                             else
                                             {
                                                 //没有单独的泛型实例类
                                                 thisType = ParseType(il2Cpp.types[typeDef.byvalTypeIndex]);
+                                                methodTypeSignature.Add(il2Cpp.types[typeDef.byvalTypeIndex].type);
                                             }
                                         }
                                         else
                                         {
                                             thisType = ParseType(il2Cpp.types[typeDef.byvalTypeIndex]);
+                                            methodTypeSignature.Add(il2Cpp.types[typeDef.byvalTypeIndex].type);
                                         }
                                         parameterStrs.Add($"{thisType} __this");
                                     }
                                     else if (il2Cpp.Version <= 24)
                                     {
+                                        methodTypeSignature.Add(Il2CppTypeEnum.IL2CPP_TYPE_PTR);
                                         parameterStrs.Add($"Il2CppObject* __this");
                                     }
                                     for (var j = 0; j < methodDef.parameterCount; j++)
@@ -199,12 +212,15 @@ namespace Il2CppDumper
                                         {
                                             parameterCType += "*";
                                         }
+                                        methodTypeSignature.Add(parameterType.byref == 1 ? Il2CppTypeEnum.IL2CPP_TYPE_PTR : parameterType.type);
                                         parameterStrs.Add($"{parameterCType} {FixName(parameterName)}");
                                     }
+                                    methodTypeSignature.Add(Il2CppTypeEnum.IL2CPP_TYPE_PTR);
                                     parameterStrs.Add($"const {methodInfoName}* method");
                                     signature += string.Join(", ", parameterStrs);
                                     signature += ");";
                                     scriptMethod.Signature = signature;
+                                    scriptMethod.TypeSignature = GetMethodTypeSignature(methodTypeSignature);
                                 }
                             }
                         }
@@ -643,6 +659,57 @@ namespace Il2CppDumper
                 default:
                     throw new NotSupportedException();
             }
+        }
+        public string GetMethodTypeSignature(List<Il2CppTypeEnum> types)
+        {
+            string signature = string.Empty;
+            foreach (Il2CppTypeEnum type in types)
+            {
+                switch (type)
+                {
+                    case Il2CppTypeEnum.IL2CPP_TYPE_VOID:
+                        signature += "v";
+                        break;
+                    case Il2CppTypeEnum.IL2CPP_TYPE_BOOLEAN:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_CHAR:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_I1:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_U1:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_I2:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_U2:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_I4:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_U4:
+                        signature += "i";
+                        break;
+                    case Il2CppTypeEnum.IL2CPP_TYPE_I8:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_U8:
+                        signature += "j";
+                        break;
+                    case Il2CppTypeEnum.IL2CPP_TYPE_R4:
+                        signature += "f";
+                        break;
+                    case Il2CppTypeEnum.IL2CPP_TYPE_R8:
+                        signature += "d";
+                        break;
+                    case Il2CppTypeEnum.IL2CPP_TYPE_STRING:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_PTR:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_ARRAY:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_GENERICINST:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_TYPEDBYREF:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_I:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_U:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_OBJECT:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_SZARRAY:
+                    case Il2CppTypeEnum.IL2CPP_TYPE_MVAR:
+                        signature += "i";
+                        break;
+                    default:
+                        throw new NotSupportedException();
+                }
+            }
+            return signature;
         }
 
         private void AddStruct(Il2CppTypeDefinition typeDef)

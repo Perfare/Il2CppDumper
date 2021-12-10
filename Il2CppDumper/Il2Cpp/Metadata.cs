@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace Il2CppDumper
@@ -10,6 +11,7 @@ namespace Il2CppDumper
     {
         public Il2CppGlobalMetadataHeader header;
         public Il2CppImageDefinition[] imageDefs;
+        public Il2CppAssemblyDefinition[] assemblyDefs;
         public Il2CppTypeDefinition[] typeDefs;
         public Il2CppMethodDefinition[] methodDefs;
         public Il2CppParameterDefinition[] parameterDefs;
@@ -73,6 +75,7 @@ namespace Il2CppDumper
             {
                 Version = 24.4;
             }
+            assemblyDefs = ReadMetadataClassArray<Il2CppAssemblyDefinition>(header.assembliesOffset, header.assembliesCount);
             typeDefs = ReadMetadataClassArray<Il2CppTypeDefinition>(header.typeDefinitionsOffset, header.typeDefinitionsCount);
             methodDefs = ReadMetadataClassArray<Il2CppMethodDefinition>(header.methodsOffset, header.methodsCount);
             parameterDefs = ReadMetadataClassArray<Il2CppParameterDefinition>(header.parametersOffset, header.parametersCount);
@@ -237,6 +240,11 @@ namespace Il2CppDumper
                 {
                     var e = fieldType.GetField("value__").FieldType;
                     size += GetPrimitiveTypeSize(e.Name);
+                }
+                else if (fieldType.IsArray)
+                {
+                    var arrayLengthAttribute = i.GetCustomAttribute<ArrayLengthAttribute>();
+                    size += arrayLengthAttribute.Length;
                 }
                 else
                 {

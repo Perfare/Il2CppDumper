@@ -44,7 +44,13 @@ def set_type(addr, type):
 	if addrType is None:
 		print("Could not identify type " + type + "(parsed as '" + newType + "')")
 	else:
-		createData(addr, addrType)
+	    try:
+	        createData(addr, addrType)
+	    except ghidra.program.model.util.CodeUnitInsertionException:
+	        print("Warning: unable to set type")
+            print(type + "at address" + addr + "(CodeUnitInsertionException)")
+            print("Skipping.")
+	    
 
 def make_function(start):
 	func = getFunctionAt(start)

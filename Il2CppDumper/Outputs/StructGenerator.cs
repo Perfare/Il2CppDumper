@@ -812,7 +812,7 @@ namespace Il2CppDumper
                     dic[methodDef.slot] = methodDef;
                 }
             }
-            if (typeDef.vtable_count > 0)
+            if (dic.Count > 0)
             {
                 structInfo.VTableMethod = new StructVTableMethodInfo[dic.Last().Key + 1];
                 foreach (var i in dic)

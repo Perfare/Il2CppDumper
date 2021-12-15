@@ -52,7 +52,7 @@ namespace Il2CppDumper
         public int rgctxEntriesCount;
         public uint imagesOffset; // Il2CppImageDefinition
         public int imagesCount;
-        public int assembliesOffset; // Il2CppAssemblyDefinition
+        public uint assembliesOffset; // Il2CppAssemblyDefinition
         public int assembliesCount;
         [Version(Min = 19, Max = 24.5)]
         public uint metadataUsageListsOffset; // Il2CppMetadataUsageList
@@ -98,6 +98,38 @@ namespace Il2CppDumper
         public int exportedTypeDefinitionsOffset; // TypeDefinitionIndex
         [Version(Min = 24)]
         public int exportedTypeDefinitionsCount;
+    }
+
+    public class Il2CppAssemblyDefinition
+    {
+        public int imageIndex;
+        [Version(Min = 24.1)]
+        public uint token;
+        [Version(Max = 24)]
+        public int customAttributeIndex;
+        [Version(Min = 20)]
+        public int referencedAssemblyStart;
+        [Version(Min = 20)]
+        public int referencedAssemblyCount;
+        public Il2CppAssemblyNameDefinition aname;
+    }
+
+    public class Il2CppAssemblyNameDefinition
+    {
+        public uint nameIndex;
+        public uint cultureIndex;
+        [Version(Max = 24.3)]
+        public int hashValueIndex;
+        public uint publicKeyIndex;
+        public uint hash_alg;
+        public int hash_len;
+        public uint flags;
+        public int major;
+        public int minor;
+        public int build;
+        public int revision;
+        [ArrayLength(Length = 8)]
+        public byte[] public_key_token;
     }
 
     public class Il2CppImageDefinition

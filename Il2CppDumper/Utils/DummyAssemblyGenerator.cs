@@ -54,8 +54,15 @@ namespace Il2CppDumper
             foreach (var imageDef in metadata.imageDefs)
             {
                 var imageName = metadata.GetStringFromIndex(imageDef.nameIndex);
-                var assemblyName = new AssemblyNameDefinition(imageName.Replace(".dll", ""), new Version("3.7.1.6"));
-                var assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyName, imageName, moduleParameters);
+                var aname = metadata.assemblyDefs[imageDef.assemblyIndex].aname;
+                var assemblyName = metadata.GetStringFromIndex(aname.nameIndex);
+                var assemblyNameDef = new AssemblyNameDefinition(assemblyName, new Version(aname.major, aname.minor, aname.build, aname.revision));
+                /*assemblyNameDef.Culture = metadata.GetStringFromIndex(aname.cultureIndex);
+                assemblyNameDef.PublicKey = Encoding.UTF8.GetBytes(metadata.GetStringFromIndex(aname.publicKeyIndex));
+                assemblyNameDef.HashAlgorithm = (AssemblyHashAlgorithm)aname.hash_alg;
+                assemblyNameDef.Attributes = (AssemblyAttributes)aname.flags;
+                assemblyNameDef.PublicKeyToken = aname.public_key_token;*/
+                var assemblyDefinition = AssemblyDefinition.CreateAssembly(assemblyNameDef, imageName, moduleParameters);
                 resolver.Register(assemblyDefinition);
                 Assemblies.Add(assemblyDefinition);
                 var moduleDefinition = assemblyDefinition.MainModule;

@@ -243,7 +243,10 @@ namespace Il2CppDumper
             }
             orderedPointers.AddRange(il2Cpp.genericMethodPointers);
             orderedPointers.AddRange(il2Cpp.invokerPointers);
-            orderedPointers.AddRange(executor.customAttributeGenerators);
+            if (il2Cpp.Version < 29)
+            {
+                orderedPointers.AddRange(executor.customAttributeGenerators);
+            }
             if (il2Cpp.Version >= 22)
             {
                 if (il2Cpp.reversePInvokeWrappers != null)

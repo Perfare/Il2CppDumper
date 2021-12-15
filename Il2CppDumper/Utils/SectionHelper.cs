@@ -340,6 +340,10 @@ namespace Il2CppDumper
                                     var va2 = FindReference(va - (ulong)i * il2Cpp.PointerSize);
                                     if (va2 != 0ul)
                                     {
+                                        if (il2Cpp.Version >= 29)
+                                        {
+                                            return va2 - il2Cpp.PointerSize * 14;
+                                        }
                                         return va2 - il2Cpp.PointerSize * 13;
                                     }
                                 }

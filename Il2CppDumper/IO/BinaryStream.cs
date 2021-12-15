@@ -52,24 +52,11 @@ namespace Il2CppDumper
 
         public double ReadDouble() => reader.ReadDouble();
 
-        public uint ReadULeb128()
-        {
-            uint value = reader.ReadByte();
-            if (value >= 0x80)
-            {
-                var bitshift = 0;
-                value &= 0x7f;
-                while (true)
-                {
-                    var b = reader.ReadByte();
-                    bitshift += 7;
-                    value |= (uint)((b & 0x7f) << bitshift);
-                    if (b < 0x80)
-                        break;
-                }
-            }
-            return value;
-        }
+        public uint ReadCompressedUInt32() => reader.ReadCompressedUInt32();
+
+        public int ReadCompressedInt32() => reader.ReadCompressedInt32();
+
+        public uint ReadULeb128() => reader.ReadULeb128();
 
         public void Write(bool value) => writer.Write(value);
 
@@ -245,6 +232,10 @@ namespace Il2CppDumper
         {
             get => Is32Bit ? 4ul : 8ul;
         }
+
+        public BinaryReader Reader => reader;
+
+        public BinaryWriter Writer => writer;
 
         protected virtual void Dispose(bool disposing)
         {

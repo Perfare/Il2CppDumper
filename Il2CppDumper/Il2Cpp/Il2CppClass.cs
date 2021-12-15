@@ -128,7 +128,8 @@ namespace Il2CppDumper
         IL2CPP_TYPE_SENTINEL = 0x41,       /* Sentinel for varargs method signature */
         IL2CPP_TYPE_PINNED = 0x45,       /* Local var that points to pinned object */
 
-        IL2CPP_TYPE_ENUM = 0x55        /* an enumeration */
+        IL2CPP_TYPE_ENUM = 0x55,        /* an enumeration */
+        IL2CPP_TYPE_IL2CPP_TYPE_INDEX = 0xff        /* an index into IL2CPP type metadata table */
     }
 
     public class Il2CppType
@@ -261,7 +262,7 @@ namespace Il2CppDumper
         public long rgctxsCount;
         public ulong rgctxs;
         public ulong debuggerMetadata;
-        [Version(Min = 27)]
+        [Version(Min = 27, Max = 27.2)]
         public ulong customAttributeCacheGenerator;
         [Version(Min = 27)]
         public ulong moduleInitializer;

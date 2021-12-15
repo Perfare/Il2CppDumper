@@ -20,8 +20,11 @@ def get_addr(addr):
 	return baseAddress.add(addr)
 
 def set_name(addr, name):
-	name = name.replace(' ', '-')
-	createLabel(addr, name, True, USER_DEFINED)
+    try:
+        name = name.replace(' ', '-')
+        createLabel(addr, name, True, USER_DEFINED)
+    except:
+        print("set_name() Failed.")
 
 def set_type(addr, type):
 	# Requires types (il2cpp.h) to be imported first
@@ -47,15 +50,16 @@ def set_type(addr, type):
 	    try:
 	        createData(addr, addrType)
 	    except ghidra.program.model.util.CodeUnitInsertionException:
-	        print("Warning: unable to set type")
-            print(type + "at address" + addr + "(CodeUnitInsertionException)")
-            print("Skipping.")
+	        print("Warning: unable to set type (CodeUnitInsertionException)")
 	    
 
 def make_function(start):
 	func = getFunctionAt(start)
 	if func is None:
-		createFunction(start, None)
+		try:
+			createFunction(start, None)
+		except:
+			print("Warning: Unable to create function")
 
 def set_sig(addr, name, sig):
 	try: 
@@ -74,8 +78,11 @@ def set_sig(addr, name, sig):
 			print("Skipping.")
 			return
 	if typeSig is not None:
-		typeSig.setName(name)
-		ApplyFunctionSignatureCmd(addr, typeSig, USER_DEFINED, False, True).applyTo(currentProgram)
+		try:
+            		typeSig.setName(name)
+            		ApplyFunctionSignatureCmd(addr, typeSig, USER_DEFINED, False, True).applyTo(currentProgram)
+		except:
+			print("Warning: unable to set Signature. ApplyFunctionSignatureCmd() Failed.")
 
 f = askFile("script.json from Il2cppdumper", "Open")
 data = json.loads(open(f.absolutePath, 'rb').read().decode('utf-8'))

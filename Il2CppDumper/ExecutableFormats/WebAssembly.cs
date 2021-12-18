@@ -46,8 +46,7 @@ namespace Il2CppDumper
 
         public WebAssemblyMemory CreateMemory()
         {
-            var last = dataSections[dataSections.Length - 1];
-            var stream = new MemoryStream((int)last.Offset + last.Data.Length);
+            var stream = new MemoryStream(new byte[Length]);
             foreach (var dataSection in dataSections)
             {
                 stream.Position = dataSection.Offset;

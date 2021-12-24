@@ -335,7 +335,7 @@ namespace Il2CppDumper
                         {
                             if (il2Cpp.Version >= 27)
                             {
-                                for (int i = imageCount; i >= 0; i--)
+                                for (int i = imageCount - 1; i >= 0; i--)
                                 {
                                     var va2 = FindReference(va - (ulong)i * il2Cpp.PointerSize);
                                     if (va2 != 0ul)

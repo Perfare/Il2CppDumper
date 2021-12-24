@@ -444,7 +444,14 @@ namespace Il2CppDumper
                     return true;
                 case Il2CppTypeEnum.IL2CPP_TYPE_IL2CPP_TYPE_INDEX:
                     var typeIndex = reader.ReadCompressedInt32();
-                    value.Value = il2Cpp.types[typeIndex];
+                    if (typeIndex == -1)
+                    {
+                        value.Value = null;
+                    }
+                    else
+                    {
+                        value.Value = il2Cpp.types[typeIndex];
+                    }
                     return true;
                 default:
                     value = null;

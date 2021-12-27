@@ -90,60 +90,68 @@ namespace Il2CppDumper
                     }
                 }
             }
-            for (var index = 0; index < metadata.typeDefs.Length; ++index)
+            foreach (var imageDef in metadata.imageDefs)
             {
-                var typeDef = metadata.typeDefs[index];
-                var typeDefinition = typeDefinitionDic[typeDef];
-
-                //nestedtype
-                for (int i = 0; i < typeDef.nested_type_count; i++)
+                var typeEnd = imageDef.typeStart + imageDef.typeCount;
+                for (var index = imageDef.typeStart; index < typeEnd; ++index)
                 {
-                    var nestedIndex = metadata.nestedTypeIndices[typeDef.nestedTypesStart + i];
-                    var nestedTypeDef = metadata.typeDefs[nestedIndex];
-                    var nestedTypeDefinition = typeDefinitionDic[nestedTypeDef];
-                    typeDefinition.NestedTypes.Add(nestedTypeDefinition);
+                    var typeDef = metadata.typeDefs[index];
+                    var typeDefinition = typeDefinitionDic[typeDef];
+
+                    //nestedtype
+                    for (int i = 0; i < typeDef.nested_type_count; i++)
+                    {
+                        var nestedIndex = metadata.nestedTypeIndices[typeDef.nestedTypesStart + i];
+                        var nestedTypeDef = metadata.typeDefs[nestedIndex];
+                        var nestedTypeDefinition = typeDefinitionDic[nestedTypeDef];
+                        typeDefinition.NestedTypes.Add(nestedTypeDefinition);
+                    }
                 }
             }
             //提前处理
-            for (var index = 0; index < metadata.typeDefs.Length; ++index)
+            foreach (var imageDef in metadata.imageDefs)
             {
-                var typeDef = metadata.typeDefs[index];
-                var typeDefinition = typeDefinitionDic[typeDef];
-
-                if (addToken)
+                var typeEnd = imageDef.typeStart + imageDef.typeCount;
+                for (var index = imageDef.typeStart; index < typeEnd; ++index)
                 {
-                    var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
-                    customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{typeDef.token:X}")));
-                    typeDefinition.CustomAttributes.Add(customTokenAttribute);
-                }
+                    var typeDef = metadata.typeDefs[index];
+                    var typeDefinition = typeDefinitionDic[typeDef];
 
-                //genericParameter
-                if (typeDef.genericContainerIndex >= 0)
-                {
-                    var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
-                    for (int i = 0; i < genericContainer.type_argc; i++)
+                    if (addToken)
                     {
-                        var genericParameterIndex = genericContainer.genericParameterStart + i;
-                        var param = metadata.genericParameters[genericParameterIndex];
-                        var genericParameter = CreateGenericParameter(param, typeDefinition);
-                        typeDefinition.GenericParameters.Add(genericParameter);
+                        var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
+                        customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{typeDef.token:X}")));
+                        typeDefinition.CustomAttributes.Add(customTokenAttribute);
                     }
-                }
 
-                //parent
-                if (typeDef.parentIndex >= 0)
-                {
-                    var parentType = il2Cpp.types[typeDef.parentIndex];
-                    var parentTypeRef = GetTypeReference(typeDefinition, parentType);
-                    typeDefinition.BaseType = parentTypeRef;
-                }
+                    //genericParameter
+                    if (typeDef.genericContainerIndex >= 0)
+                    {
+                        var genericContainer = metadata.genericContainers[typeDef.genericContainerIndex];
+                        for (int i = 0; i < genericContainer.type_argc; i++)
+                        {
+                            var genericParameterIndex = genericContainer.genericParameterStart + i;
+                            var param = metadata.genericParameters[genericParameterIndex];
+                            var genericParameter = CreateGenericParameter(param, typeDefinition);
+                            typeDefinition.GenericParameters.Add(genericParameter);
+                        }
+                    }
 
-                //interfaces
-                for (int i = 0; i < typeDef.interfaces_count; i++)
-                {
-                    var interfaceType = il2Cpp.types[metadata.interfaceIndices[typeDef.interfacesStart + i]];
-                    var interfaceTypeRef = GetTypeReference(typeDefinition, interfaceType);
-                    typeDefinition.Interfaces.Add(new InterfaceImplementation(interfaceTypeRef));
+                    //parent
+                    if (typeDef.parentIndex >= 0)
+                    {
+                        var parentType = il2Cpp.types[typeDef.parentIndex];
+                        var parentTypeRef = GetTypeReference(typeDefinition, parentType);
+                        typeDefinition.BaseType = parentTypeRef;
+                    }
+
+                    //interfaces
+                    for (int i = 0; i < typeDef.interfaces_count; i++)
+                    {
+                        var interfaceType = il2Cpp.types[metadata.interfaceIndices[typeDef.interfacesStart + i]];
+                        var interfaceTypeRef = GetTypeReference(typeDefinition, interfaceType);
+                        typeDefinition.Interfaces.Add(new InterfaceImplementation(interfaceTypeRef));
+                    }
                 }
             }
             //处理field, method, property等等

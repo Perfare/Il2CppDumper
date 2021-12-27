@@ -8,7 +8,7 @@ Unity il2cpp逆向工程
 
 * 还原DLL文件（不包含代码），可用于提取`MonoBehaviour`和`MonoScript`
 * 支持ELF, ELF64, Mach-O, PE, NSO和WASM格式
-* 支持Unity 5.3 - 2020.2
+* 支持Unity 5.3 - 2021.2
 * 生成IDA和Ghidra的脚本，帮助IDA和Ghidra更好的分析il2cpp文件
 * 生成结构体头文件
 * 支持从内存dump的`libil2cpp.so`文件以绕过保护

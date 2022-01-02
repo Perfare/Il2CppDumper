@@ -76,7 +76,20 @@ namespace Il2CppDumper
             {
                 Version = 24.4;
             }
+            var v241Plus = false;
+            if (Version == 24.1 && header.assembliesSize / 64 == imageDefs.Length)
+            {
+                v241Plus = true;
+            }
+            if (v241Plus)
+            {
+                Version = 24.4;
+            }
             assemblyDefs = ReadMetadataClassArray<Il2CppAssemblyDefinition>(header.assembliesOffset, header.assembliesSize);
+            if (v241Plus)
+            {
+                Version = 24.1;
+            }
             typeDefs = ReadMetadataClassArray<Il2CppTypeDefinition>(header.typeDefinitionsOffset, header.typeDefinitionsSize);
             methodDefs = ReadMetadataClassArray<Il2CppMethodDefinition>(header.methodsOffset, header.methodsSize);
             parameterDefs = ReadMetadataClassArray<Il2CppParameterDefinition>(header.parametersOffset, header.parametersSize);

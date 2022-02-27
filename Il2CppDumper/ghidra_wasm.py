@@ -47,9 +47,9 @@ if "ScriptMethod" in data and "ScriptMethod" in processFields:
 		offset = scriptMethod["Address"]
 		sig = scriptMethod["TypeSignature"]
 		symbolName = "func_%s_%d" % (sig, offset)
-		symbol = currentProgram.symbolTable.getSymbol(symbolName, dynCallNamespace)
-		if symbol:
-			addr = symbol.address
+		symbol = currentProgram.symbolTable.getSymbols(symbolName, dynCallNamespace)
+		if len(symbol) > 0:
+			addr = symbol[0].address
 			name = scriptMethod["Name"].encode("utf-8")
 			set_name(addr, name)
 		else:

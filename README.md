@@ -54,6 +54,10 @@ structure information header file
 
 For Ghidra
 
+#### binaryninja3_py3.py
+
+For BinaryNinja
+
 #### ghidra_wasm.py
 
 For Ghidra, work with [ghidra-wasm-plugin](https://github.com/nneonneo/ghidra-wasm-plugin)

@@ -52,6 +52,10 @@ Il2CppDumper.exe <executable-file> <global-metadata> <output-directory>
 
 用于Ghidra
 
+#### binaryninja3_py3.py
+
+用于BinaryNinja
+
 #### ghidra_wasm.py
 
 用于Ghidra, 和[ghidra-wasm-plugin](https://github.com/nneonneo/ghidra-wasm-plugin)一起工作

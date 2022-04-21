@@ -30,6 +30,7 @@ namespace Il2CppDumper
         public Dictionary<string, Il2CppCodeGenModule> codeGenModules;
         public Dictionary<string, ulong[]> codeGenModuleMethodPointers;
         public Dictionary<string, Dictionary<uint, Il2CppRGCTXDefinition[]>> rgctxsDictionary;
+        public bool IsDumped;
 
         public abstract ulong MapVATR(ulong addr);
         public abstract ulong MapRTVA(ulong addr);
@@ -37,6 +38,7 @@ namespace Il2CppDumper
         public abstract bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount);
         public abstract bool SymbolSearch();
         public abstract SectionHelper GetSectionHelper(int methodCount, int typeDefinitionsCount, int imageCount);
+        public abstract bool CheckDump();
 
         protected Il2Cpp(Stream stream) : base(stream) { }
 

@@ -265,5 +265,7 @@ namespace Il2CppDumper
             sectionHelper.SetSection(SearchSectionType.Bss, bss);
             return sectionHelper;
         }
+
+        public override bool CheckDump() => false;
     }
 }

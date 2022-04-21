@@ -184,12 +184,25 @@ namespace Il2CppDumper
             var version = config.ForceIl2CppVersion ? config.ForceVersion : metadata.Version;
             il2Cpp.SetProperties(version, metadata.maxMetadataUsages);
             Console.WriteLine($"Il2Cpp Version: {il2Cpp.Version}");
-            if (il2Cpp.Version >= 27 && il2Cpp is ElfBase elf && elf.IsDumped)
+            if (il2Cpp.CheckDump())
             {
-                Console.WriteLine("Input global-metadata.dat dump address:");
-                metadata.Address = Convert.ToUInt64(Console.ReadLine(), 16);
+                if (il2Cpp is ElfBase elf)
+                {
+                    Console.WriteLine("Detected this may be a dump file.");
+                    Console.WriteLine("Input il2cpp dump address or input 0 to force continue:");
+                    var DumpAddr = Convert.ToUInt64(Console.ReadLine(), 16);
+                    if (DumpAddr != 0)
+                    {
+                        il2Cpp.ImageBase = DumpAddr;
+                        il2Cpp.IsDumped = true;
+                        elf.Reload();
+                    }
+                }
+                else
+                {
+                    il2Cpp.IsDumped = true;
+                }
             }
-
 
             Console.WriteLine("Searching...");
             try
@@ -221,7 +234,12 @@ namespace Il2CppDumper
                     Console.Write("Input MetadataRegistration: ");
                     var metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
                     il2Cpp.Init(codeRegistration, metadataRegistration);
-                    return true;
+                }
+                if (il2Cpp.Version >= 27 && il2Cpp.IsDumped)
+                {
+                    var typeDef = metadata.typeDefs[0];
+                    var il2CppType = il2Cpp.types[typeDef.byvalTypeIndex];
+                    metadata.ImageBase = il2CppType.data.typeHandle - metadata.header.typeDefinitionsOffset;
                 }
             }
             catch (Exception e)

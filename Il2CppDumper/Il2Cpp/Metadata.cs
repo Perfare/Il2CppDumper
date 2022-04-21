@@ -39,7 +39,6 @@ namespace Il2CppDumper
         public Il2CppRGCTXDefinition[] rgctxEntries;
 
         private Dictionary<uint, string> stringCache = new Dictionary<uint, string>();
-        public ulong Address;
 
         public Metadata(Stream stream) : base(stream)
         {

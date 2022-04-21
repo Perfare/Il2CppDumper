@@ -9,7 +9,6 @@ namespace Il2CppDumper
     public sealed class PE : Il2Cpp
     {
         private SectionHeader[] sections;
-        private ulong imageBase;
 
         public PE(Stream stream) : base(stream)
         {
@@ -31,12 +30,12 @@ namespace Il2CppDumper
             {
                 Is32Bit = true;
                 var optionalHeader = ReadClass<OptionalHeader>();
-                imageBase = optionalHeader.ImageBase;
+                ImageBase = optionalHeader.ImageBase;
             }
             else if (magic == 0x20b)
             {
                 var optionalHeader = ReadClass<OptionalHeader64>();
-                imageBase = optionalHeader.ImageBase;
+                ImageBase = optionalHeader.ImageBase;
             }
             else
             {
@@ -48,7 +47,7 @@ namespace Il2CppDumper
 
         public void LoadFromMemory(ulong addr)
         {
-            imageBase = addr;
+            ImageBase = addr;
             foreach (var section in sections)
             {
                 section.PointerToRawData = section.VirtualAddress;
@@ -58,7 +57,7 @@ namespace Il2CppDumper
 
         public override ulong MapVATR(ulong absAddr)
         {
-            var addr = absAddr - imageBase;
+            var addr = absAddr - ImageBase;
             var section = sections.FirstOrDefault(x => addr >= x.VirtualAddress && addr <= x.VirtualAddress + x.VirtualSize);
             if (section == null)
             {
@@ -74,7 +73,7 @@ namespace Il2CppDumper
             {
                 return 0ul;
             }
-            return addr - section.PointerToRawData + section.VirtualAddress + imageBase;
+            return addr - section.PointerToRawData + section.VirtualAddress + ImageBase;
         }
 
         public override bool Search()
@@ -97,7 +96,7 @@ namespace Il2CppDumper
 
         public override ulong GetRVA(ulong pointer)
         {
-            return pointer - imageBase;
+            return pointer - ImageBase;
         }
 
         public override SectionHelper GetSectionHelper(int methodCount, int typeDefinitionsCount, int imageCount)
@@ -120,10 +119,22 @@ namespace Il2CppDumper
             var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, maxMetadataUsages, imageCount);
             var data = dataList.ToArray();
             var exec = execList.ToArray();
-            sectionHelper.SetSection(SearchSectionType.Exec, imageBase, exec);
-            sectionHelper.SetSection(SearchSectionType.Data, imageBase, data);
-            sectionHelper.SetSection(SearchSectionType.Bss, imageBase, data);
+            sectionHelper.SetSection(SearchSectionType.Exec, ImageBase, exec);
+            sectionHelper.SetSection(SearchSectionType.Data, ImageBase, data);
+            sectionHelper.SetSection(SearchSectionType.Bss, ImageBase, data);
             return sectionHelper;
+        }
+
+        public override bool CheckDump()
+        {
+            if (Is32Bit)
+            {
+                return ImageBase != 0x10000000;
+            }
+            else
+            {
+                return ImageBase != 0x180000000;
+            }
         }
     }
 }

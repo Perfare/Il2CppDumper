@@ -11,6 +11,7 @@ namespace Il2CppDumper
     {
         public double Version;
         public bool Is32Bit;
+        public ulong ImageBase;
         private Stream stream;
         private BinaryReader reader;
         private BinaryWriter writer;

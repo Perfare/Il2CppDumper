@@ -17,12 +17,13 @@ namespace Il2CppDumper
 
         public Elf64(Stream stream) : base(stream)
         {
-            elfHeader = ReadClass<Elf64_Ehdr>();
+            Load();
+        }
+
+        protected override void Load()
+        {
+            elfHeader = ReadClass<Elf64_Ehdr>(0);
             programSegment = ReadClassArray<Elf64_Phdr>(elfHeader.e_phoff, elfHeader.e_phnum);
-            if (!CheckSection())
-            {
-                GetDumpAddress();
-            }
             if (IsDumped)
             {
                 FixedProgramSegment();
@@ -44,7 +45,7 @@ namespace Il2CppDumper
             }
         }
 
-        public bool CheckSection()
+        protected override bool CheckSection()
         {
             try
             {
@@ -217,28 +218,35 @@ namespace Il2CppDumper
 
         private bool CheckProtection()
         {
-            //.init_proc
-            if (dynamicSection.Any(x => x.d_tag == DT_INIT))
+            try
             {
-                Console.WriteLine("WARNING: find .init_proc");
-                return true;
-            }
-            //JNI_OnLoad
-            ulong dynstrOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_STRTAB).d_un);
-            foreach (var symbol in symbolTable)
-            {
-                var name = ReadStringToNull(dynstrOffset + symbol.st_name);
-                switch (name)
+                //.init_proc
+                if (dynamicSection.Any(x => x.d_tag == DT_INIT))
                 {
-                    case "JNI_OnLoad":
-                        Console.WriteLine("WARNING: find JNI_OnLoad");
-                        return true;
+                    Console.WriteLine("WARNING: find .init_proc");
+                    return true;
+                }
+                //JNI_OnLoad
+                ulong dynstrOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_STRTAB).d_un);
+                foreach (var symbol in symbolTable)
+                {
+                    var name = ReadStringToNull(dynstrOffset + symbol.st_name);
+                    switch (name)
+                    {
+                        case "JNI_OnLoad":
+                            Console.WriteLine("WARNING: find JNI_OnLoad");
+                            return true;
+                    }
+                }
+                if (sectionTable != null && sectionTable.Any(x => x.sh_type == SHT_LOUSER))
+                {
+                    Console.WriteLine("WARNING: find SHT_LOUSER section");
+                    return true;
                 }
             }
-            if (sectionTable != null && sectionTable.Any(x => x.sh_type == SHT_LOUSER))
+            catch
             {
-                Console.WriteLine("WARNING: find SHT_LOUSER section");
-                return true;
+                // ignored
             }
             return false;
         }
@@ -247,7 +255,7 @@ namespace Il2CppDumper
         {
             if (IsDumped)
             {
-                return pointer - DumpAddr;
+                return pointer - ImageBase;
             }
             return pointer;
         }
@@ -260,7 +268,7 @@ namespace Il2CppDumper
                 var phdr = programSegment[i];
                 phdr.p_offset = phdr.p_vaddr;
                 Write(phdr.p_offset);
-                phdr.p_vaddr += DumpAddr;
+                phdr.p_vaddr += ImageBase;
                 Write(phdr.p_vaddr);
                 Position += 8;
                 phdr.p_filesz = phdr.p_memsz;
@@ -287,7 +295,7 @@ namespace Il2CppDumper
                     case DT_JMPREL:
                     case DT_INIT_ARRAY:
                     case DT_FINI_ARRAY:
-                        dyn.d_un += DumpAddr;
+                        dyn.d_un += ImageBase;
                         Write(dyn.d_un);
                         break;
                 }

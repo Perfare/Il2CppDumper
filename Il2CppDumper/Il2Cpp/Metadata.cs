@@ -227,7 +227,7 @@ namespace Il2CppDumper
                     metadataUsageDic[(Il2CppMetadataUsage)usage][metadataUsagePair.destinationIndex] = decodedIndex;
                 }
             }
-            maxMetadataUsages = metadataUsageDic.Max(x => x.Value.Max(y => y.Key)) + 1;
+            maxMetadataUsages = metadataUsageDic.Max(x => x.Value.Select(y => y.Key).DefaultIfEmpty().Max()) + 1;
         }
 
         public uint GetEncodedIndexType(uint index)

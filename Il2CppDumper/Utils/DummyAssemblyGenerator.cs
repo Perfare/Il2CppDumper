@@ -666,13 +666,13 @@ namespace Il2CppDumper
         private CustomAttributeArgument CreateCustomAttributeArgument(TypeReference typeReference, BlobValue blobValue, MemberReference memberReference)
         {
             var val = blobValue.Value;
-            if (val == null)
-            {
-                return new CustomAttributeArgument(typeReference, val);
-            }
-            else if (typeReference.FullName == "System.Object")
+            if (typeReference.FullName == "System.Object")
             {
                 val = new CustomAttributeArgument(GetBlobValueTypeReference(blobValue, memberReference), val);
+            }
+            else if (val == null)
+            {
+                return new CustomAttributeArgument(typeReference, val);
             }
             else if (typeReference is ArrayType arrayType)
             {

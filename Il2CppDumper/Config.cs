@@ -15,5 +15,7 @@
         public bool RequireAnyKey = true;
         public bool ForceIl2CppVersion = false;
         public double ForceVersion = 24.3;
+        public bool ForceDump = false;
+        public bool NoRedirectedPointer = false;
     }
 }

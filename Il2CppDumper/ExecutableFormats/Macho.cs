@@ -197,7 +197,7 @@ namespace Il2CppDumper
             var data = sections.Where(x => x.sectname == "__const").ToArray();
             var code = sections.Where(x => x.flags == 0x80000400).ToArray();
             var bss = sections.Where(x => x.flags == 1u).ToArray();
-            var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, maxMetadataUsages, imageCount);
+            var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, metadataUsagesCount, imageCount);
             sectionHelper.SetSection(SearchSectionType.Exec, code);
             sectionHelper.SetSection(SearchSectionType.Data, data);
             sectionHelper.SetSection(SearchSectionType.Bss, bss);

@@ -9,18 +9,18 @@ namespace Il2CppDumper
         private Il2Cpp il2Cpp;
         private int methodCount;
         private int typeDefinitionsCount;
-        private long maxMetadataUsages;
+        private long metadataUsagesCount;
         private int imageCount;
         public List<SearchSection> exec;
         public List<SearchSection> data;
         public List<SearchSection> bss;
 
-        public SectionHelper(Il2Cpp il2Cpp, int methodCount, int typeDefinitionsCount, long maxMetadataUsages, int imageCount)
+        public SectionHelper(Il2Cpp il2Cpp, int methodCount, int typeDefinitionsCount, long metadataUsagesCount, int imageCount)
         {
             this.il2Cpp = il2Cpp;
             this.methodCount = methodCount;
             this.typeDefinitionsCount = typeDefinitionsCount;
-            this.maxMetadataUsages = maxMetadataUsages;
+            this.metadataUsagesCount = metadataUsagesCount;
             this.imageCount = imageCount;
         }
 
@@ -231,7 +231,7 @@ namespace Il2CppDumper
                             var pointer = il2Cpp.MapVATR(il2Cpp.ReadUIntPtr());
                             if (CheckPointerRangeDataRa(pointer))
                             {
-                                var pointers = il2Cpp.ReadClassArray<ulong>(pointer, maxMetadataUsages);
+                                var pointers = il2Cpp.ReadClassArray<ulong>(pointer, metadataUsagesCount);
                                 if (CheckPointerRangeBssVa(pointers))
                                 {
                                     return addr - il2Cpp.PointerSize * 12 - section.offset + section.address;
@@ -375,7 +375,8 @@ namespace Il2CppDumper
             foreach (var dataSec in data)
             {
                 il2Cpp.Position = dataSec.offset;
-                while (il2Cpp.Position < dataSec.offsetEnd - il2Cpp.PointerSize)
+                var end = Math.Min(dataSec.offsetEnd, il2Cpp.Length) - il2Cpp.PointerSize;
+                while (il2Cpp.Position < end)
                 {
                     var offset = il2Cpp.Position;
                     if (il2Cpp.ReadUIntPtr() == addr)

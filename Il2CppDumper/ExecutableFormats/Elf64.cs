@@ -328,7 +328,7 @@ namespace Il2CppDumper
             }
             var data = dataList.ToArray();
             var exec = execList.ToArray();
-            var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, maxMetadataUsages, imageCount);
+            var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, metadataUsagesCount, imageCount);
             sectionHelper.SetSection(SearchSectionType.Exec, exec);
             sectionHelper.SetSection(SearchSectionType.Data, data);
             sectionHelper.SetSection(SearchSectionType.Bss, data);

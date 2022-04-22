@@ -26,7 +26,7 @@ namespace Il2CppDumper
         public Dictionary<int, List<Il2CppMethodSpec>> methodDefinitionMethodSpecs = new Dictionary<int, List<Il2CppMethodSpec>>();
         public Dictionary<Il2CppMethodSpec, ulong> methodSpecGenericMethodPointers = new Dictionary<Il2CppMethodSpec, ulong>();
         private bool fieldOffsetsArePointers;
-        protected long maxMetadataUsages;
+        protected long metadataUsagesCount;
         public Dictionary<string, Il2CppCodeGenModule> codeGenModules;
         public Dictionary<string, ulong[]> codeGenModuleMethodPointers;
         public Dictionary<string, Dictionary<uint, Il2CppRGCTXDefinition[]>> rgctxsDictionary;
@@ -42,10 +42,10 @@ namespace Il2CppDumper
 
         protected Il2Cpp(Stream stream) : base(stream) { }
 
-        public void SetProperties(double version, long maxMetadataUsages)
+        public void SetProperties(double version, long metadataUsagesCount)
         {
             Version = version;
-            this.maxMetadataUsages = maxMetadataUsages;
+            this.metadataUsagesCount = metadataUsagesCount;
         }
 
         protected bool AutoPlusInit(ulong codeRegistration, ulong metadataRegistration)
@@ -143,7 +143,7 @@ namespace Il2CppDumper
             }
             if (Version > 16 && Version < 27)
             {
-                metadataUsages = MapVATR<ulong>(pMetadataRegistration.metadataUsages, maxMetadataUsages);
+                metadataUsages = MapVATR<ulong>(pMetadataRegistration.metadataUsages, metadataUsagesCount);
             }
             if (Version >= 22)
             {

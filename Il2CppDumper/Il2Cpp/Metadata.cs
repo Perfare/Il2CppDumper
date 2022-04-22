@@ -28,7 +28,7 @@ namespace Il2CppDumper
         public int[] attributeTypes;
         public int[] interfaceIndices;
         public Dictionary<Il2CppMetadataUsage, SortedDictionary<uint, uint>> metadataUsageDic;
-        public long maxMetadataUsages;
+        public long metadataUsagesCount;
         public int[] nestedTypeIndices;
         public Il2CppEventDefinition[] eventDefs;
         public Il2CppGenericContainer[] genericContainers;
@@ -221,13 +221,18 @@ namespace Il2CppDumper
                 for (int i = 0; i < metadataUsageList.count; i++)
                 {
                     var offset = metadataUsageList.start + i;
+                    if (offset >= metadataUsagePairs.Length)
+                    {
+                        continue;
+                    }
                     var metadataUsagePair = metadataUsagePairs[offset];
                     var usage = GetEncodedIndexType(metadataUsagePair.encodedSourceIndex);
                     var decodedIndex = GetDecodedMethodIndex(metadataUsagePair.encodedSourceIndex);
                     metadataUsageDic[(Il2CppMetadataUsage)usage][metadataUsagePair.destinationIndex] = decodedIndex;
                 }
             }
-            maxMetadataUsages = metadataUsageDic.Max(x => x.Value.Select(y => y.Key).DefaultIfEmpty().Max()) + 1;
+            //metadataUsagesCount = metadataUsagePairs.Max(x => x.destinationIndex) + 1;
+            metadataUsagesCount = metadataUsageDic.Max(x => x.Value.Select(y => y.Key).DefaultIfEmpty().Max()) + 1;
         }
 
         public uint GetEncodedIndexType(uint index)

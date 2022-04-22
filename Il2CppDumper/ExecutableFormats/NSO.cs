@@ -322,7 +322,7 @@ namespace Il2CppDumper
 
         public override SectionHelper GetSectionHelper(int methodCount, int typeDefinitionsCount, int imageCount)
         {
-            var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, maxMetadataUsages, imageCount);
+            var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, metadataUsagesCount, imageCount);
             sectionHelper.SetSection(SearchSectionType.Exec, header.TextSegment);
             sectionHelper.SetSection(SearchSectionType.Data, header.DataSegment, header.RoDataSegment);
             sectionHelper.SetSection(SearchSectionType.Bss, header.BssSegment);

@@ -173,7 +173,7 @@ namespace Il2CppDumper
             for (var i = 0; i < pMetadataRegistration.typesCount; ++i)
             {
                 types[i] = MapVATR<Il2CppType>(pTypes[i]);
-                types[i].Init();
+                types[i].Init(Version);
                 typeDic.Add(pTypes[i], types[i]);
             }
             if (Version >= 24.2)

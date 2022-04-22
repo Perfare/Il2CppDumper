@@ -142,14 +142,25 @@ namespace Il2CppDumper
         public uint num_mods { get; set; }
         public uint byref { get; set; }
         public uint pinned { get; set; }
+        public uint valuetype { get; set; }
 
-        public void Init()
+        public void Init(double version)
         {
             attrs = bits & 0xffff;
             type = (Il2CppTypeEnum)((bits >> 16) & 0xff);
-            num_mods = (bits >> 24) & 0x3f;
-            byref = (bits >> 30) & 1;
-            pinned = bits >> 31;
+            if (version >= 27.2)
+            {
+                num_mods = (bits >> 24) & 0x1f;
+                byref = (bits >> 29) & 1;
+                pinned = (bits >> 30) & 1;
+                valuetype = bits >> 31;
+            }
+            else
+            {
+                num_mods = (bits >> 24) & 0x3f;
+                byref = (bits >> 30) & 1;
+                pinned = bits >> 31;
+            }
             data = new Union { dummy = datapoint };
         }
 

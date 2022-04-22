@@ -103,7 +103,7 @@ Available options:
 
 Make sure you choose the correct file. Sometimes games may obfuscate this file for content protection purposes and so on. Deobfuscating of such files is beyond the scope of this program, so please **DO NOT** file an issue regarding to deobfuscating.
 
-If your file is `libil2cpp.so` and you have a rooted Android phone, you can try my other project [Riru-Il2CppDumper](https://github.com/Perfare/Riru-Il2CppDumper), it can bypass this protection.
+If your file is `libil2cpp.so` and you have a rooted Android phone, you can try my other project [Zygisk-Il2CppDumper](https://github.com/Perfare/Zygisk-Il2CppDumper), it can bypass this protection.
 
 #### `ERROR: Can't use auto mode to process file, try manual mode.`
 
@@ -115,7 +115,7 @@ You can open a new issue and upload the file, I will try to solve.
 
 Il2CppDumper detected that the executable file has been protected, use `GameGuardian` to dump `libil2cpp.so` from the game memory, then use Il2CppDumper to load and follow the prompts, can bypass most protections.
 
-If you have a rooted Android phone, you can try my other project [Riru-Il2CppDumper](https://github.com/Perfare/Riru-Il2CppDumper), it can bypass almost all protections.
+If you have a rooted Android phone, you can try my other project [Zygisk-Il2CppDumper](https://github.com/Perfare/Zygisk-Il2CppDumper), it can bypass almost all protections.
 
 ## Credits
 

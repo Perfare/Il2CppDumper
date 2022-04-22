@@ -97,7 +97,7 @@ Il2CppDumper.exe <executable-file> <global-metadata> <output-directory>
 
 global-metadata.dat已被加密。关于解密的问题请去相关破解论坛寻求帮助，请不要在issues提问！
 
-如果你的文件是`libil2cpp.so`并且你拥有一台已root的安卓手机，你可以尝试我的另一个项目[Riru-Il2CppDumper](https://github.com/Perfare/Riru-Il2CppDumper)，它能够无视global-metadata.dat加密
+如果你的文件是`libil2cpp.so`并且你拥有一台已root的安卓手机，你可以尝试我的另一个项目[Zygisk-Il2CppDumper](https://github.com/Perfare/Zygisk-Il2CppDumper)，它能够无视global-metadata.dat加密
 
 #### `ERROR: Can't use auto mode to process file, try manual mode.`
 
@@ -109,7 +109,7 @@ global-metadata.dat已被加密。关于解密的问题请去相关破解论坛�
 
 Il2CppDumper检测到可执行文件已被保护，使用`GameGuardian`从游戏内存中dump `libil2cpp.so`，然后使用Il2CppDumper载入按提示操作，可绕过大部分保护
 
-如果你拥有一台已root的安卓手机，你可以尝试我的另一个项目[Riru-Il2CppDumper](https://github.com/Perfare/Riru-Il2CppDumper)，它能够绕过几乎所有保护
+如果你拥有一台已root的安卓手机，你可以尝试我的另一个项目[Zygisk-Il2CppDumper](https://github.com/Perfare/Zygisk-Il2CppDumper)，它能够绕过几乎所有保护
 
 ## 感谢
 

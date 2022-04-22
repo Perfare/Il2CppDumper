@@ -10,7 +10,7 @@ Unity il2cpp reverse engineer
 
 * Complete DLL restore (except code), can be used to extract `MonoBehaviour` and `MonoScript`
 * Supports ELF, ELF64, Mach-O, PE, NSO and WASM format
-* Supports Unity 5.3 - 2021.2
+* Supports Unity 5.3 - 2021.3
 * Supports generate IDA and Ghidra scripts to help IDA and Ghidra better analyze il2cpp files
 * Supports generate structures header file
 * Supports Android memory dumped `libil2cpp.so` file to bypass protection
@@ -82,8 +82,20 @@ Available options:
 * `GenerateDummyDll`, `GenerateScript`
   * Whether to generate these things
 
+* `DummyDllAddToken`
+  * Whether to add token in DummyDll
+
+* `RequireAnyKey`
+  * Whether to press any key to exit at the end
+
 * `ForceIl2CppVersion`, `ForceVersion`
   * If `ForceIl2CppVersion` is `true`, the program will use the version number specified in `ForceVersion` to choose parser for il2cpp binaries (does not affect the choice of metadata parser). This may be useful on some older il2cpp version (e.g. the program may need to use v16 parser on il2cpp v20 (Android) binaries in order to work properly)
+
+* `ForceDump`
+  * Force files to be treated as dumped
+
+* `NoRedirectedPointer`
+  * Treat pointers in dumped files as unredirected, This option needs to be `true` for files dumped from some devices
 
 ## Common errors
 

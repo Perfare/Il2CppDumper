@@ -8,7 +8,7 @@ Unity il2cpp逆向工程
 
 * 还原DLL文件（不包含代码），可用于提取`MonoBehaviour`和`MonoScript`
 * 支持ELF, ELF64, Mach-O, PE, NSO和WASM格式
-* 支持Unity 5.3 - 2021.2
+* 支持Unity 5.3 - 2021.3
 * 生成IDA和Ghidra的脚本，帮助IDA和Ghidra更好的分析il2cpp文件
 * 生成结构体头文件
 * 支持从内存dump的`libil2cpp.so`文件以绕过保护
@@ -76,8 +76,20 @@ Il2CppDumper.exe <executable-file> <global-metadata> <output-directory>
 * `GenerateDummyDll`，`GenerateScript`
   * 是否生成这些内容
 
+* `DummyDllAddToken`
+  * 是否在DummyDll中添加token
+
+* `RequireAnyKey`
+  * 在程序结束时是否需要按键退出
+
 * `ForceIl2CppVersion`，`ForceVersion`  
-  * 当ForceIl2CppVersion为true时，程序将根据ForceVersion指定的版本读取il2cpp的可执行文件（Metadata仍然使用header里的版本），在部分低版本的il2cpp中可能会用到（比如安卓20版本下，你可能需要设置ForceVersion为16程序才能正常工作）
+  * 当ForceIl2CppVersion为`true`时，程序将根据ForceVersion指定的版本读取il2cpp的可执行文件（Metadata仍然使用header里的版本），在部分低版本的il2cpp中可能会用到（比如安卓20版本下，你可能需要设置ForceVersion为16程序才能正常工作）
+
+* `ForceDump`
+  * 强制将文件视为dump文件
+
+* `NoRedirectedPointer`
+  * 将dump文件中的指针视为未重定向的, 从某些设备dump出的文件需要设置该项为`true`
 
 ## 常见问题
 

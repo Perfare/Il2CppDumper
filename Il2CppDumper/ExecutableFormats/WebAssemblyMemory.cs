@@ -4,9 +4,12 @@ namespace Il2CppDumper
 {
     public sealed class WebAssemblyMemory : Il2Cpp
     {
-        public WebAssemblyMemory(Stream stream, bool is32Bit) : base(stream)
+        private uint bssStart;
+
+        public WebAssemblyMemory(Stream stream, uint bssStart) : base(stream)
         {
-            Is32Bit = is32Bit;
+            Is32Bit = true;
+            this.bssStart = bssStart;
         }
 
         public override ulong MapVATR(ulong addr)
@@ -55,9 +58,9 @@ namespace Il2CppDumper
             };
             var bss = new SearchSection
             {
-                offset = Length,
+                offset = bssStart,
                 offsetEnd = long.MaxValue, //hack
-                address = Length,
+                address = bssStart,
                 addressEnd = long.MaxValue //hack
             };
             var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, metadataUsagesCount, imageCount);

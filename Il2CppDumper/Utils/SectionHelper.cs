@@ -220,7 +220,7 @@ namespace Il2CppDumper
             foreach (var section in data)
             {
                 il2Cpp.Position = section.offset;
-                while (il2Cpp.Position < section.offsetEnd)
+                while (il2Cpp.Position < section.offsetEnd - il2Cpp.PointerSize)
                 {
                     var addr = il2Cpp.Position;
                     if (il2Cpp.ReadIntPtr() == typeDefinitionsCount)

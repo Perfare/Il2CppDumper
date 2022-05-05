@@ -42,7 +42,7 @@ if "ScriptMethod" in data and "ScriptMethod" in processFields:
 	scriptMethods = data["ScriptMethod"]
 	for scriptMethod in scriptMethods:
 		addr = get_addr(scriptMethod["Address"])
-		name = scriptMethod["Name"].encode("utf-8")
+		name = scriptMethod["Name"]
 		set_name(addr, name)
 
 if "ScriptString" in data and "ScriptString" in processFields:
@@ -50,7 +50,7 @@ if "ScriptString" in data and "ScriptString" in processFields:
 	scriptStrings = data["ScriptString"]
 	for scriptString in scriptStrings:
 		addr = get_addr(scriptString["Address"])
-		value = scriptString["Value"].encode("utf-8")
+		value = scriptString["Value"]
 		name = "StringLiteral_" + str(index)
 		idc.set_name(addr, name, SN_NOWARN)
 		idc.set_cmt(addr, value, 1)
@@ -60,7 +60,7 @@ if "ScriptMetadata" in data and "ScriptMetadata" in processFields:
 	scriptMetadatas = data["ScriptMetadata"]
 	for scriptMetadata in scriptMetadatas:
 		addr = get_addr(scriptMetadata["Address"])
-		name = scriptMetadata["Name"].encode("utf-8")
+		name = scriptMetadata["Name"]
 		set_name(addr, name)
 		idc.set_cmt(addr, name, 1)
 
@@ -68,11 +68,11 @@ if "ScriptMetadataMethod" in data and "ScriptMetadataMethod" in processFields:
 	scriptMetadataMethods = data["ScriptMetadataMethod"]
 	for scriptMetadataMethod in scriptMetadataMethods:
 		addr = get_addr(scriptMetadataMethod["Address"])
-		name = scriptMetadataMethod["Name"].encode("utf-8")
+		name = scriptMetadataMethod["Name"]
 		methodAddr = get_addr(scriptMetadataMethod["MethodAddress"])
 		set_name(addr, name)
 		idc.set_cmt(addr, name, 1)
 		idc.set_cmt(addr, '{0:X}'.format(methodAddr), 0)
 
-print 'Script finished!'
+print('Script finished!')
 

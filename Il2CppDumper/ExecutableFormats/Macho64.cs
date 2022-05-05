@@ -14,7 +14,7 @@ namespace Il2CppDumper
         private static readonly byte[] FeatureBytes2 = { 0x3, 0x0, 0x80, 0x52 };//MOV W3, #0
         private ulong vmaddr;
 
-        public Macho64(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
+        public Macho64(Stream stream) : base(stream)
         {
             Position += 16; //skip magic, cputype, cpusubtype, filetype
             var ncmds = ReadUInt32();
@@ -24,47 +24,76 @@ namespace Il2CppDumper
                 var pos = Position;
                 var cmd = ReadUInt32();
                 var cmdsize = ReadUInt32();
-                if (cmd == 0x19) //LC_SEGMENT_64
+                switch (cmd)
                 {
-                    var segname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
-                    if (segname == "__TEXT") //__PAGEZERO
-                    {
-                        vmaddr = ReadUInt64();
-                    }
-                    else
-                    {
+                    case 0x19: //LC_SEGMENT_64
+                        var segname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
+                        if (segname == "__TEXT") //__PAGEZERO
+                        {
+                            vmaddr = ReadUInt64();
+                        }
+                        else
+                        {
+                            Position += 8;
+                        }
+                        Position += 32; //skip vmsize, fileoff, filesize, maxprot, initprot
+                        var nsects = ReadUInt32();
+                        Position += 4; //skip flags
+                        for (var j = 0; j < nsects; j++)
+                        {
+                            var section = new MachoSection64Bit();
+                            sections.Add(section);
+                            section.sectname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
+                            Position += 16; //skip segname
+                            section.addr = ReadUInt64();
+                            section.size = ReadUInt64();
+                            section.offset = ReadUInt32();
+                            Position += 12; //skip align, reloff, nreloc
+                            section.flags = ReadUInt32();
+                            Position += 12; //skip reserved1, reserved2, reserved3
+                        }
+                        break;
+                    case 0x2C: //LC_ENCRYPTION_INFO_64
                         Position += 8;
-                    }
-                    Position += 32; //skip vmsize, fileoff, filesize, maxprot, initprot
-                    var nsects = ReadUInt32();
-                    Position += 4; //skip flags
-                    for (var j = 0; j < nsects; j++)
-                    {
-                        var section = new MachoSection64Bit();
-                        sections.Add(section);
-                        section.sectname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
-                        Position += 16; //skip segname
-                        section.addr = ReadUInt64();
-                        section.size = ReadUInt64();
-                        section.offset = ReadUInt32();
-                        Position += 12; //skip align, reloff, nreloc
-                        section.flags = ReadUInt32();
-                        section.end = section.addr + section.size;
-                        Position += 12; //skip reserved1, reserved2, reserved3
-                    }
+                        var cryptID = ReadUInt32();
+                        if (cryptID != 0)
+                        {
+                            Console.WriteLine("ERROR: This Mach-O executable is encrypted and cannot be processed.");
+                        }
+                        break;
                 }
                 Position = pos + cmdsize;//skip
             }
         }
 
-        public override ulong MapVATR(ulong uiAddr)
+        public override ulong MapVATR(ulong addr)
         {
-            var section = sections.First(x => uiAddr >= x.addr && uiAddr <= x.end);
-            return uiAddr - (section.addr - section.offset);
+            var section = sections.First(x => addr >= x.addr && addr <= x.addr + x.size);
+            if (section.sectname == "__bss")
+            {
+                throw new Exception();
+            }
+            return addr - section.addr + section.offset;
+        }
+
+        public override ulong MapRTVA(ulong addr)
+        {
+            var section = sections.FirstOrDefault(x => addr >= x.offset && addr <= x.offset + x.size);
+            if (section == null)
+            {
+                return 0;
+            }
+            if (section.sectname == "__bss")
+            {
+                throw new Exception();
+            }
+            return addr - section.offset + section.addr;
         }
 
         public override bool Search()
         {
+            var codeRegistration = 0ul;
+            var metadataRegistration = 0ul;
             if (Version < 23)
             {
                 var __mod_init_func = sections.First(x => x.sectname == "__mod_init_func");
@@ -73,6 +102,8 @@ namespace Il2CppDumper
                 {
                     if (i > 0)
                     {
+                        var flag = false;
+                        var subaddr = 0ul;
                         Position = MapVATR(i);
                         var buff = ReadBytes(4);
                         if (FeatureBytes1.SequenceEqual(buff))
@@ -81,19 +112,42 @@ namespace Il2CppDumper
                             if (FeatureBytes2.SequenceEqual(buff))
                             {
                                 Position += 8;
-                                var subaddr = DecodeAdr(i + 16, ReadBytes(4));
-                                var rsubaddr = MapVATR(subaddr);
-                                Position = rsubaddr;
-                                var codeRegistration = DecodeAdrp(subaddr, ReadBytes(4));
-                                codeRegistration += DecodeAdd(ReadBytes(4));
-                                Position = rsubaddr + 8;
-                                var metadataRegistration = DecodeAdrp(subaddr + 8, ReadBytes(4));
-                                metadataRegistration += DecodeAdd(ReadBytes(4));
-                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                                Init(codeRegistration, metadataRegistration);
-                                return true;
+                                var inst = ReadBytes(4);
+                                if (IsAdr(inst))
+                                {
+                                    subaddr = DecodeAdr(i + 16, inst);
+                                    flag = true;
+                                }
                             }
+                        }
+                        else
+                        {
+                            Position += 0xc;
+                            buff = ReadBytes(4);
+                            if (FeatureBytes2.SequenceEqual(buff))
+                            {
+                                buff = ReadBytes(4);
+                                if (FeatureBytes1.SequenceEqual(buff))
+                                {
+                                    Position -= 0x10;
+                                    var inst = ReadBytes(4);
+                                    if (IsAdr(inst))
+                                    {
+                                        subaddr = DecodeAdr(i + 8, inst);
+                                        flag = true;
+                                    }
+                                }
+                            }
+                        }
+                        if (flag)
+                        {
+                            var rsubaddr = MapVATR(subaddr);
+                            Position = rsubaddr;
+                            codeRegistration = DecodeAdrp(subaddr, ReadBytes(4));
+                            codeRegistration += DecodeAdd(ReadBytes(4));
+                            Position = rsubaddr + 8;
+                            metadataRegistration = DecodeAdrp(subaddr + 8, ReadBytes(4));
+                            metadataRegistration += DecodeAdd(ReadBytes(4));
                         }
                     }
                 }
@@ -125,15 +179,11 @@ namespace Il2CppDumper
                                 var subaddr = DecodeAdr(i + 8, ReadBytes(4));
                                 var rsubaddr = MapVATR(subaddr);
                                 Position = rsubaddr;
-                                var codeRegistration = DecodeAdrp(subaddr, ReadBytes(4));
+                                codeRegistration = DecodeAdrp(subaddr, ReadBytes(4));
                                 codeRegistration += DecodeAdd(ReadBytes(4));
                                 Position = rsubaddr + 8;
-                                var metadataRegistration = DecodeAdrp(subaddr + 8, ReadBytes(4));
+                                metadataRegistration = DecodeAdrp(subaddr + 8, ReadBytes(4));
                                 metadataRegistration += DecodeAdd(ReadBytes(4));
-                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                                Init(codeRegistration, metadataRegistration);
-                                return true;
                             }
                         }
                     }
@@ -166,36 +216,32 @@ namespace Il2CppDumper
                                 var subaddr = DecodeAdr(i + 8, ReadBytes(4));
                                 var rsubaddr = MapVATR(subaddr);
                                 Position = rsubaddr;
-                                var codeRegistration = DecodeAdrp(subaddr, ReadBytes(4));
+                                codeRegistration = DecodeAdrp(subaddr, ReadBytes(4));
                                 codeRegistration += DecodeAdd(ReadBytes(4));
                                 Position = rsubaddr + 8;
-                                var metadataRegistration = DecodeAdrp(subaddr + 8, ReadBytes(4));
+                                metadataRegistration = DecodeAdrp(subaddr + 8, ReadBytes(4));
                                 metadataRegistration += DecodeAdd(ReadBytes(4));
-                                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
-                                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
-                                Init(codeRegistration, metadataRegistration);
-                                return true;
                             }
                         }
                     }
                 }
             }
+            if (codeRegistration != 0 && metadataRegistration != 0)
+            {
+                Console.WriteLine("CodeRegistration : {0:x}", codeRegistration);
+                Console.WriteLine("MetadataRegistration : {0:x}", metadataRegistration);
+                Init(codeRegistration, metadataRegistration);
+                return true;
+            }
             return false;
         }
 
-        public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
+        public override bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount)
         {
-            var data = sections.Where(x => x.sectname == "__const" || x.sectname == "__cstring" || x.sectname == "__data").ToArray();
-            var code = sections.Where(x => x.flags == 0x80000400).ToArray();
-            var bss = sections.Where(x => x.flags == 1u).ToArray();
-
-            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
-            plusSearch.SetSection(SearchSectionType.Exec, code);
-            plusSearch.SetSection(SearchSectionType.Data, data);
-            plusSearch.SetSection(SearchSectionType.Bss, bss);
-            var codeRegistration = plusSearch.FindCodeRegistration();
-            var metadataRegistration = plusSearch.FindMetadataRegistration();
-            return AutoInit(codeRegistration, metadataRegistration);
+            var sectionHelper = GetSectionHelper(methodCount, typeDefinitionsCount, imageCount);
+            var codeRegistration = sectionHelper.FindCodeRegistration();
+            var metadataRegistration = sectionHelper.FindMetadataRegistration();
+            return AutoPlusInit(codeRegistration, metadataRegistration);
         }
 
         public override bool SymbolSearch()
@@ -207,5 +253,19 @@ namespace Il2CppDumper
         {
             return pointer - vmaddr;
         }
+
+        public override SectionHelper GetSectionHelper(int methodCount, int typeDefinitionsCount, int imageCount)
+        {
+            var data = sections.Where(x => x.sectname == "__const" || x.sectname == "__cstring" || x.sectname == "__data").ToArray();
+            var code = sections.Where(x => x.flags == 0x80000400).ToArray();
+            var bss = sections.Where(x => x.flags == 1u).ToArray();
+            var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, metadataUsagesCount, imageCount);
+            sectionHelper.SetSection(SearchSectionType.Exec, code);
+            sectionHelper.SetSection(SearchSectionType.Data, data);
+            sectionHelper.SetSection(SearchSectionType.Bss, bss);
+            return sectionHelper;
+        }
+
+        public override bool CheckDump() => false;
     }
 }

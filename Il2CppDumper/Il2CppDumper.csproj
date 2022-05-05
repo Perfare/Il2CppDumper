@@ -1,127 +1,51 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{379715D4-4B7B-41F2-B78A-8B18D86320E2}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Il2CppDumper</RootNamespace>
-    <AssemblyName>Il2CppDumper</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <TargetFrameworks>net472;net5.0;net6.0</TargetFrameworks>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Copyright>Copyright © Perfare 2016-2020</Copyright>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Mono.Cecil, Version=0.11.1.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Mono.Cecil.0.11.1\lib\net40\Mono.Cecil.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.4" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
     <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="Attributes\ArrayLengthAttribute.cs" />
-    <Compile Include="Extensions\BoyerMooreHorspool.cs" />
-    <Compile Include="Extensions\HexExtensions.cs" />
-    <Compile Include="Outputs\DummyAssemblyExporter.cs" />
-    <Compile Include="Outputs\HeaderConstants.cs" />
-    <Compile Include="Outputs\Il2CppDecompiler.cs" />
-    <Compile Include="Outputs\ScriptJson.cs" />
-    <Compile Include="Outputs\StructInfo.cs" />
-    <Compile Include="Utils\Il2CppDummyDll.cs" />
-    <Compile Include="Outputs\Il2CppConstants.cs" />
-    <Compile Include="IO\Lz4DecoderStream.cs" />
-    <Compile Include="ExecutableFormats\NSO.cs" />
-    <Compile Include="ExecutableFormats\NSOClass.cs" />
-    <Compile Include="Outputs\ScriptGenerator.cs" />
-    <Compile Include="Utils\Il2CppExecutor.cs" />
-    <Compile Include="Utils\ReadCache.cs" />
-    <Compile Include="Utils\SearchSection.cs" />
-    <Compile Include="Extensions\StringExtensions.cs" />
-    <Compile Include="Attributes\VersionAttribute.cs" />
-    <Compile Include="Config.cs" />
-    <Compile Include="Utils\DummyAssemblyGenerator.cs" />
-    <Compile Include="ExecutableFormats\Elf.cs" />
-    <Compile Include="ExecutableFormats\Elf64.cs" />
-    <Compile Include="ExecutableFormats\Il2CppClass.cs" />
-    <Compile Include="ExecutableFormats\Il2Cpp.cs" />
-    <Compile Include="ExecutableFormats\Macho.cs" />
-    <Compile Include="ExecutableFormats\Metadata.cs" />
-    <Compile Include="ExecutableFormats\MetadataClass.cs" />
-    <Compile Include="Utils\MyAssemblyResolver.cs" />
-    <Compile Include="ExecutableFormats\PE.cs" />
-    <Compile Include="ExecutableFormats\PEClass.cs" />
-    <Compile Include="Utils\PlusSearch.cs" />
-    <Compile Include="Utils\ArmUtils.cs" />
-    <Compile Include="ExecutableFormats\ElfClass.cs" />
-    <Compile Include="ExecutableFormats\MachoClass.cs" />
-    <Compile Include="ExecutableFormats\MachoFat.cs" />
-    <Compile Include="IO\BinaryStream.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ExecutableFormats\Macho64.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="config.json">
+    <None Update="config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ida.py">
+    <None Update="ghidra.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="ida_with_struct.py">
+    <None Update="ghidra_wasm.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ghidra.py">
+    <None Update="ghidra_with_struct.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="ida.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="ida_py3.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="ida_with_struct.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="ida_with_struct_py3.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="il2cpp_header_to_ghidra.py">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <ProjectExtensions>
-    <VisualStudio>
-      <UserProperties config_1json__JsonSchema="" />
-    </VisualStudio>
-  </ProjectExtensions>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>

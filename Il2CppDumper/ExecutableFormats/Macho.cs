@@ -14,7 +14,7 @@ namespace Il2CppDumper
         private static readonly byte[] FeatureBytes2 = { 0x78, 0x44, 0x79, 0x44 };//ADD R0, PC and ADD R1, PC
         private ulong vmaddr;
 
-        public Macho(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
+        public Macho(Stream stream) : base(stream)
         {
             Is32Bit = true;
             Position += 16; //skip magic, cputype, cpusubtype, filetype
@@ -25,34 +25,43 @@ namespace Il2CppDumper
                 var pos = Position;
                 var cmd = ReadUInt32();
                 var cmdsize = ReadUInt32();
-                if (cmd == 1) //LC_SEGMENT
+                switch (cmd)
                 {
-                    var segname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
-                    if (segname == "__TEXT") //__PAGEZERO
-                    {
-                        vmaddr = ReadUInt32();
-                    }
-                    else
-                    {
-                        Position += 4;
-                    }
-                    Position += 20; //skip vmsize, fileoff, filesize, maxprot, initprot
-                    var nsects = ReadUInt32();
-                    Position += 4; //skip flags
-                    for (var j = 0; j < nsects; j++)
-                    {
-                        var section = new MachoSection();
-                        sections.Add(section);
-                        section.sectname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
-                        Position += 16; //skip segname
-                        section.addr = ReadUInt32();
-                        section.size = ReadUInt32();
-                        section.offset = ReadUInt32();
-                        Position += 12; //skip align, reloff, nreloc
-                        section.flags = ReadUInt32();
-                        section.end = section.addr + section.size;
-                        Position += 8; //skip reserved1, reserved2
-                    }
+                    case 1: //LC_SEGMENT
+                        var segname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
+                        if (segname == "__TEXT") //__PAGEZERO
+                        {
+                            vmaddr = ReadUInt32();
+                        }
+                        else
+                        {
+                            Position += 4;
+                        }
+                        Position += 20; //skip vmsize, fileoff, filesize, maxprot, initprot
+                        var nsects = ReadUInt32();
+                        Position += 4; //skip flags
+                        for (var j = 0; j < nsects; j++)
+                        {
+                            var section = new MachoSection();
+                            sections.Add(section);
+                            section.sectname = Encoding.UTF8.GetString(ReadBytes(16)).TrimEnd('\0');
+                            Position += 16; //skip segname
+                            section.addr = ReadUInt32();
+                            section.size = ReadUInt32();
+                            section.offset = ReadUInt32();
+                            Position += 12; //skip align, reloff, nreloc
+                            section.flags = ReadUInt32();
+                            Position += 8; //skip reserved1, reserved2
+                        }
+                        break;
+                    case 0x21: //LC_ENCRYPTION_INFO
+                        Position += 8;
+                        var cryptID = ReadUInt32();
+                        if (cryptID != 0)
+                        {
+                            Console.WriteLine("ERROR: This Mach-O executable is encrypted and cannot be processed.");
+                        }
+                        break;
                 }
                 Position = pos + cmdsize;//next
             }
@@ -65,10 +74,20 @@ namespace Il2CppDumper
             customAttributeGenerators = customAttributeGenerators.Select(x => x - 1).ToArray();
         }
 
-        public override ulong MapVATR(ulong uiAddr)
+        public override ulong MapVATR(ulong addr)
         {
-            var section = sections.First(x => uiAddr >= x.addr && uiAddr <= x.end);
-            return uiAddr - (section.addr - section.offset);
+            var section = sections.First(x => addr >= x.addr && addr <= x.addr + x.size);
+            return addr - section.addr + section.offset;
+        }
+
+        public override ulong MapRTVA(ulong addr)
+        {
+            var section = sections.FirstOrDefault(x => addr >= x.offset && addr <= x.offset + x.size);
+            if (section == null)
+            {
+                return 0;
+            }
+            return addr - section.offset + section.addr;
         }
 
         public override bool Search()
@@ -155,19 +174,12 @@ namespace Il2CppDumper
             }
         }
 
-        public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
+        public override bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount)
         {
-            var data = sections.Where(x => x.sectname == "__const").ToArray();
-            var code = sections.Where(x => x.flags == 0x80000400).ToArray();
-            var bss = sections.Where(x => x.flags == 1u).ToArray();
-
-            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
-            plusSearch.SetSection(SearchSectionType.Exec, code);
-            plusSearch.SetSection(SearchSectionType.Data, data);
-            plusSearch.SetSection(SearchSectionType.Bss, bss);
-            var codeRegistration = plusSearch.FindCodeRegistration();
-            var metadataRegistration = plusSearch.FindMetadataRegistration();
-            return AutoInit(codeRegistration, metadataRegistration);
+            var sectionHelper = GetSectionHelper(methodCount, typeDefinitionsCount, imageCount);
+            var codeRegistration = sectionHelper.FindCodeRegistration();
+            var metadataRegistration = sectionHelper.FindMetadataRegistration();
+            return AutoPlusInit(codeRegistration, metadataRegistration);
         }
 
         public override bool SymbolSearch()
@@ -179,5 +191,19 @@ namespace Il2CppDumper
         {
             return pointer - vmaddr;
         }
+
+        public override SectionHelper GetSectionHelper(int methodCount, int typeDefinitionsCount, int imageCount)
+        {
+            var data = sections.Where(x => x.sectname == "__const").ToArray();
+            var code = sections.Where(x => x.flags == 0x80000400).ToArray();
+            var bss = sections.Where(x => x.flags == 1u).ToArray();
+            var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, metadataUsagesCount, imageCount);
+            sectionHelper.SetSection(SearchSectionType.Exec, code);
+            sectionHelper.SetSection(SearchSectionType.Data, data);
+            sectionHelper.SetSection(SearchSectionType.Bss, bss);
+            return sectionHelper;
+        }
+
+        public override bool CheckDump() => false;
     }
 }

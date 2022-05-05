@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -8,15 +9,16 @@ namespace Il2CppDumper
 {
     public class BinaryStream : IDisposable
     {
-        public float Version;
+        public double Version;
         public bool Is32Bit;
+        public ulong ImageBase;
         private Stream stream;
         private BinaryReader reader;
         private BinaryWriter writer;
         private MethodInfo readClass;
         private MethodInfo readClassArray;
         private Dictionary<Type, MethodInfo> genericMethodCache = new Dictionary<Type, MethodInfo>();
-        private Dictionary<FieldInfo, VersionAttribute> attributeCache = new Dictionary<FieldInfo, VersionAttribute>();
+        private Dictionary<FieldInfo, VersionAttribute[]> attributeCache = new Dictionary<FieldInfo, VersionAttribute[]>();
 
         public BinaryStream(Stream input)
         {
@@ -51,6 +53,12 @@ namespace Il2CppDumper
 
         public double ReadDouble() => reader.ReadDouble();
 
+        public uint ReadCompressedUInt32() => reader.ReadCompressedUInt32();
+
+        public int ReadCompressedInt32() => reader.ReadCompressedInt32();
+
+        public uint ReadULeb128() => reader.ReadULeb128();
+
         public void Write(bool value) => writer.Write(value);
 
         public void Write(byte value) => writer.Write(value);
@@ -78,6 +86,8 @@ namespace Il2CppDumper
             get => (ulong)stream.Position;
             set => stream.Position = (long)value;
         }
+
+        public ulong Length => (ulong)stream.Length;
 
         private object ReadPrimitive(Type type)
         {
@@ -125,23 +135,39 @@ namespace Il2CppDumper
                 var t = new T();
                 foreach (var i in t.GetType().GetFields())
                 {
-                    if (!attributeCache.TryGetValue(i, out var versionAttribute))
+                    if (!attributeCache.TryGetValue(i, out var versionAttributes))
                     {
                         if (Attribute.IsDefined(i, typeof(VersionAttribute)))
                         {
-                            versionAttribute = i.GetCustomAttribute<VersionAttribute>();
-                            attributeCache.Add(i, versionAttribute);
+                            versionAttributes = i.GetCustomAttributes<VersionAttribute>().ToArray();
+                            attributeCache.Add(i, versionAttributes);
                         }
                     }
-                    if (versionAttribute != null)
+                    if (versionAttributes?.Length > 0)
                     {
-                        if (Version < versionAttribute.Min || Version > versionAttribute.Max)
+                        var read = false;
+                        foreach (var versionAttribute in versionAttributes)
+                        {
+                            if (Version >= versionAttribute.Min && Version <= versionAttribute.Max)
+                            {
+                                read = true;
+                                break;
+                            }
+                        }
+                        if (!read)
+                        {
                             continue;
+                        }
                     }
                     var fieldType = i.FieldType;
                     if (fieldType.IsPrimitive)
                     {
                         i.SetValue(t, ReadPrimitive(fieldType));
+                    }
+                    else if (fieldType.IsEnum)
+                    {
+                        var e = fieldType.GetField("value__").FieldType;
+                        i.SetValue(t, ReadPrimitive(e));
                     }
                     else if (fieldType.IsArray)
                     {
@@ -192,6 +218,25 @@ namespace Il2CppDumper
                 bytes.Add(b);
             return Encoding.UTF8.GetString(bytes.ToArray());
         }
+
+        public long ReadIntPtr()
+        {
+            return Is32Bit ? ReadInt32() : ReadInt64();
+        }
+
+        public ulong ReadUIntPtr()
+        {
+            return Is32Bit ? ReadUInt32() : ReadUInt64();
+        }
+
+        public ulong PointerSize
+        {
+            get => Is32Bit ? 4ul : 8ul;
+        }
+
+        public BinaryReader Reader => reader;
+
+        public BinaryWriter Writer => writer;
 
         protected virtual void Dispose(bool disposing)
         {

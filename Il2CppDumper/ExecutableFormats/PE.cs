@@ -9,9 +9,8 @@ namespace Il2CppDumper
     public sealed class PE : Il2Cpp
     {
         private SectionHeader[] sections;
-        private ulong imageBase;
 
-        public PE(Stream stream, float version, long maxMetadataUsages) : base(stream, version, maxMetadataUsages)
+        public PE(Stream stream) : base(stream)
         {
             var dosHeader = ReadClass<DosHeader>();
             if (dosHeader.Magic != 0x5A4D)
@@ -25,30 +24,56 @@ namespace Il2CppDumper
             }
             var fileHeader = ReadClass<FileHeader>();
             var pos = Position;
-            if (fileHeader.Machine == 0x14c) //Intel 386
+            var magic = ReadUInt16();
+            Position -= 2;
+            if (magic == 0x10b)
             {
                 Is32Bit = true;
                 var optionalHeader = ReadClass<OptionalHeader>();
-                imageBase = optionalHeader.ImageBase;
+                ImageBase = optionalHeader.ImageBase;
             }
-            else if (fileHeader.Machine == 0x8664) //AMD64
+            else if (magic == 0x20b)
             {
                 var optionalHeader = ReadClass<OptionalHeader64>();
-                imageBase = optionalHeader.ImageBase;
+                ImageBase = optionalHeader.ImageBase;
             }
             else
             {
-                throw new NotSupportedException("ERROR: Unsupported machine.");
+                throw new NotSupportedException($"Invalid Optional header magic {magic}");
             }
             Position = pos + fileHeader.SizeOfOptionalHeader;
             sections = ReadClassArray<SectionHeader>(fileHeader.NumberOfSections);
         }
 
+        public void LoadFromMemory(ulong addr)
+        {
+            ImageBase = addr;
+            foreach (var section in sections)
+            {
+                section.PointerToRawData = section.VirtualAddress;
+                section.SizeOfRawData = section.VirtualSize;
+            }
+        }
+
         public override ulong MapVATR(ulong absAddr)
         {
-            var addr = absAddr - imageBase;
-            var section = sections.First(x => addr >= x.VirtualAddress && addr <= x.VirtualAddress + x.VirtualSize);
-            return addr - (section.VirtualAddress - section.PointerToRawData);
+            var addr = absAddr - ImageBase;
+            var section = sections.FirstOrDefault(x => addr >= x.VirtualAddress && addr <= x.VirtualAddress + x.VirtualSize);
+            if (section == null)
+            {
+                return 0ul;
+            }
+            return addr - section.VirtualAddress + section.PointerToRawData;
+        }
+
+        public override ulong MapRTVA(ulong addr)
+        {
+            var section = sections.FirstOrDefault(x => addr >= x.PointerToRawData && addr <= x.PointerToRawData + x.SizeOfRawData);
+            if (section == null)
+            {
+                return 0ul;
+            }
+            return addr - section.PointerToRawData + section.VirtualAddress + ImageBase;
         }
 
         public override bool Search()
@@ -56,7 +81,25 @@ namespace Il2CppDumper
             return false;
         }
 
-        public override bool PlusSearch(int methodCount, int typeDefinitionsCount)
+        public override bool PlusSearch(int methodCount, int typeDefinitionsCount, int imageCount)
+        {
+            var sectionHelper = GetSectionHelper(methodCount, typeDefinitionsCount, imageCount);
+            var codeRegistration = sectionHelper.FindCodeRegistration();
+            var metadataRegistration = sectionHelper.FindMetadataRegistration();
+            return AutoPlusInit(codeRegistration, metadataRegistration);
+        }
+
+        public override bool SymbolSearch()
+        {
+            return false;
+        }
+
+        public override ulong GetRVA(ulong pointer)
+        {
+            return pointer - ImageBase;
+        }
+
+        public override SectionHelper GetSectionHelper(int methodCount, int typeDefinitionsCount, int imageCount)
         {
             var execList = new List<SectionHeader>();
             var dataList = new List<SectionHeader>();
@@ -73,25 +116,25 @@ namespace Il2CppDumper
                         break;
                 }
             }
-            var plusSearch = new PlusSearch(this, methodCount, typeDefinitionsCount, maxMetadataUsages);
+            var sectionHelper = new SectionHelper(this, methodCount, typeDefinitionsCount, metadataUsagesCount, imageCount);
             var data = dataList.ToArray();
             var exec = execList.ToArray();
-            plusSearch.SetSection(SearchSectionType.Exec, imageBase, exec);
-            plusSearch.SetSection(SearchSectionType.Data, imageBase, data);
-            plusSearch.SetSection(SearchSectionType.Bss, imageBase, data);
-            var codeRegistration = plusSearch.FindCodeRegistration();
-            var metadataRegistration = plusSearch.FindMetadataRegistration();
-            return AutoInit(codeRegistration, metadataRegistration);
+            sectionHelper.SetSection(SearchSectionType.Exec, ImageBase, exec);
+            sectionHelper.SetSection(SearchSectionType.Data, ImageBase, data);
+            sectionHelper.SetSection(SearchSectionType.Bss, ImageBase, data);
+            return sectionHelper;
         }
 
-        public override bool SymbolSearch()
+        public override bool CheckDump()
         {
-            return false;
-        }
-
-        public override ulong GetRVA(ulong pointer)
-        {
-            return pointer - imageBase;
+            if (Is32Bit)
+            {
+                return ImageBase != 0x10000000;
+            }
+            else
+            {
+                return ImageBase != 0x180000000;
+            }
         }
     }
 }

@@ -4,9 +4,9 @@ namespace Il2CppDumper
 {
     public class Il2CppCodeRegistration
     {
-        [Version(Max = 24.1f)]
+        [Version(Max = 24.1)]
         public long methodPointersCount;
-        [Version(Max = 24.1f)]
+        [Version(Max = 24.1)]
         public ulong methodPointers;
         [Version(Max = 21)]
         public ulong delegateWrappersFromNativeToManagedCount;
@@ -30,9 +30,14 @@ namespace Il2CppDumper
         public ulong ccwMarshalingFunctions;
         public long genericMethodPointersCount;
         public ulong genericMethodPointers;
+        [Version(Min = 24.5, Max = 24.5)]
+        [Version(Min = 27.1)]
+        public ulong genericAdjustorThunks;
         public long invokerPointersCount;
         public ulong invokerPointers;
+        [Version(Max = 24.5)]
         public long customAttributeCount;
+        [Version(Max = 24.5)]
         public ulong customAttributeGenerators;
         [Version(Min = 21, Max = 22)]
         public long guidCount;
@@ -46,13 +51,13 @@ namespace Il2CppDumper
         public ulong interopDataCount;
         [Version(Min = 23)]
         public ulong interopData;
-        [Version(Min = 24.3f)]
+        [Version(Min = 24.3)]
         public ulong windowsRuntimeFactoryCount;
-        [Version(Min = 24.3f)]
+        [Version(Min = 24.3)]
         public ulong windowsRuntimeFactoryTable;
-        [Version(Min = 24.2f)]
+        [Version(Min = 24.2)]
         public long codeGenModulesCount;
-        [Version(Min = 24.2f)]
+        [Version(Min = 24.2)]
         public ulong codeGenModules;
     }
 
@@ -123,7 +128,8 @@ namespace Il2CppDumper
         IL2CPP_TYPE_SENTINEL = 0x41,       /* Sentinel for varargs method signature */
         IL2CPP_TYPE_PINNED = 0x45,       /* Local var that points to pinned object */
 
-        IL2CPP_TYPE_ENUM = 0x55        /* an enumeration */
+        IL2CPP_TYPE_ENUM = 0x55,        /* an enumeration */
+        IL2CPP_TYPE_IL2CPP_TYPE_INDEX = 0xff        /* an index into IL2CPP type metadata table */
     }
 
     public class Il2CppType
@@ -136,14 +142,25 @@ namespace Il2CppDumper
         public uint num_mods { get; set; }
         public uint byref { get; set; }
         public uint pinned { get; set; }
+        public uint valuetype { get; set; }
 
-        public void Init()
+        public void Init(double version)
         {
             attrs = bits & 0xffff;
             type = (Il2CppTypeEnum)((bits >> 16) & 0xff);
-            num_mods = (bits >> 24) & 0x3f;
-            byref = (bits >> 30) & 1;
-            pinned = bits >> 31;
+            if (version >= 27.2)
+            {
+                num_mods = (bits >> 24) & 0x1f;
+                byref = (bits >> 29) & 1;
+                pinned = (bits >> 30) & 1;
+                valuetype = bits >> 31;
+            }
+            else
+            {
+                num_mods = (bits >> 24) & 0x3f;
+                byref = (bits >> 30) & 1;
+                pinned = bits >> 31;
+            }
             data = new Union { dummy = datapoint };
         }
 
@@ -154,6 +171,10 @@ namespace Il2CppDumper
             /// for VALUETYPE and CLASS
             /// </summary>
             public long klassIndex => (long)dummy;
+            /// <summary>
+            /// for VALUETYPE and CLASS at runtime
+            /// </summary>
+            public ulong typeHandle => dummy;
             /// <summary>
             /// for PTR and SZARRAY
             /// </summary>
@@ -167,6 +188,10 @@ namespace Il2CppDumper
             /// </summary>
             public long genericParameterIndex => (long)dummy;
             /// <summary>
+            /// for VAR and MVAR at runtime
+            /// </summary>
+            public ulong genericParameterHandle => dummy;
+            /// <summary>
             /// for GENERICINST
             /// </summary>
             public ulong generic_class => dummy;
@@ -175,7 +200,10 @@ namespace Il2CppDumper
 
     public class Il2CppGenericClass
     {
+        [Version(Max = 24.5)]
         public long typeDefinitionIndex;    /* the generic type definition */
+        [Version(Min = 27)]
+        public ulong type;        /* the generic type definition */
         public Il2CppGenericContext context;   /* a context that contains the type instantiation doesn't contain any method instantiation */
         public ulong cached_class; /* if present, the Il2CppClass corresponding to the instantiation.  */
     }
@@ -214,6 +242,9 @@ namespace Il2CppDumper
     {
         public int methodIndex;
         public int invokerIndex;
+        [Version(Min = 24.5, Max = 24.5)]
+        [Version(Min = 27.1)]
+        public int adjustorThunk;
     };
 
     public class Il2CppMethodSpec
@@ -228,13 +259,41 @@ namespace Il2CppDumper
         public ulong moduleName;
         public long methodPointerCount;
         public ulong methodPointers;
+        [Version(Min = 24.5, Max = 24.5)]
+        [Version(Min = 27.1)]
+        public long adjustorThunkCount;
+        [Version(Min = 24.5, Max = 24.5)]
+        [Version(Min = 27.1)]
+        public ulong adjustorThunks;
         public ulong invokerIndices;
         public ulong reversePInvokeWrapperCount;
         public ulong reversePInvokeWrapperIndices;
-        public ulong rgctxRangesCount;
+        public long rgctxRangesCount;
         public ulong rgctxRanges;
-        public ulong rgctxsCount;
+        public long rgctxsCount;
         public ulong rgctxs;
         public ulong debuggerMetadata;
+        [Version(Min = 27, Max = 27.2)]
+        public ulong customAttributeCacheGenerator;
+        [Version(Min = 27)]
+        public ulong moduleInitializer;
+        [Version(Min = 27)]
+        public ulong staticConstructorTypeIndices;
+        [Version(Min = 27)]
+        public ulong metadataRegistration; // Per-assembly mode only
+        [Version(Min = 27)]
+        public ulong codeRegistaration; // Per-assembly mode only
+    }
+
+    public class Il2CppRange
+    {
+        public int start;
+        public int length;
+    }
+
+    public class Il2CppTokenRangePair
+    {
+        public uint token;
+        public Il2CppRange range;
     }
 }

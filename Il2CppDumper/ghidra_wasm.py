@@ -1,6 +1,15 @@
 # -*- coding: utf-8 -*-
 import json
 
+from wasm import WasmLoader
+from wasm.analysis import WasmAnalysis
+from ghidra.util.task import ConsoleTaskMonitor
+
+monitor = ConsoleTaskMonitor()
+WasmLoader.loadElementsToTable(currentProgram, WasmAnalysis.getState(currentProgram).module, 0, 0, 0, monitor)
+
+runScript("analyze_dyncalls.py")
+
 processFields = [
 	"ScriptMethod",
 	"ScriptString",
@@ -10,11 +19,11 @@ processFields = [
 ]
 
 functionManager = currentProgram.getFunctionManager()
-baseAddress = currentProgram.getImageBase()
+progspace = currentProgram.addressFactory.getAddressSpace("ram")
 USER_DEFINED = ghidra.program.model.symbol.SourceType.USER_DEFINED
 
 def get_addr(addr):
-	return baseAddress.add(addr)
+	return progspace.getAddress(addr)
 
 def set_name(addr, name):
 	name = name.replace(' ', '-')
@@ -28,14 +37,24 @@ def make_function(start):
 f = askFile("script.json from Il2cppdumper", "Open")
 data = json.loads(open(f.absolutePath, 'rb').read().decode('utf-8'))
 
+
 if "ScriptMethod" in data and "ScriptMethod" in processFields:
 	scriptMethods = data["ScriptMethod"]
+	dynCallNamespace =  currentProgram.symbolTable.getNamespace("dynCall", None)
 	monitor.initialize(len(scriptMethods))
 	monitor.setMessage("Methods")
 	for scriptMethod in scriptMethods:
-		addr = get_addr(scriptMethod["Address"])
-		name = scriptMethod["Name"].encode("utf-8")
-		set_name(addr, name)
+		offset = scriptMethod["Address"]
+		sig = scriptMethod["TypeSignature"]
+		symbolName = "func_%s_%d" % (sig, offset)
+		symbol = currentProgram.symbolTable.getSymbols(symbolName, dynCallNamespace)
+		if len(symbol) > 0:
+			addr = symbol[0].address
+			name = scriptMethod["Name"].encode("utf-8")
+			set_name(addr, name)
+		else:
+			print "Warning at %s:" % scriptMethod["Name"]
+			print "Symbol %s not found!" % symbolName
 		monitor.incrementProgress(1)
 
 if "ScriptString" in data and "ScriptString" in processFields:
@@ -76,12 +95,6 @@ if "ScriptMetadataMethod" in data and "ScriptMetadataMethod" in processFields:
 		monitor.incrementProgress(1)
 
 if "Addresses" in data and "Addresses" in processFields:
-	addresses = data["Addresses"]
-	monitor.initialize(len(addresses))
-	monitor.setMessage("Addresses")
-	for index in range(len(addresses) - 1):
-		start = get_addr(addresses[index])
-		make_function(start)
-		monitor.incrementProgress(1)
+	pass
 
 print 'Script finished!'

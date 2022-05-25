@@ -759,6 +759,27 @@ namespace Il2CppDumper
             }
         }
 
+        private bool RecurseDeclaredName(StructInfo structInfo, StructFieldInfo toCheckfield)
+        {
+            foreach(StructFieldInfo field in structInfo.Fields)
+            {
+                if (!field.Equals(toCheckfield) && field.FieldName.Equals(toCheckfield.FieldName))
+                {
+                    return true;
+                }
+            }
+
+            if (structInfo.Parent != null) 
+            {
+                String fullParentName = structInfo.Parent + "_o";
+
+                if (structInfoWithStructName.ContainsKey(fullParentName))
+                    return RecurseDeclaredName(structInfoWithStructName[fullParentName], toCheckfield);
+            }
+
+            return false;
+        }
+
         private void AddFields(Il2CppTypeDefinition typeDef, StructInfo structInfo, Il2CppGenericContext context)
         {
             if (typeDef.field_count > 0)
@@ -776,10 +797,12 @@ namespace Il2CppDumper
                     var structFieldInfo = new StructFieldInfo();
                     structFieldInfo.FieldTypeName = ParseType(fieldType, context);
                     var fieldName = FixName(metadata.GetStringFromIndex(fieldDef.nameIndex));
+
                     if (!cache.Add(fieldName))
                     {
                         fieldName = $"_{i - typeDef.fieldStart}_{fieldName}";
                     }
+
                     structFieldInfo.FieldName = fieldName;
                     structFieldInfo.IsValueType = IsValueType(fieldType, context);
                     structFieldInfo.IsCustomType = IsCustomType(fieldType, context);
@@ -1027,6 +1050,11 @@ namespace Il2CppDumper
             }
             foreach (var field in info.Fields)
             {
+                while (RecurseDeclaredName(info, field))
+                {
+                    field.FieldName = "_" + field.FieldName;
+                }
+
                 if (field.IsValueType)
                 {
                     var fieldInfo = structInfoWithStructName[field.FieldTypeName];

@@ -11,7 +11,7 @@ notfound = []
 header = ""
 
 for line in data.splitlines():
-    if line.startswith("struct"):
+    if line.startswith("struct") or line.startswith("union"):
         struct = line.split()[1]
         if struct.endswith(";"):
             struct = struct[:-1]

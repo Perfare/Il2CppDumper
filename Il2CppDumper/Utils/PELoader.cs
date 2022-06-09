@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -27,10 +28,13 @@ namespace Il2CppDumper
                     throw new InvalidDataException("ERROR: Invalid PE file");
                 }
                 var fileHeader = reader.ReadClass<FileHeader>();
-                if ((fileHeader.Machine == 0x14c && Environment.Is64BitProcess) //64bit process can't load 32bit dll
-                    || (fileHeader.Machine == 0x8664 && !Environment.Is64BitProcess)) //32bit process can't load 64bit dll
+                if (fileHeader.Machine == 0x14c && Environment.Is64BitProcess) //64bit process can't load 32bit dll
                 {
-                    return new PE(new MemoryStream(buff));
+                    throw new InvalidOperationException("The file is a 32-bit file, please try to load it with Il2CppDumper-x86.exe");
+                }
+                if (fileHeader.Machine == 0x8664 && !Environment.Is64BitProcess) //32bit process can't load 64bit dll
+                {
+                    throw new InvalidOperationException("The file is a 64-bit file, please try to load it with Il2CppDumper.exe");
                 }
                 var pos = reader.Position;
                 reader.Position = pos + fileHeader.SizeOfOptionalHeader;
@@ -41,9 +45,7 @@ namespace Il2CppDumper
                 var handle = LoadLibrary(fileName);
                 if (handle == IntPtr.Zero)
                 {
-                    //Missing dependent DLL
-                    //throw new Win32Exception();
-                    return new PE(new MemoryStream(buff));
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
                 }
                 foreach (var section in sections)
                 {

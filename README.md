@@ -11,7 +11,7 @@ Unity il2cpp reverse engineer
 * Complete DLL restore (except code), can be used to extract `MonoBehaviour` and `MonoScript`
 * Supports ELF, ELF64, Mach-O, PE, NSO and WASM format
 * Supports Unity 5.3 - 2021.3
-* Supports generate IDA and Ghidra scripts to help IDA and Ghidra better analyze il2cpp files
+* Supports generate IDA, Ghidra and Binary Ninja scripts to help them better analyze il2cpp files
 * Supports generate structures header file
 * Supports Android memory dumped `libil2cpp.so` file to bypass protection
 * Support bypassing simple PE protection
@@ -54,7 +54,7 @@ structure information header file
 
 For Ghidra
 
-#### binaryninja3_py3.py
+#### Il2CppBinaryNinja
 
 For BinaryNinja
 
@@ -64,7 +64,7 @@ For Ghidra, work with [ghidra-wasm-plugin](https://github.com/nneonneo/ghidra-wa
 
 #### script.json
 
-For ida.py and ghidra.py
+For ida.py, ghidra.py and Il2CppBinaryNinja
 
 #### stringliteral.json
 

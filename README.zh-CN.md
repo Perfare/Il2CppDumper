@@ -52,7 +52,7 @@ Il2CppDumper.exe <executable-file> <global-metadata> <output-directory>
 
 用于Ghidra
 
-#### binaryninja3_py3.py
+#### Il2CppBinaryNinja
 
 用于BinaryNinja
 

@@ -668,7 +668,14 @@ namespace Il2CppDumper
             var val = blobValue.Value;
             if (typeReference.FullName == "System.Object")
             {
-                val = new CustomAttributeArgument(GetBlobValueTypeReference(blobValue, memberReference), val);
+                if (blobValue.il2CppTypeEnum == Il2CppTypeEnum.IL2CPP_TYPE_IL2CPP_TYPE_INDEX)
+                {
+                    val = new CustomAttributeArgument(memberReference.Module.ImportReference(typeof(Type)), GetTypeReference(memberReference, (Il2CppType)val));
+                }
+                else
+                {
+                    val = new CustomAttributeArgument(GetBlobValueTypeReference(blobValue, memberReference), val);
+                }
             }
             else if (val == null)
             {

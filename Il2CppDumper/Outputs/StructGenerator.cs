@@ -416,6 +416,7 @@ namespace Il2CppDumper
                     sb.Append(HeaderConstants.HeaderV27);
                     break;
                 case 29:
+                case 29.1:
                     sb.Append(HeaderConstants.HeaderV29);
                     break;
                 default:

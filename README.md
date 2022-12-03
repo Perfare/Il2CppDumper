@@ -47,7 +47,7 @@ For IDA
 For IDA, read il2cpp.h file and apply structure information in IDA
 
 #### il2cpp.h
-
+xbzbbsbsb
 structure information header file
 
 #### ghidra.py

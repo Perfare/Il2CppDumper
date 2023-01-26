@@ -1,7 +1,5 @@
 import codecs
 import json
-from tkinter import filedialog as fd
-
 
 def deserializeJSON(script_file):
     if script_file is not None:
@@ -12,7 +10,6 @@ def deserializeJSON(script_file):
         f.close()
 
         return data
-
 
 def changeAddressNames(script):
     for i in script['ScriptMethod']:
@@ -26,12 +23,10 @@ def changeAddressNames(script):
 
     return
 
-
 def main():
     script_file = doc.askFile('Select script.py', None, None)
     script = deserializeJSON(script_file)
     changeAddressNames(script)
-
 
 doc = Document.getCurrentDocument()
 main()

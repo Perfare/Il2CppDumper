@@ -265,24 +265,31 @@ namespace Il2CppDumper
                         il2Cpp.Position += il2Cpp.PointerSize;
                         if (il2Cpp.ReadIntPtr() == typeDefinitionsCount)
                         {
-                            var pointer = il2Cpp.MapVATR(il2Cpp.ReadUIntPtr());
-                            if (CheckPointerRangeDataRa(pointer))
+                            try
                             {
-                                var pointers = il2Cpp.ReadClassArray<ulong>(pointer, typeDefinitionsCount);
-                                if (il2Cpp is ElfBase)
+                                var pointer = il2Cpp.MapVATR(il2Cpp.ReadUIntPtr());
+                                if (CheckPointerRangeDataRa(pointer))
                                 {
-                                    if (CheckPointerRangeExecVa(pointers))
+                                    var pointers = il2Cpp.ReadClassArray<ulong>(pointer, typeDefinitionsCount);
+                                    if (il2Cpp is ElfBase)
                                     {
-                                        return addr - il2Cpp.PointerSize * 10 - section.offset + section.address;
+                                        if (CheckPointerRangeExecVa(pointers))
+                                        {
+                                            return addr - il2Cpp.PointerSize * 10 - section.offset + section.address;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (CheckPointerRangeDataVa(pointers))
+                                        {
+                                            return addr - il2Cpp.PointerSize * 10 - section.offset + section.address;
+                                        }
                                     }
                                 }
-                                else
-                                {
-                                    if (CheckPointerRangeDataVa(pointers))
-                                    {
-                                        return addr - il2Cpp.PointerSize * 10 - section.offset + section.address;
-                                    }
-                                }
+                            }
+                            catch
+                            {
+                                // ignored
                             }
                         }
                     }

@@ -267,5 +267,20 @@ namespace Il2CppDumper
         }
 
         public override bool CheckDump() => false;
+
+        public override ulong ReadUIntPtr()
+        {
+            var pointer = ReadUInt64();
+            if (pointer > 0xFFFFFFFF)
+            {
+                var addr = Position;
+                var section = sections.First(x => addr >= x.offset && addr <= x.offset + x.size);
+                if (section.sectname == "__const" || section.sectname == "__data")
+                {
+                    pointer &= 0xFFFFFFFF;
+                }
+            }
+            return pointer;
+        }
     }
 }

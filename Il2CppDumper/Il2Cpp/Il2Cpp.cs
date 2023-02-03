@@ -52,12 +52,13 @@ namespace Il2CppDumper
         {
             if (codeRegistration != 0)
             {
+                var limit = this is WebAssemblyMemory ? 0x35000 : 0x50000; //TODO
                 if (Version >= 24.2)
                 {
                     pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
                     if (Version == 29)
                     {
-                        if (pCodeRegistration.genericMethodPointersCount > 0x50000) //TODO
+                        if (pCodeRegistration.genericMethodPointersCount > limit)
                         {
                             Version = 29.1;
                             codeRegistration -= PointerSize * 2;
@@ -66,7 +67,7 @@ namespace Il2CppDumper
                     }
                     if (Version == 27)
                     {
-                        if (pCodeRegistration.reversePInvokeWrapperCount > 0x50000) //TODO
+                        if (pCodeRegistration.reversePInvokeWrapperCount > limit)
                         {
                             Version = 27.1;
                             codeRegistration -= PointerSize;
@@ -76,7 +77,7 @@ namespace Il2CppDumper
                     if (Version == 24.4)
                     {
                         codeRegistration -= PointerSize * 2;
-                        if (pCodeRegistration.reversePInvokeWrapperCount > 0x50000) //TODO
+                        if (pCodeRegistration.reversePInvokeWrapperCount > limit)
                         {
                             Version = 24.5;
                             codeRegistration -= PointerSize;
@@ -107,7 +108,8 @@ namespace Il2CppDumper
         public virtual void Init(ulong codeRegistration, ulong metadataRegistration)
         {
             pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
-            if (Version == 27 && pCodeRegistration.invokerPointersCount > 0x50000) //TODO
+            var limit = this is WebAssemblyMemory ? 0x35000 : 0x50000; //TODO
+            if (Version == 27 && pCodeRegistration.invokerPointersCount > limit)
             {
                 Version = 27.1;
                 Console.WriteLine($"Change il2cpp version to: {Version}");
@@ -122,7 +124,7 @@ namespace Il2CppDumper
                     if (codeGenModule.rgctxsCount > 0)
                     {
                         var rgctxs = MapVATR<Il2CppRGCTXDefinition>(codeGenModule.rgctxs, codeGenModule.rgctxsCount);
-                        if (rgctxs.All(x => x.data.rgctxDataDummy > 0x50000))
+                        if (rgctxs.All(x => x.data.rgctxDataDummy > limit))
                         {
                             Version = 27.2;
                             Console.WriteLine($"Change il2cpp version to: {Version}");
@@ -131,7 +133,7 @@ namespace Il2CppDumper
                     }
                 }
             }
-            if (Version == 24.4 && pCodeRegistration.invokerPointersCount > 0x50000) //TODO
+            if (Version == 24.4 && pCodeRegistration.invokerPointersCount > limit)
             {
                 Version = 24.5;
                 Console.WriteLine($"Change il2cpp version to: {Version}");

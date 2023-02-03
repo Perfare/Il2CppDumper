@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net472;net5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>net472;net6.0;net7.0</TargetFrameworks>
     <Version>1.0.0.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <Copyright>Copyright © Perfare 2016-2022</Copyright>
+    <Copyright>Copyright © Perfare 2016-2023</Copyright>
     <Prefer32Bit>true</Prefer32Bit>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>embedded</DebugType>
@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="Mono.Cecil" Version="0.11.4" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">

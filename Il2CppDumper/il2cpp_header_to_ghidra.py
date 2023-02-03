@@ -10,7 +10,8 @@ header = "typedef unsigned __int8 uint8_t;\n" \
          "typedef __int64 int64_t;\n" \
          "typedef __int64 intptr_t;\n" \
          "typedef __int64 uintptr_t;\n" \
-         "typedef unsigned __int64 size_t;\n"
+         "typedef unsigned __int64 size_t;\n" \
+         "typedef _Bool bool;\n"
 
 
 def main():

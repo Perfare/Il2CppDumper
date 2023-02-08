@@ -52,7 +52,7 @@ namespace Il2CppDumper
         {
             if (codeRegistration != 0)
             {
-                var limit = this is WebAssemblyMemory ? 0x35000 : 0x50000; //TODO
+                var limit = this is WebAssemblyMemory ? 0x35000u : 0x50000u; //TODO
                 if (Version >= 24.2)
                 {
                     pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
@@ -108,7 +108,7 @@ namespace Il2CppDumper
         public virtual void Init(ulong codeRegistration, ulong metadataRegistration)
         {
             pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
-            var limit = this is WebAssemblyMemory ? 0x35000 : 0x50000; //TODO
+            var limit = this is WebAssemblyMemory ? 0x35000u : 0x50000u; //TODO
             if (Version == 27 && pCodeRegistration.invokerPointersCount > limit)
             {
                 Version = 27.1;
@@ -247,6 +247,11 @@ namespace Il2CppDumper
         public T MapVATR<T>(ulong addr) where T : new()
         {
             return ReadClass<T>(MapVATR(addr));
+        }
+
+        public T[] MapVATR<T>(ulong addr, ulong count) where T : new()
+        {
+            return ReadClassArray<T>(MapVATR(addr), count);
         }
 
         public T[] MapVATR<T>(ulong addr, long count) where T : new()

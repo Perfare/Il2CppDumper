@@ -29,7 +29,7 @@ namespace Il2CppDumper
                 FixedProgramSegment();
             }
             pt_dynamic = programSegment.First(x => x.p_type == PT_DYNAMIC);
-            dynamicSection = ReadClassArray<Elf64_Dyn>(pt_dynamic.p_offset, (long)pt_dynamic.p_filesz / 16L);
+            dynamicSection = ReadClassArray<Elf64_Dyn>(pt_dynamic.p_offset, pt_dynamic.p_filesz / 16L);
             if (IsDumped)
             {
                 FixedDynamicSection();
@@ -187,7 +187,7 @@ namespace Il2CppDumper
             {
                 var relaOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_RELA).d_un);
                 var relaSize = dynamicSection.First(x => x.d_tag == DT_RELASZ).d_un;
-                var relaTable = ReadClassArray<Elf64_Rela>(relaOffset, (long)relaSize / 24L);
+                var relaTable = ReadClassArray<Elf64_Rela>(relaOffset, relaSize / 24L);
                 foreach (var rela in relaTable)
                 {
                     var type = rela.r_info & 0xffffffff;

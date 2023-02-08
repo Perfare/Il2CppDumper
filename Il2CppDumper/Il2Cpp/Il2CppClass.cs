@@ -5,7 +5,7 @@ namespace Il2CppDumper
     public class Il2CppCodeRegistration
     {
         [Version(Max = 24.1)]
-        public long methodPointersCount;
+        public ulong methodPointersCount;
         [Version(Max = 24.1)]
         public ulong methodPointers;
         [Version(Max = 21)]
@@ -13,7 +13,7 @@ namespace Il2CppDumper
         [Version(Max = 21)]
         public ulong delegateWrappersFromNativeToManaged; // note the double indirection to handle different calling conventions
         [Version(Min = 22)]
-        public long reversePInvokeWrapperCount;
+        public ulong reversePInvokeWrapperCount;
         [Version(Min = 22)]
         public ulong reversePInvokeWrappers;
         [Version(Max = 22)]
@@ -28,23 +28,23 @@ namespace Il2CppDumper
         public ulong ccwMarshalingFunctionsCount;
         [Version(Min = 21, Max = 22)]
         public ulong ccwMarshalingFunctions;
-        public long genericMethodPointersCount;
+        public ulong genericMethodPointersCount;
         public ulong genericMethodPointers;
         [Version(Min = 24.5, Max = 24.5)]
         [Version(Min = 27.1)]
         public ulong genericAdjustorThunks;
-        public long invokerPointersCount;
+        public ulong invokerPointersCount;
         public ulong invokerPointers;
         [Version(Max = 24.5)]
-        public long customAttributeCount;
+        public ulong customAttributeCount;
         [Version(Max = 24.5)]
         public ulong customAttributeGenerators;
         [Version(Min = 21, Max = 22)]
-        public long guidCount;
+        public ulong guidCount;
         [Version(Min = 21, Max = 22)]
         public ulong guids; // Il2CppGuid
         [Version(Min = 22)]
-        public long unresolvedVirtualCallCount; //29.1 unresolvedIndirectCallCount;
+        public ulong unresolvedVirtualCallCount; //29.1 unresolvedIndirectCallCount;
         [Version(Min = 22)]
         public ulong unresolvedVirtualCallPointers;
         [Version(Min = 29.1)]
@@ -60,7 +60,7 @@ namespace Il2CppDumper
         [Version(Min = 24.3)]
         public ulong windowsRuntimeFactoryTable;
         [Version(Min = 24.2)]
-        public long codeGenModulesCount;
+        public ulong codeGenModulesCount;
         [Version(Min = 24.2)]
         public ulong codeGenModules;
     }

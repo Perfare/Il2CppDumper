@@ -199,6 +199,11 @@ namespace Il2CppDumper
             return t;
         }
 
+        public T[] ReadClassArray<T>(ulong addr, ulong count) where T : new()
+        {
+            return ReadClassArray<T>(addr, (long)count);
+        }
+
         public T[] ReadClassArray<T>(ulong addr, long count) where T : new()
         {
             Position = addr;

@@ -271,13 +271,15 @@ namespace Il2CppDumper
         public override ulong ReadUIntPtr()
         {
             var pointer = ReadUInt64();
-            if (pointer > 0xFFFFFFFF)
+            if (pointer > vmaddr + 0xFFFFFFFF)
             {
                 var addr = Position;
                 var section = sections.First(x => addr >= x.offset && addr <= x.offset + x.size);
                 if (section.sectname == "__const" || section.sectname == "__data")
                 {
-                    pointer &= 0xFFFFFFFF;
+                    var rva = pointer - vmaddr;
+                    rva &= 0xFFFFFFFF;
+                    pointer = rva + vmaddr;
                 }
             }
             return pointer;

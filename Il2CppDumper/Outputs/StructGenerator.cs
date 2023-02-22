@@ -657,6 +657,11 @@ namespace Il2CppDumper
                         if (context != null)
                         {
                             var genericParameter = executor.GetGenericParameteFromIl2CppType(il2CppType);
+                            //https://github.com/Perfare/Il2CppDumper/issues/687
+                            if (context.method_inst == 0 && context.class_inst != 0)
+                            {
+                                goto case Il2CppTypeEnum.IL2CPP_TYPE_VAR;
+                            }
                             var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(context.method_inst);
                             var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
                             var pointer = pointers[genericParameter.num];

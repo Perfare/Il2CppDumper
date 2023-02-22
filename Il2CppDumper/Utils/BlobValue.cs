@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Il2CppDumper
+﻿namespace Il2CppDumper
 {
     public class BlobValue
     {

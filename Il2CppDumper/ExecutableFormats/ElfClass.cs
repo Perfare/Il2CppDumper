@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Il2CppDumper
+﻿namespace Il2CppDumper
 {
     public class Elf32_Ehdr
     {

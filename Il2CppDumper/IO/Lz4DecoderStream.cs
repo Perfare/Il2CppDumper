@@ -131,7 +131,7 @@ namespace Il2CppDumper
                     goto copyMatch;
             }
 
-            readToken:
+        readToken:
             int tok;
             if (inBufPos < inBufEnd)
             {
@@ -172,7 +172,7 @@ namespace Il2CppDumper
                     goto copyLiteral;
             }
 
-            readExLiteralLength:
+        readExLiteralLength:
             int exLitLen;
             if (inBufPos < inBufEnd)
             {
@@ -202,7 +202,7 @@ namespace Il2CppDumper
             phase = DecodePhase.CopyLiteral;
             goto copyLiteral;
 
-            copyLiteral:
+        copyLiteral:
             int nReadLit = litLen < nToRead ? litLen : nToRead;
             if (nReadLit != 0)
             {
@@ -246,7 +246,7 @@ namespace Il2CppDumper
             phase = DecodePhase.ReadOffset;
             goto readOffset;
 
-            readOffset:
+        readOffset:
             if (inBufPos + 1 < inBufEnd)
             {
                 matDst = (decBuf[inBufPos + 1] << 8) | decBuf[inBufPos];
@@ -279,7 +279,7 @@ namespace Il2CppDumper
                 goto copyMatch;
             }
 
-            readExMatchLength:
+        readExMatchLength:
             int exMatLen;
             if (inBufPos < inBufEnd)
             {
@@ -308,7 +308,7 @@ namespace Il2CppDumper
             phase = DecodePhase.CopyMatch;
             goto copyMatch;
 
-            copyMatch:
+        copyMatch:
             int nCpyMat = matLen < nToRead ? matLen : nToRead;
             if (nCpyMat != 0)
             {
@@ -346,7 +346,7 @@ namespace Il2CppDumper
             phase = DecodePhase.ReadToken;
             goto readToken;
 
-            finish:
+        finish:
             nRead = count - nToRead;
 
             int nToBuf = nRead < DecBufLen ? nRead : DecBufLen;

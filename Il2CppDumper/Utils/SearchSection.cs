@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Il2CppDumper
+﻿namespace Il2CppDumper
 {
     public enum SearchSectionType
     {

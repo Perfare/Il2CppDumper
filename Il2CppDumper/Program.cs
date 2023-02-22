@@ -2,10 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Newtonsoft.Json;
-#if NETFRAMEWORK
-using System.Windows.Forms;
-#endif
+using System.Text.Json;
 
 namespace Il2CppDumper
 {
@@ -16,7 +13,7 @@ namespace Il2CppDumper
         [STAThread]
         static void Main(string[] args)
         {
-            config = JsonConvert.DeserializeObject<Config>(File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + @"config.json"));
+            config = JsonSerializer.Deserialize<Config>(File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + @"config.json"));
             string il2cppPath = null;
             string metadataPath = null;
             string outputDir = null;
@@ -60,30 +57,31 @@ namespace Il2CppDumper
             {
                 outputDir = AppDomain.CurrentDomain.BaseDirectory;
             }
-#if NETFRAMEWORK
-            if (il2cppPath == null)
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                var ofd = new OpenFileDialog();
-                ofd.Filter = "Il2Cpp binary file|*.*";
-                if (ofd.ShowDialog() == DialogResult.OK)
+                if (il2cppPath == null)
                 {
-                    il2cppPath = ofd.FileName;
-                    ofd.Filter = "global-metadata|global-metadata.dat";
-                    if (ofd.ShowDialog() == DialogResult.OK)
+                    var ofd = new OpenFileDialog();
+                    ofd.Filter = "Il2Cpp binary file|*.*";
+                    if (ofd.ShowDialog())
                     {
-                        metadataPath = ofd.FileName;
+                        il2cppPath = ofd.FileName;
+                        ofd.Filter = "global-metadata|global-metadata.dat";
+                        if (ofd.ShowDialog())
+                        {
+                            metadataPath = ofd.FileName;
+                        }
+                        else
+                        {
+                            return;
+                        }
                     }
                     else
                     {
                         return;
                     }
                 }
-                else
-                {
-                    return;
-                }
             }
-#endif
             if (il2cppPath == null)
             {
                 ShowHelp();

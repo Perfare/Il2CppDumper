@@ -192,21 +192,20 @@ namespace Il2CppDumper
                 {
                     var type = rela.r_info & 0xffffffff;
                     var sym = rela.r_info >> 32;
-                    switch (type)
+                    (ulong value, bool recognized) result = (type, elfHeader.e_machine) switch
                     {
-                        case R_AARCH64_ABS64:
-                            {
-                                var symbol = symbolTable[sym];
-                                Position = MapVATR(rela.r_offset);
-                                Write(symbol.st_value + (ulong)rela.r_addend);
-                                break;
-                            }
-                        case R_AARCH64_RELATIVE:
-                            {
-                                Position = MapVATR(rela.r_offset);
-                                Write(rela.r_addend);
-                                break;
-                            }
+                        (R_AARCH64_ABS64, EM_AARCH64) => (symbolTable[sym].st_value + rela.r_addend, true),
+                        (R_AARCH64_RELATIVE, EM_AARCH64) => (rela.r_addend, true),
+
+                        (R_X86_64_64, EM_X86_64) => (symbolTable[sym].st_value + rela.r_addend, true),
+                        (R_X86_64_RELATIVE, EM_X86_64) => (rela.r_addend, true),
+
+                        _ => (0, false)
+                    };
+                    if (result.recognized)
+                    {
+                        Position = MapVATR(rela.r_offset);
+                        Write(result.value);
                     }
                 }
             }

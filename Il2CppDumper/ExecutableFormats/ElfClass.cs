@@ -144,19 +144,25 @@
     {
         public ulong r_offset;
         public ulong r_info;
-        public long r_addend;
+        public ulong r_addend;
     }
 
     public static class ElfConstants
     {
+        //e_machine
         public const int EM_386 = 3;
         public const int EM_ARM = 40;
+        public const int EM_X86_64 = 62;
+        public const int EM_AARCH64 = 183;
 
+        //p_type
         public const int PT_LOAD = 1;
         public const int PT_DYNAMIC = 2;
 
+        //p_flags
         public const int PF_X = 1;
 
+        //d_tag
         public const int DT_PLTGOT = 3;
         public const int DT_HASH = 4;
         public const int DT_STRTAB = 5;
@@ -172,13 +178,21 @@
         public const int DT_FINI_ARRAY = 26;
         public const int DT_GNU_HASH = 0x6ffffef5;
 
+        //sh_type
         public const uint SHT_LOUSER = 0x80000000;
 
+        //ARM relocs
         public const int R_ARM_ABS32 = 2;
 
+        //i386 relocs
         public const int R_386_32 = 1;
 
+        //AArch64 relocs
         public const int R_AARCH64_ABS64 = 257;
         public const int R_AARCH64_RELATIVE = 1027;
+
+        //AMD x86-64 relocations
+        public const int R_X86_64_64 = 1;
+        public const int R_X86_64_RELATIVE = 8;
     }
 }

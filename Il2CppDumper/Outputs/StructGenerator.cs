@@ -266,7 +266,7 @@ namespace Il2CppDumper
             if (il2Cpp.Version >= 27)
             {
                 var sectionHelper = executor.GetSectionHelper();
-                foreach (var sec in sectionHelper.data)
+                foreach (var sec in sectionHelper.Data)
                 {
                     il2Cpp.Position = sec.offset;
                     var end = Math.Min(sec.offsetEnd, il2Cpp.Length) - il2Cpp.PointerSize;

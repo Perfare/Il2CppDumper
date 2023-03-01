@@ -1389,7 +1389,15 @@ namespace Il2CppDumper
 
             methodInfoHeader.Append($"struct {methodInfoName} {{\n");
             methodInfoHeader.Append($"\tIl2CppMethodPointer methodPointer;\n");
-            methodInfoHeader.Append($"\tvoid* invoker_method;\n");
+            if (il2Cpp.Version >= 29)
+            {
+                methodInfoHeader.Append($"\tIl2CppMethodPointer virtualMethodPointer;\n");
+                methodInfoHeader.Append($"\tInvokerMethod invoker_method;\n");
+            }
+            else
+            {
+                methodInfoHeader.Append($"\tvoid* invoker_method;\n"); //TODO
+            }
             methodInfoHeader.Append($"\tconst char* name;\n");
             if (il2Cpp.Version <= 24)
             {
@@ -1400,7 +1408,14 @@ namespace Il2CppDumper
                 methodInfoHeader.Append($"\t{structTypeName}_c *klass;\n");
             }
             methodInfoHeader.Append($"\tconst Il2CppType *return_type;\n");
-            methodInfoHeader.Append($"\tconst void* parameters;\n");
+            if (il2Cpp.Version >= 29)
+            {
+                methodInfoHeader.Append($"\tconst Il2CppType** parameters;\n");
+            }
+            else
+            {
+                methodInfoHeader.Append($"\tconst void* parameters;\n"); //ParameterInfo*
+            }
             if (rgctxs.Count > 0)
             {
                 methodInfoHeader.Append($"\tconst {methodInfoName}_RGCTXs* rgctx_data;\n");
@@ -1412,7 +1427,14 @@ namespace Il2CppDumper
             methodInfoHeader.Append($"\tunion\n");
             methodInfoHeader.Append($"\t{{\n");
             methodInfoHeader.Append($"\t\tconst void* genericMethod;\n");
-            methodInfoHeader.Append($"\t\tconst void* genericContainer;\n");
+            if (il2Cpp.Version >= 27)
+            {
+                methodInfoHeader.Append($"\t\tconst void* genericContainerHandle;\n");
+            }
+            else
+            {
+                methodInfoHeader.Append($"\t\tconst void* genericContainer;\n");
+            }
             methodInfoHeader.Append($"\t}};\n");
             if (il2Cpp.Version <= 24)
             {

@@ -3,6 +3,7 @@ using Mono.Cecil.Cil;
 using Mono.Collections.Generic;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Il2CppDumper
@@ -18,6 +19,7 @@ namespace Il2CppDumper
         private Dictionary<Il2CppGenericParameter, GenericParameter> genericParameterDic = new Dictionary<Il2CppGenericParameter, GenericParameter>();
         private MethodDefinition attributeAttribute;
         private TypeReference stringType;
+        private TypeSystem typeSystem;
         private Dictionary<int, FieldDefinition> fieldDefinitionDic = new Dictionary<int, FieldDefinition>();
         private Dictionary<int, PropertyDefinition> propertyDefinitionDic = new Dictionary<int, PropertyDefinition>();
         private Dictionary<int, MethodDefinition> methodDefinitionDic = new Dictionary<int, MethodDefinition>();
@@ -29,14 +31,16 @@ namespace Il2CppDumper
             il2Cpp = il2CppExecutor.il2Cpp;
 
             //Il2CppDummyDll
-            var il2CppDummyDll = Il2CppDummyDll.Create();
+            var il2CppDummyDll = AssemblyDefinition.ReadAssembly(new MemoryStream(Resource1.Il2CppDummyDll));
             Assemblies.Add(il2CppDummyDll);
-            var addressAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "AddressAttribute").Methods[0];
-            var fieldOffsetAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "FieldOffsetAttribute").Methods[0];
-            attributeAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "AttributeAttribute").Methods[0];
-            var metadataOffsetAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "MetadataOffsetAttribute").Methods[0];
-            var tokenAttribute = il2CppDummyDll.MainModule.Types.First(x => x.Name == "TokenAttribute").Methods[0];
-            stringType = il2CppDummyDll.MainModule.TypeSystem.String;
+            var dummyMD = il2CppDummyDll.MainModule;
+            var addressAttribute = dummyMD.Types.First(x => x.Name == "AddressAttribute").Methods[0];
+            var fieldOffsetAttribute = dummyMD.Types.First(x => x.Name == "FieldOffsetAttribute").Methods[0];
+            attributeAttribute = dummyMD.Types.First(x => x.Name == "AttributeAttribute").Methods[0];
+            var metadataOffsetAttribute = dummyMD.Types.First(x => x.Name == "MetadataOffsetAttribute").Methods[0];
+            var tokenAttribute = dummyMD.Types.First(x => x.Name == "TokenAttribute").Methods[0];
+            stringType = dummyMD.TypeSystem.String;
+            typeSystem = dummyMD.TypeSystem;
 
             var resolver = new MyAssemblyResolver();
             var moduleParameters = new ModuleParameters
@@ -217,7 +221,7 @@ namespace Il2CppDumper
                     {
                         var methodDef = metadata.methodDefs[i];
                         var methodName = metadata.GetStringFromIndex(methodDef.nameIndex);
-                        var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition.Module.ImportReference(typeof(void)));
+                        var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition.Module.ImportReference(typeSystem.Void));
                         methodDefinition.ImplAttributes = (MethodImplAttributes)methodDef.iflags;
                         typeDefinition.Methods.Add(methodDefinition);
                         //genericParameter
@@ -462,41 +466,41 @@ namespace Il2CppDumper
             switch (il2CppType.type)
             {
                 case Il2CppTypeEnum.IL2CPP_TYPE_OBJECT:
-                    return moduleDefinition.ImportReference(typeof(object));
+                    return moduleDefinition.ImportReference(typeSystem.Object);
                 case Il2CppTypeEnum.IL2CPP_TYPE_VOID:
-                    return moduleDefinition.ImportReference(typeof(void));
+                    return moduleDefinition.ImportReference(typeSystem.Void);
                 case Il2CppTypeEnum.IL2CPP_TYPE_BOOLEAN:
-                    return moduleDefinition.ImportReference(typeof(bool));
+                    return moduleDefinition.ImportReference(typeSystem.Boolean);
                 case Il2CppTypeEnum.IL2CPP_TYPE_CHAR:
-                    return moduleDefinition.ImportReference(typeof(char));
+                    return moduleDefinition.ImportReference(typeSystem.Char);
                 case Il2CppTypeEnum.IL2CPP_TYPE_I1:
-                    return moduleDefinition.ImportReference(typeof(sbyte));
+                    return moduleDefinition.ImportReference(typeSystem.SByte);
                 case Il2CppTypeEnum.IL2CPP_TYPE_U1:
-                    return moduleDefinition.ImportReference(typeof(byte));
+                    return moduleDefinition.ImportReference(typeSystem.Byte);
                 case Il2CppTypeEnum.IL2CPP_TYPE_I2:
-                    return moduleDefinition.ImportReference(typeof(short));
+                    return moduleDefinition.ImportReference(typeSystem.Int16);
                 case Il2CppTypeEnum.IL2CPP_TYPE_U2:
-                    return moduleDefinition.ImportReference(typeof(ushort));
+                    return moduleDefinition.ImportReference(typeSystem.UInt16);
                 case Il2CppTypeEnum.IL2CPP_TYPE_I4:
-                    return moduleDefinition.ImportReference(typeof(int));
+                    return moduleDefinition.ImportReference(typeSystem.Int32);
                 case Il2CppTypeEnum.IL2CPP_TYPE_U4:
-                    return moduleDefinition.ImportReference(typeof(uint));
+                    return moduleDefinition.ImportReference(typeSystem.UInt32);
                 case Il2CppTypeEnum.IL2CPP_TYPE_I:
-                    return moduleDefinition.ImportReference(typeof(IntPtr));
+                    return moduleDefinition.ImportReference(typeSystem.IntPtr);
                 case Il2CppTypeEnum.IL2CPP_TYPE_U:
-                    return moduleDefinition.ImportReference(typeof(UIntPtr));
+                    return moduleDefinition.ImportReference(typeSystem.UIntPtr);
                 case Il2CppTypeEnum.IL2CPP_TYPE_I8:
-                    return moduleDefinition.ImportReference(typeof(long));
+                    return moduleDefinition.ImportReference(typeSystem.Int64);
                 case Il2CppTypeEnum.IL2CPP_TYPE_U8:
-                    return moduleDefinition.ImportReference(typeof(ulong));
+                    return moduleDefinition.ImportReference(typeSystem.UInt64);
                 case Il2CppTypeEnum.IL2CPP_TYPE_R4:
-                    return moduleDefinition.ImportReference(typeof(float));
+                    return moduleDefinition.ImportReference(typeSystem.Single);
                 case Il2CppTypeEnum.IL2CPP_TYPE_R8:
-                    return moduleDefinition.ImportReference(typeof(double));
+                    return moduleDefinition.ImportReference(typeSystem.Double);
                 case Il2CppTypeEnum.IL2CPP_TYPE_STRING:
-                    return moduleDefinition.ImportReference(typeof(string));
+                    return moduleDefinition.ImportReference(typeSystem.String);
                 case Il2CppTypeEnum.IL2CPP_TYPE_TYPEDBYREF:
-                    return moduleDefinition.ImportReference(typeof(TypedReference));
+                    return moduleDefinition.ImportReference(typeSystem.TypedReference);
                 case Il2CppTypeEnum.IL2CPP_TYPE_CLASS:
                 case Il2CppTypeEnum.IL2CPP_TYPE_VALUETYPE:
                     {

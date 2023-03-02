@@ -1,6 +1,6 @@
 ---
-name: Bug提交
-about: 中文Bug提交
+name: 问题报告
+about: 中文问题报告
 title: ''
 labels: ''
 assignees: ''
@@ -11,7 +11,7 @@ assignees: ''
 
 - Il2CppDumper版本
 
-- 目标Unity版本
+- 目标Unity版本 (可以不填)
 
 - 问题描述
 

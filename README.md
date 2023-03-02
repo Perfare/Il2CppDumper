@@ -10,7 +10,7 @@ Unity il2cpp reverse engineer
 
 * Complete DLL restore (except code), can be used to extract `MonoBehaviour` and `MonoScript`
 * Supports ELF, ELF64, Mach-O, PE, NSO and WASM format
-* Supports Unity 5.3 - 2021.3
+* Supports Unity 5.3 - 2022.2
 * Supports generate IDA, Ghidra and Binary Ninja scripts to help them better analyze il2cpp files
 * Supports generate structures header file
 * Supports Android memory dumped `libil2cpp.so` file to bypass protection

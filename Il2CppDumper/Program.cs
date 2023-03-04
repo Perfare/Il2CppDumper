@@ -53,16 +53,15 @@ namespace Il2CppDumper
                     }
                 }
             }
-            if (outputDir == null)
-            {
-                outputDir = AppDomain.CurrentDomain.BaseDirectory;
-            }
+            outputDir ??= AppDomain.CurrentDomain.BaseDirectory;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 if (il2cppPath == null)
                 {
-                    var ofd = new OpenFileDialog();
-                    ofd.Filter = "Il2Cpp binary file|*.*";
+                    var ofd = new OpenFileDialog
+                    {
+                        Filter = "Il2Cpp binary file|*.*"
+                    };
                     if (ofd.ShowDialog())
                     {
                         il2cppPath = ofd.FileName;

@@ -10,7 +10,7 @@ namespace Il2CppDumper
     {
         public Metadata metadata;
         public Il2Cpp il2Cpp;
-        private static readonly Dictionary<int, string> TypeString = new Dictionary<int, string>
+        private static readonly Dictionary<int, string> TypeString = new()
         {
             {1,"void"},
             {2,"bool"},
@@ -118,7 +118,7 @@ namespace Il2CppDumper
                         var index = typeName.IndexOf("`");
                         if (index != -1)
                         {
-                            str += typeName.Substring(0, index);
+                            str += typeName[..index];
                         }
                         else
                         {
@@ -167,7 +167,7 @@ namespace Il2CppDumper
                 var index = typeName.IndexOf("`");
                 if (index != -1)
                 {
-                    typeName = typeName.Substring(0, index);
+                    typeName = typeName[..index];
                 }
                 if (genericParameter)
                 {
@@ -342,8 +342,10 @@ namespace Il2CppDumper
 
         public bool GetConstantValueFromBlob(Il2CppTypeEnum type, BinaryReader reader, out BlobValue value)
         {
-            value = new BlobValue();
-            value.il2CppTypeEnum = type;
+            value = new BlobValue
+            {
+                il2CppTypeEnum = type
+            };
             switch (type)
             {
                 case Il2CppTypeEnum.IL2CPP_TYPE_BOOLEAN:

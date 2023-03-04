@@ -16,15 +16,15 @@ namespace Il2CppDumper
         public Il2CppMethodDefinition[] methodDefs;
         public Il2CppParameterDefinition[] parameterDefs;
         public Il2CppFieldDefinition[] fieldDefs;
-        private Dictionary<int, Il2CppFieldDefaultValue> fieldDefaultValuesDic;
-        private Dictionary<int, Il2CppParameterDefaultValue> parameterDefaultValuesDic;
+        private readonly Dictionary<int, Il2CppFieldDefaultValue> fieldDefaultValuesDic;
+        private readonly Dictionary<int, Il2CppParameterDefaultValue> parameterDefaultValuesDic;
         public Il2CppPropertyDefinition[] propertyDefs;
         public Il2CppCustomAttributeTypeRange[] attributeTypeRanges;
         public Il2CppCustomAttributeDataRange[] attributeDataRanges;
-        private Dictionary<Il2CppImageDefinition, Dictionary<uint, int>> attributeTypeRangesDic;
+        private readonly Dictionary<Il2CppImageDefinition, Dictionary<uint, int>> attributeTypeRangesDic;
         public Il2CppStringLiteral[] stringLiterals;
-        private Il2CppMetadataUsageList[] metadataUsageLists;
-        private Il2CppMetadataUsagePair[] metadataUsagePairs;
+        private readonly Il2CppMetadataUsageList[] metadataUsageLists;
+        private readonly Il2CppMetadataUsagePair[] metadataUsagePairs;
         public int[] attributeTypes;
         public int[] interfaceIndices;
         public Dictionary<Il2CppMetadataUsage, SortedDictionary<uint, uint>> metadataUsageDic;
@@ -38,7 +38,7 @@ namespace Il2CppDumper
         public uint[] vtableMethods;
         public Il2CppRGCTXDefinition[] rgctxEntries;
 
-        private Dictionary<uint, string> stringCache = new Dictionary<uint, string>();
+        private readonly Dictionary<uint, string> stringCache = new();
 
         public Metadata(Stream stream) : base(stream)
         {
@@ -239,7 +239,7 @@ namespace Il2CppDumper
             metadataUsagesCount = metadataUsageDic.Max(x => x.Value.Select(y => y.Key).DefaultIfEmpty().Max()) + 1;
         }
 
-        public uint GetEncodedIndexType(uint index)
+        public static uint GetEncodedIndexType(uint index)
         {
             return (index & 0xE0000000) >> 29;
         }
@@ -286,19 +286,14 @@ namespace Il2CppDumper
             }
             return size;
 
-            int GetPrimitiveTypeSize(string name)
+            static int GetPrimitiveTypeSize(string name)
             {
-                switch (name)
+                return name switch
                 {
-                    case "Int32":
-                    case "UInt32":
-                        return 4;
-                    case "Int16":
-                    case "UInt16":
-                        return 2;
-                    default:
-                        return 0;
-                }
+                    "Int32" or "UInt32" => 4,
+                    "Int16" or "UInt16" => 2,
+                    _ => 0,
+                };
             }
         }
     }

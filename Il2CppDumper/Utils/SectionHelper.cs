@@ -9,11 +9,11 @@ namespace Il2CppDumper
         private List<SearchSection> exec;
         private List<SearchSection> data;
         private List<SearchSection> bss;
-        private Il2Cpp il2Cpp;
-        private int methodCount;
-        private int typeDefinitionsCount;
-        private long metadataUsagesCount;
-        private int imageCount;
+        private readonly Il2Cpp il2Cpp;
+        private readonly int methodCount;
+        private readonly int typeDefinitionsCount;
+        private readonly long metadataUsagesCount;
+        private readonly int imageCount;
         private bool pointerInExec;
 
         public List<SearchSection> Exec => exec;

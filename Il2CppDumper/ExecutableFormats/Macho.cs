@@ -9,10 +9,10 @@ namespace Il2CppDumper
 {
     public sealed class Macho : Il2Cpp
     {
-        private List<MachoSection> sections = new List<MachoSection>();
         private static readonly byte[] FeatureBytes1 = { 0x0, 0x22 };//MOVS R2, #0
         private static readonly byte[] FeatureBytes2 = { 0x78, 0x44, 0x79, 0x44 };//ADD R0, PC and ADD R1, PC
-        private ulong vmaddr;
+        private readonly List<MachoSection> sections = new();
+        private readonly ulong vmaddr;
 
         public Macho(Stream stream) : base(stream)
         {

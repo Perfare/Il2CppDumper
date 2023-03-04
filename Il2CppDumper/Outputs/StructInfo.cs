@@ -8,10 +8,10 @@ namespace Il2CppDumper
         public string TypeName;
         public bool IsValueType;
         public string Parent;
-        public List<StructFieldInfo> Fields = new List<StructFieldInfo>();
-        public List<StructFieldInfo> StaticFields = new List<StructFieldInfo>();
+        public List<StructFieldInfo> Fields = new();
+        public List<StructFieldInfo> StaticFields = new();
         public StructVTableMethodInfo[] VTableMethod = Array.Empty<StructVTableMethodInfo>();
-        public List<StructRGCTXInfo> RGCTXs = new List<StructRGCTXInfo>();
+        public List<StructRGCTXInfo> RGCTXs = new();
     }
 
     public class StructFieldInfo

@@ -7,7 +7,7 @@ namespace Il2CppDumper
 {
     public sealed class PE : Il2Cpp
     {
-        private SectionHeader[] sections;
+        private readonly SectionHeader[] sections;
 
         public PE(Stream stream) : base(stream)
         {

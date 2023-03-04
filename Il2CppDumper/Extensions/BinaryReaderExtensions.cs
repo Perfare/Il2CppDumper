@@ -10,7 +10,7 @@ namespace Il2CppDumper
         {
             var start = reader.BaseStream.Position;
             // UTF8 takes up to 4 bytes per character
-            var str = Encoding.UTF8.GetString(reader.ReadBytes(numChars * 4)).Substring(0, numChars);
+            var str = Encoding.UTF8.GetString(reader.ReadBytes(numChars * 4))[..numChars];
             // make our position what it would have been if we'd known the exact number of bytes needed.
             reader.BaseStream.Position = start;
             reader.ReadBytes(Encoding.UTF8.GetByteCount(str));

@@ -9,16 +9,17 @@ namespace Il2CppDumper
 {
     public class Il2CppDecompiler
     {
-        private Il2CppExecutor executor;
-        private Metadata metadata;
-        private Il2Cpp il2Cpp;
-        private Dictionary<Il2CppMethodDefinition, string> methodModifiers = new Dictionary<Il2CppMethodDefinition, string>();
+        private readonly Il2CppExecutor executor;
+        private readonly Metadata metadata;
+        private readonly Il2Cpp il2Cpp;
+        private readonly Dictionary<Il2CppMethodDefinition, string> methodModifiers;
 
         public Il2CppDecompiler(Il2CppExecutor il2CppExecutor)
         {
             executor = il2CppExecutor;
             metadata = il2CppExecutor.metadata;
             il2Cpp = il2CppExecutor.il2Cpp;
+            methodModifiers = new();
         }
 
         public void Decompile(Config config, string outputDir)
@@ -436,7 +437,7 @@ namespace Il2CppDumper
                     {
                         sb.Append(padding);
                         sb.Append(reader.GetStringCustomAttributeData());
-                        sb.Append("\n");
+                        sb.Append('\n');
                     }
                     return sb.ToString();
                 }

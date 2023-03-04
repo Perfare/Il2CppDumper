@@ -9,10 +9,10 @@ namespace Il2CppDumper
 {
     public sealed class Macho64 : Il2Cpp
     {
-        private List<MachoSection64Bit> sections = new List<MachoSection64Bit>();
         private static readonly byte[] FeatureBytes1 = { 0x2, 0x0, 0x80, 0xD2 };//MOV X2, #0
         private static readonly byte[] FeatureBytes2 = { 0x3, 0x0, 0x80, 0x52 };//MOV W3, #0
-        private ulong vmaddr;
+        private readonly List<MachoSection64Bit> sections = new();
+        private readonly ulong vmaddr;
 
         public Macho64(Stream stream) : base(stream)
         {

@@ -5,9 +5,8 @@ namespace Il2CppDumper
 {
     public class CustomAttributeDataReader : BinaryReader
     {
-        private Il2CppExecutor executor;
-        private Metadata metadata;
-        private Il2Cpp il2Cpp;
+        private readonly Il2CppExecutor executor;
+        private readonly Metadata metadata;
         private long ctorBuffer;
         private long dataBuffer;
 
@@ -17,7 +16,6 @@ namespace Il2CppDumper
         {
             this.executor = executor;
             metadata = executor.metadata;
-            il2Cpp = executor.il2Cpp;
             Count = this.ReadCompressedUInt32();
             ctorBuffer = BaseStream.Position;
             dataBuffer = BaseStream.Position + Count * 4;

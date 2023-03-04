@@ -8,23 +8,25 @@ namespace Il2CppDumper
 {
     public sealed class NSO : Il2Cpp
     {
-        private NSOHeader header;
-        private bool isTextCompressed;
-        private bool isRoDataCompressed;
-        private bool isDataCompressed;
-        private List<NSOSegmentHeader> segments = new List<NSOSegmentHeader>();
+        private readonly NSOHeader header;
+        private readonly bool isTextCompressed;
+        private readonly bool isRoDataCompressed;
+        private readonly bool isDataCompressed;
+        private readonly List<NSOSegmentHeader> segments = new();
         private Elf64_Sym[] symbolTable;
-        private List<Elf64_Dyn> dynamicSection = new List<Elf64_Dyn>();
-        private bool isCompressed => isTextCompressed || isRoDataCompressed || isDataCompressed;
+        private readonly List<Elf64_Dyn> dynamicSection = new();
+        private bool IsCompressed => isTextCompressed || isRoDataCompressed || isDataCompressed;
 
 
         public NSO(Stream stream) : base(stream)
         {
-            header = new NSOHeader();
-            header.Magic = ReadUInt32();
-            header.Version = ReadUInt32();
-            header.Reserved = ReadUInt32();
-            header.Flags = ReadUInt32();
+            header = new NSOHeader
+            {
+                Magic = ReadUInt32(),
+                Version = ReadUInt32(),
+                Reserved = ReadUInt32(),
+                Flags = ReadUInt32()
+            };
             isTextCompressed = (header.Flags & 1) != 0;
             isRoDataCompressed = (header.Flags & 2) != 0;
             isDataCompressed = (header.Flags & 4) != 0;
@@ -76,7 +78,7 @@ namespace Il2CppDumper
             header.RoDataHash = ReadBytes(0x20);
             header.DataHash = ReadBytes(0x20);
 
-            if (!isCompressed)
+            if (!IsCompressed)
             {
                 Position = header.TextSegment.FileOffset + 4;
                 var modOffset = ReadUInt32();

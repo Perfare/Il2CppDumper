@@ -5,7 +5,7 @@ namespace Il2CppDumper
 {
     public sealed class WebAssembly : BinaryStream
     {
-        private DataSection[] dataSections;
+        private readonly DataSection[] dataSections;
 
         public WebAssembly(Stream stream) : base(stream)
         {
@@ -46,7 +46,7 @@ namespace Il2CppDumper
 
         public WebAssemblyMemory CreateMemory()
         {
-            var last = dataSections[dataSections.Length - 1];
+            var last = dataSections[^1];
             var bssStart = last.Offset + (uint)last.Data.Length;
             var stream = new MemoryStream(new byte[Length]);
             foreach (var dataSection in dataSections)

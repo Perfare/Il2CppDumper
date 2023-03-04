@@ -12,13 +12,13 @@ namespace Il2CppDumper
         public double Version;
         public bool Is32Bit;
         public ulong ImageBase;
-        private Stream stream;
-        private BinaryReader reader;
-        private BinaryWriter writer;
-        private MethodInfo readClass;
-        private MethodInfo readClassArray;
-        private Dictionary<Type, MethodInfo> genericMethodCache = new Dictionary<Type, MethodInfo>();
-        private Dictionary<FieldInfo, VersionAttribute[]> attributeCache = new Dictionary<FieldInfo, VersionAttribute[]>();
+        private readonly Stream stream;
+        private readonly BinaryReader reader;
+        private readonly BinaryWriter writer;
+        private readonly MethodInfo readClass;
+        private readonly MethodInfo readClassArray;
+        private readonly Dictionary<Type, MethodInfo> genericMethodCache;
+        private readonly Dictionary<FieldInfo, VersionAttribute[]> attributeCache;
 
         public BinaryStream(Stream input)
         {
@@ -27,6 +27,8 @@ namespace Il2CppDumper
             writer = new BinaryWriter(stream, Encoding.UTF8, true);
             readClass = GetType().GetMethod("ReadClass", Type.EmptyTypes);
             readClassArray = GetType().GetMethod("ReadClassArray", new[] { typeof(long) });
+            genericMethodCache = new();
+            attributeCache = new();
         }
 
         public bool ReadBoolean() => reader.ReadBoolean();
@@ -91,26 +93,17 @@ namespace Il2CppDumper
 
         private object ReadPrimitive(Type type)
         {
-            var typename = type.Name;
-            switch (typename)
+            return type.Name switch
             {
-                case "Int32":
-                    return ReadInt32();
-                case "UInt32":
-                    return ReadUInt32();
-                case "Int16":
-                    return ReadInt16();
-                case "UInt16":
-                    return ReadUInt16();
-                case "Byte":
-                    return ReadByte();
-                case "Int64":
-                    return ReadIntPtr();
-                case "UInt64":
-                    return ReadUIntPtr();
-                default:
-                    throw new NotSupportedException();
-            }
+                "Int32" => ReadInt32(),
+                "UInt32" => ReadUInt32(),
+                "Int16" => ReadInt16(),
+                "UInt16" => ReadUInt16(),
+                "Byte" => ReadByte(),
+                "Int64" => ReadIntPtr(),
+                "UInt64" => ReadUIntPtr(),
+                _ => throw new NotSupportedException()
+            };
         }
 
         public T ReadClass<T>(ulong addr) where T : new()
@@ -243,8 +236,8 @@ namespace Il2CppDumper
         {
             if (disposing)
             {
-                reader.Close();
-                writer.Close();
+                reader.Dispose();
+                writer.Dispose();
                 stream.Close();
             }
         }
@@ -252,6 +245,7 @@ namespace Il2CppDumper
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

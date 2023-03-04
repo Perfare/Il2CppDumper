@@ -10,19 +10,19 @@ namespace Il2CppDumper
 {
     public class DummyAssemblyGenerator
     {
-        public List<AssemblyDefinition> Assemblies = new List<AssemblyDefinition>();
+        public List<AssemblyDefinition> Assemblies = new();
 
-        private Il2CppExecutor executor;
-        private Metadata metadata;
-        private Il2Cpp il2Cpp;
-        private Dictionary<Il2CppTypeDefinition, TypeDefinition> typeDefinitionDic = new Dictionary<Il2CppTypeDefinition, TypeDefinition>();
-        private Dictionary<Il2CppGenericParameter, GenericParameter> genericParameterDic = new Dictionary<Il2CppGenericParameter, GenericParameter>();
-        private MethodDefinition attributeAttribute;
-        private TypeReference stringType;
-        private TypeSystem typeSystem;
-        private Dictionary<int, FieldDefinition> fieldDefinitionDic = new Dictionary<int, FieldDefinition>();
-        private Dictionary<int, PropertyDefinition> propertyDefinitionDic = new Dictionary<int, PropertyDefinition>();
-        private Dictionary<int, MethodDefinition> methodDefinitionDic = new Dictionary<int, MethodDefinition>();
+        private readonly Il2CppExecutor executor;
+        private readonly Metadata metadata;
+        private readonly Il2Cpp il2Cpp;
+        private readonly Dictionary<Il2CppTypeDefinition, TypeDefinition> typeDefinitionDic = new();
+        private readonly Dictionary<Il2CppGenericParameter, GenericParameter> genericParameterDic = new();
+        private readonly MethodDefinition attributeAttribute;
+        private readonly TypeReference stringType;
+        private readonly TypeSystem typeSystem;
+        private readonly Dictionary<int, FieldDefinition> fieldDefinitionDic = new();
+        private readonly Dictionary<int, PropertyDefinition> propertyDefinitionDic = new();
+        private readonly Dictionary<int, MethodDefinition> methodDefinitionDic = new();
 
         public DummyAssemblyGenerator(Il2CppExecutor il2CppExecutor, bool addToken)
         {
@@ -221,8 +221,10 @@ namespace Il2CppDumper
                     {
                         var methodDef = metadata.methodDefs[i];
                         var methodName = metadata.GetStringFromIndex(methodDef.nameIndex);
-                        var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition.Module.ImportReference(typeSystem.Void));
-                        methodDefinition.ImplAttributes = (MethodImplAttributes)methodDef.iflags;
+                        var methodDefinition = new MethodDefinition(methodName, (MethodAttributes)methodDef.flags, typeDefinition.Module.ImportReference(typeSystem.Void))
+                        {
+                            ImplAttributes = (MethodImplAttributes)methodDef.iflags
+                        };
                         typeDefinition.Methods.Add(methodDefinition);
                         //genericParameter
                         if (methodDef.genericContainerIndex >= 0)
@@ -336,8 +338,7 @@ namespace Il2CppDumper
                         if (propertyDef.set >= 0)
                         {
                             SetMethod = methodDefinitionDic[typeDef.methodStart + propertyDef.set];
-                            if (propertyType == null)
-                                propertyType = SetMethod.Parameters[0].ParameterType;
+                            propertyType ??= SetMethod.Parameters[0].ParameterType;
                         }
                         var propertyDefinition = new PropertyDefinition(propertyName, (PropertyAttributes)propertyDef.attrs, propertyType)
                         {
@@ -554,7 +555,7 @@ namespace Il2CppDumper
                         return new PointerType(GetTypeReference(memberReference, oriType));
                     }
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new NotSupportedException();
             }
         }
 
@@ -635,7 +636,7 @@ namespace Il2CppDumper
             }
         }
 
-        private bool TryRestoreCustomAttribute(TypeDefinition attributeType, ModuleDefinition moduleDefinition, Collection<CustomAttribute> customAttributes)
+        private static bool TryRestoreCustomAttribute(TypeDefinition attributeType, ModuleDefinition moduleDefinition, Collection<CustomAttribute> customAttributes)
         {
             if (attributeType.Methods.Count == 1 && attributeType.Name != "CompilerGeneratedAttribute")
             {
@@ -655,8 +656,10 @@ namespace Il2CppDumper
             if (!genericParameterDic.TryGetValue(param, out var genericParameter))
             {
                 var genericName = metadata.GetStringFromIndex(param.nameIndex);
-                genericParameter = new GenericParameter(genericName, iGenericParameterProvider);
-                genericParameter.Attributes = (GenericParameterAttributes)param.flags;
+                genericParameter = new GenericParameter(genericName, iGenericParameterProvider)
+                {
+                    Attributes = (GenericParameterAttributes)param.flags
+                };
                 genericParameterDic.Add(param, genericParameter);
                 for (int i = 0; i < param.constraintsCount; ++i)
                 {
@@ -709,8 +712,10 @@ namespace Il2CppDumper
             {
                 return GetTypeReference(memberReference, blobValue.EnumType);
             }
-            var il2CppType = new Il2CppType();
-            il2CppType.type = blobValue.il2CppTypeEnum;
+            var il2CppType = new Il2CppType
+            {
+                type = blobValue.il2CppTypeEnum
+            };
             return GetTypeReference(memberReference, il2CppType);
         }
     }

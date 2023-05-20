@@ -332,5 +332,10 @@ namespace Il2CppDumper
         {
             return pointer;
         }
+
+        public virtual int GetFunctionIndex(ulong pointer)
+        {
+            return -1;
+        }
     }
 }

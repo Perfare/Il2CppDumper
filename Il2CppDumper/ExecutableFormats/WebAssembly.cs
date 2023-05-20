@@ -6,6 +6,7 @@ namespace Il2CppDumper
     public sealed class WebAssembly : BinaryStream
     {
         private readonly DataSection[] dataSections;
+        private readonly uint[] funcRefs;
 
         public WebAssembly(Stream stream) : base(stream)
         {
@@ -16,7 +17,31 @@ namespace Il2CppDumper
             {
                 var id = ReadULeb128();
                 var len = ReadULeb128();
-                if (id == 11)
+                var nextSection = Position + len;
+
+                if (id == 9) // element section
+                {
+                    // assume these is only one segment and is ref.func.
+                    // probably we need to handle another type of segments in future.
+                    var segmentCount = ReadULeb128();
+                    if (segmentCount == 1)
+                    {
+                        var flags = ReadULeb128();
+                        var opCode = ReadByte();
+                        var value = ReadULeb128();
+                        var endOpCode = ReadByte();
+                        var elemCount = ReadULeb128();
+                        if (flags == 0 || opCode == 0x41 || endOpCode == 0xB)
+                        {
+                            funcRefs = new uint[elemCount + 1];
+                            for (int ei = 0; ei < elemCount; ++ei)
+                            {
+                                funcRefs[ei + 1] = ReadULeb128();
+                            }
+                        }
+                    }
+                }
+                else if (id == 11) // data section
                 {
                     var count = ReadULeb128();
                     dataSections = new DataSection[count];
@@ -38,9 +63,9 @@ namespace Il2CppDumper
                         }
                         dataSection.Data = ReadBytes((int)ReadULeb128());
                     }
-                    break;
                 }
-                Position += len;
+
+                Position = nextSection;
             }
         }
 
@@ -54,7 +79,7 @@ namespace Il2CppDumper
                 stream.Position = dataSection.Offset;
                 stream.Write(dataSection.Data, 0, dataSection.Data.Length);
             }
-            return new WebAssemblyMemory(stream, bssStart);
+            return new WebAssemblyMemory(stream, bssStart, funcRefs);
         }
     }
 }

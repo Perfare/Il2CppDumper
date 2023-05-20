@@ -14,9 +14,15 @@ namespace Il2CppDumper
     public class ScriptMethod
     {
         public ulong Address;
+        public int Index = -1;
         public string Name;
         public string Signature;
         public string TypeSignature;
+
+        public bool ShouldSerializeIndex()
+        {
+            return Index != -1;
+        }
     }
 
     public class ScriptString

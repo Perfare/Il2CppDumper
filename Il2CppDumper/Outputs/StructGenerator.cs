@@ -93,6 +93,7 @@ namespace Il2CppDumper
                             var scriptMethod = new ScriptMethod();
                             json.ScriptMethod.Add(scriptMethod);
                             scriptMethod.Address = il2Cpp.GetRVA(methodPointer);
+                            scriptMethod.Index = il2Cpp.GetFunctionIndex(methodPointer);
                             var methodFullName = typeName + "$$" + methodName;
                             scriptMethod.Name = methodFullName;
 
@@ -148,6 +149,7 @@ namespace Il2CppDumper
                                     var scriptMethod = new ScriptMethod();
                                     json.ScriptMethod.Add(scriptMethod);
                                     scriptMethod.Address = il2Cpp.GetRVA(genericMethodPointer);
+                                    scriptMethod.Index = il2Cpp.GetFunctionIndex(genericMethodPointer);
                                     var methodInfoName = $"MethodInfo_{scriptMethod.Address:X}";
                                     var structTypeName = structNameDic[typeDef];
                                     var rgctxs = GenerateRGCTX(imageName, methodDef);

@@ -79,7 +79,7 @@ namespace Il2CppDumper
             // on wasm, address of function is actually index of reference table.
             // reference table points index of function at runtime.
             // (e.g. if a function has address 123 and refTable[123] is 456, it will be $func456)
-            return refTable != null && address < (ulong)refTable.Length ? (int)refTable[address] : -1;
+            return refTable != null && address < (ulong)refTable.Length ? (int)refTable[address] : 0;
         }
     }
 }

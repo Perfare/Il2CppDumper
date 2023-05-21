@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Il2CppDumper
 {
@@ -14,15 +15,11 @@ namespace Il2CppDumper
     public class ScriptMethod
     {
         public ulong Address;
-        public int Index = -1;
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public int Index;
         public string Name;
         public string Signature;
         public string TypeSignature;
-
-        public bool ShouldSerializeIndex()
-        {
-            return Index != -1;
-        }
     }
 
     public class ScriptString

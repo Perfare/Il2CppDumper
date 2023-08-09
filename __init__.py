@@ -175,60 +175,106 @@ def process(bv: BinaryView):
     task.start()
 
 
-def annotate(bv: BinaryView, addr: int):
-    laddr = addr - bv.start
+class IL2CPPAnnotateTask(BackgroundTaskThread):
+    def __init__(self, addr: int, bv: BinaryView):
+        super().__init__("annotating function", False)
+        self.addr = addr
+        self.bv = bv
 
-    method = first_or_else(
-        [m for m in script_data["ScriptMethod"] if m["Address"] == laddr], None)
-    log_info(method)
-    if method is not None:
+    def load_types(self, header: str):
+        log_debug("header = \n", header)
+        tys = self.bv.parse_types_from_string(header)
+        for t_name in tys.types:
+            if not self.bv.get_type_by_name(t_name):
+                self.bv.define_user_type(t_name, tys.types[t_name])
+        return tys
+
+    def annotate_method(self, addr: int):
+        laddr = addr - self.bv.start
+        method = first_or_else(
+            [m for m in script_data["ScriptMethod"] if m["Address"] == laddr], None)
+        if method is None:
+            return None
+
         address = method["Address"]
         name = method["Name"]
         signature = method["Signature"]
+
         refs = find_refs(parser.parse(str.encode(signature)).root_node)
         header = "#include <stdint.h>\n"
         mark = set()
         for ref in refs:
             header += build_struct(ref.decode("utf-8"), mark)
         header += signature
-        log_debug("header = \n", header)
-        tys = bv.parse_types_from_string(header)
-        for t_name in tys.types:
-            if not bv.get_type_by_name(t_name):
-                bv.define_user_type(t_name, tys.types[t_name])
-        ty_f = first_or_else(list(tys.functions.values()), None)
-        if ty_f is not None:
-            fn = bv.get_function_at(addr)
-            if fn is None:
-                fn = bv.add_function(addr)
-            fn.name = name
-            fn.type = ty_f
-            fn.request_advanced_analysis_data()
-            log_info(f"defined func at {addr}")
+        tys = self.load_types(header)
 
-    metadata = first_or_else(
-        [m for m in script_data["ScriptMetadata"] if m["Address"] == laddr], None)
-    if metadata is not None:
+        ty_f = first_or_else(list(tys.functions.values()), None)
+        if ty_f is None:
+            log_error(f"failed to parse function {signature}")
+            return None
+
+        fn = self.bv.get_function_at(addr)
+        if fn is None:
+            fn = self.bv.add_function(addr)
+        fn.name = name
+        fn.type = ty_f
+        fn.request_advanced_analysis_data()
+        log_info(f"defined func at {addr}")
+        return fn
+
+    def annotate_child(self, fn: Function):
+        self.progress = f"Annotating child functions of {fn}"
+        self.bv.update_analysis_and_wait()
+        component = self.bv.create_component()
+        component.add_function(fn)
+        for ref_addr in component.get_referenced_data_variables():
+            log_info(f"annotate child {ref_addr} of {fn}")
+            method = self.annotate_method(ref_addr.address)
+            if method is None:
+                self.annotate_var(ref_addr.address)
+        self.bv.remove_component(component)
+        log_info(f"Annotating {fn} finished")
+        return True
+
+    def annotate_var(self, addr: int):
+        laddr = addr - self.bv.start
+        metadata = first_or_else(
+            [m for m in script_data["ScriptMetadata"] if m["Address"] == laddr], None)
+        if metadata is None:
+            return None
+
         address = metadata["Address"]
         name = metadata["Name"]
         signature: str = metadata["Signature"]
+
         ref = signature[:signature.find("*")]
         header = "#include <stdint.h>\n" + build_struct(ref, set())
-        log_debug("header = \n", header)
-        tys = bv.parse_types_from_string(header)
-        for t_name in tys.types:
-            if not bv.get_type_by_name(t_name):
-                bv.define_user_type(t_name, tys.types[t_name])
-        var = bv.get_data_var_at(addr)
+        _ = self.load_types(header)
+        var = self.bv.get_data_var_at(addr)
         if var is None:
-            bv.define_user_data_var(addr, signature, name)
+            var = self.bv.define_user_data_var(addr, signature, name)
         else:
             var.name = name
             var.type = signature
         log_info(f"defined var at {addr}")
+        return var
 
-    if method is None and metadata is None:
-        log_info("No metadata found.")
+    def run(self):
+        method = self.annotate_method(self.addr)
+        var = self.annotate_var(self.addr)
+        if method is None:
+            for fn in self.bv.get_functions_containing(self.addr):
+                log_info(f"Annotating surrounding function {fn}")
+                method = method or self.annotate_method(fn.start)
+        if method is not None:
+            self.annotate_child(method)
+        if not method and not var:
+            log_info(f"No metadata found for {self.addr}.")
+
+
+def annotate(bv: BinaryView, addr: int):
+    task = IL2CPPAnnotateTask(addr, bv)
+    task.start()
 
 
 def annotate_valid(bv: BinaryView, addr: int):

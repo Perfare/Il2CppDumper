@@ -21,12 +21,11 @@
     "Windows"
   ],
   "installinstructions": {
-    "Darwin":  "Follow instructions on https://github.com/SyxP/IL2CPPDumperBinja/blob/main/README.md",
-    "Linux":   "Follow instructions on https://github.com/SyxP/IL2CPPDumperBinja/blob/main/README.md",
+    "Darwin": "Follow instructions on https://github.com/SyxP/IL2CPPDumperBinja/blob/main/README.md",
+    "Linux": "Follow instructions on https://github.com/SyxP/IL2CPPDumperBinja/blob/main/README.md",
     "Windows": "Follow instructions on https://github.com/SyxP/IL2CPPDumperBinja/blob/main/README.md"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "version": "1.0.0",
   "author": "Il2CppDumper contributors",
   "minimumbinaryninjaversion": 3164

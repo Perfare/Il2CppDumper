@@ -12,11 +12,14 @@ def get_addr(bv: BinaryView, relative_addr: int):
 
 
 class IL2CPPProcessTask(BackgroundTaskThread):
-    def __init__(self, bv: BinaryView, script_path: str, header_path: str):
+    def __init__(
+        self, bv: BinaryView, script_path: str, header_path: str, skip_naming: bool
+    ):
         BackgroundTaskThread.__init__(self, "IL2CPP Initialise", True)
         self.bv = bv
         self.script_path = script_path
         self.header_path = header_path
+        self.skip_naming = skip_naming
 
     def process_methods(self, data: dict):
         self.progress = "Adding IL2CPP Methods"
@@ -32,11 +35,11 @@ class IL2CPPProcessTask(BackgroundTaskThread):
 
             i += 1
             if i % 100 == 0:
-                percentage = 100*i / N
+                percentage = 100 * i / N
                 self.progress = f"IL2CPP Methods: {percentage:.2f}% ({i}/{N})"
 
             addr = get_addr(self.bv, method["Address"])
-            name = method["Name"].replace("$", "_").replace(".", "_")
+            name = method["Name"]
             sig = method["Signature"]
             f = self.bv.get_function_at(addr)
 
@@ -67,19 +70,17 @@ class IL2CPPProcessTask(BackgroundTaskThread):
 
             i += 1
             if i % 100 == 0:
-                percentage = 100*i / N
+                percentage = 100 * i / N
                 self.progress = f"IL2CPP ScriptString: {percentage:.2f}% ({i}/{N})"
 
             addr = get_addr(self.bv, string["Address"])
             value = string["Value"]
             var = self.bv.get_data_var_at(addr)
             try:
-
                 if var != None:
                     var.name = f"StringLiteral_{i}"
                 else:
-                    self.bv.define_user_data_var(
-                        addr, "void*", f"StringLiteral_{i}")
+                    self.bv.define_user_data_var(addr, "void*", f"StringLiteral_{i}")
                 self.bv.set_comment_at(addr, value)
             except Exception:
                 log_info(f"Unable to add string at {addr}")
@@ -97,7 +98,7 @@ class IL2CPPProcessTask(BackgroundTaskThread):
 
             i += 1
             if i % 100 == 0:
-                percentage = 100*i / N
+                percentage = 100 * i / N
                 self.progress = f"IL2CPP ScriptMetadata: {percentage:.2f}% ({i}/{N})"
 
             addr = get_addr(self.bv, metadata["Address"])
@@ -105,7 +106,6 @@ class IL2CPPProcessTask(BackgroundTaskThread):
             name = metadata["Name"]
             var = self.bv.get_data_var_at(addr)
             try:
-
                 if var != None:
                     var.name = name
                 else:
@@ -127,8 +127,10 @@ class IL2CPPProcessTask(BackgroundTaskThread):
 
             i += 1
             if i % 100 == 0:
-                percentage = 100*i / N
-                self.progress = f"IL2CPP ScriptMetadataMethod: {percentage:.2f}% ({i}/{N})"
+                percentage = 100 * i / N
+                self.progress = (
+                    f"IL2CPP ScriptMetadataMethod: {percentage:.2f}% ({i}/{N})"
+                )
 
             addr = get_addr(self.bv, metadata["Address"])
             method_addr = metadata["MethodAddress"]
@@ -144,34 +146,38 @@ class IL2CPPProcessTask(BackgroundTaskThread):
                 log_info(f"Unable to add metadata at {addr} {str(e)}")
 
     def run(self):
-        data = json.loads(open(self.script_path, 'rb').read().decode('utf-8'))
+        data = json.loads(open(self.script_path, "rb").read().decode("utf-8"))
         global script_data
         script_data = data
-        if "ScriptMethod" in data:
-            self.process_methods(data)
-        if "ScriptString" in data:
-            self.process_strings(data)
-        if "ScriptMetadata" in data:
-            self.process_data(data)
-        if "ScriptMetadataMethod" in data:
-            self.process_method_data(data)
+        if not self.skip_naming:
+            if "ScriptMethod" in data:
+                self.process_methods(data)
+            if "ScriptString" in data:
+                self.process_strings(data)
+            if "ScriptMetadata" in data:
+                self.process_data(data)
+            if "ScriptMetadataMethod" in data:
+                self.process_method_data(data)
         self.progress = "Loading il2cpp.h"
         load_file(self.header_path)
         log_info("IL2CPPDumper data loaded")
 
 
 def process(bv: BinaryView):
-    scriptDialog = OpenFileNameField(
-        "Select script.json", "script.json", "script.json")
-    headerDialog = OpenFileNameField(
-        "Select il2cpp.h", "il2cpp.h", "il2cpp.h")
-    if not get_form_input([scriptDialog, headerDialog], "Select IL2CPPDumper outputs"):
+    scriptDialog = OpenFileNameField("Select script.json", "script.json", "script.json")
+    headerDialog = OpenFileNameField("Select il2cpp.h", "il2cpp.h", "il2cpp.h")
+    skip_naming = ChoiceField("Skip naming", ["Yes", "No"])
+    if not get_form_input(
+        [scriptDialog, headerDialog, skip_naming], "Select IL2CPPDumper outputs"
+    ):
         return log_error("File not selected.")
     if not exists(scriptDialog.result):
         return log_error("File not found.")
     if not exists(headerDialog.result):
         return log_error("File not found.")
-    task = IL2CPPProcessTask(bv, scriptDialog.result, headerDialog.result)
+    task = IL2CPPProcessTask(
+        bv, scriptDialog.result, headerDialog.result, skip_naming.result
+    )
     task.start()
 
 
@@ -182,7 +188,7 @@ class IL2CPPAnnotateTask(BackgroundTaskThread):
         self.bv = bv
 
     def load_types(self, header: str):
-        log_debug("header = \n", header)
+        log_debug(f"header = {header}\n")
         tys = self.bv.parse_types_from_string(header)
         for t_name in tys.types:
             if not self.bv.get_type_by_name(t_name):
@@ -192,13 +198,15 @@ class IL2CPPAnnotateTask(BackgroundTaskThread):
     def annotate_method(self, addr: int):
         laddr = addr - self.bv.start
         method = first_or_else(
-            [m for m in script_data["ScriptMethod"] if m["Address"] == laddr], None)
+            [m for m in script_data["ScriptMethod"] if m["Address"] == laddr], None
+        )
         if method is None:
             return None
 
         address = method["Address"]
         name = method["Name"]
-        signature = method["Signature"]
+        signature = method["Signature"].replace("* method);", "* __method);")
+        log_debug(f"signature = {signature}")
 
         refs = find_refs(parser.parse(str.encode(signature)).root_node)
         header = "#include <stdint.h>\n"
@@ -224,9 +232,9 @@ class IL2CPPAnnotateTask(BackgroundTaskThread):
 
     def annotate_child(self, fn: Function):
         self.progress = f"Annotating child functions of {fn}"
-        self.bv.update_analysis_and_wait()
         component = self.bv.create_component()
         component.add_function(fn)
+        self.bv.update_analysis_and_wait()
         for ref_addr in component.get_referenced_data_variables():
             log_info(f"annotate child {ref_addr} of {fn}")
             method = self.annotate_method(ref_addr.address)
@@ -239,7 +247,8 @@ class IL2CPPAnnotateTask(BackgroundTaskThread):
     def annotate_var(self, addr: int):
         laddr = addr - self.bv.start
         metadata = first_or_else(
-            [m for m in script_data["ScriptMetadata"] if m["Address"] == laddr], None)
+            [m for m in script_data["ScriptMetadata"] if m["Address"] == laddr], None
+        )
         if metadata is None:
             return None
 
@@ -247,7 +256,7 @@ class IL2CPPAnnotateTask(BackgroundTaskThread):
         name = metadata["Name"]
         signature: str = metadata["Signature"]
 
-        ref = signature[:signature.find("*")]
+        ref = signature[: signature.find("*")]
         header = "#include <stdint.h>\n" + build_struct(ref, set())
         _ = self.load_types(header)
         var = self.bv.get_data_var_at(addr)
@@ -284,7 +293,8 @@ def annotate_valid(bv: BinaryView, addr: int):
 def register():
     PluginCommand.register("IL2CPPDumper Load", "Process File", process)
     PluginCommand.register_for_address(
-        "IL2CPPDumper Annotate", "Process File", annotate, annotate_valid)
+        "IL2CPPDumper Annotate", "Process File", annotate, annotate_valid
+    )
 
 
 register()

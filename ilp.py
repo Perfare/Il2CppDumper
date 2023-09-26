@@ -1,7 +1,7 @@
 import tree_sitter_languages
 from tree_sitter import Node
 
-parser = tree_sitter_languages.get_parser('cpp')
+parser = tree_sitter_languages.get_parser("cpp")
 
 
 def first_or_else(lst, default):
@@ -16,19 +16,20 @@ def handle_field_decl_list(fields: Node) -> dict[bytes, bool]:
     for field in fields.children:
         if field.type == "field_declaration":
             ty = field.children_by_field_name("type")[0]
-            is_weak = first_or_else(
-                field.children_by_field_name("declarator"), None)
+            is_weak = first_or_else(field.children_by_field_name("declarator"), None)
             is_weak = is_weak is None or is_weak.type == "pointer_declarator"
             if ty.type == "type_identifier":
                 ret[ty.text] = (ret.get(ty.text) or False) or (not is_weak)
             elif ty.type == "struct_specifier" or ty.type == "union_specifier":
                 fields = first_or_else(
-                    [c for c in ty.children if c.type == "field_declaration_list"], None)
+                    [c for c in ty.children if c.type == "field_declaration_list"], None
+                )
                 if fields is not None:
                     ret.update(handle_field_decl_list(fields))
                 else:
-                    ident = [c for c in ty.children if c.type ==
-                             "type_identifier"][0].text
+                    ident = [c for c in ty.children if c.type == "type_identifier"][
+                        0
+                    ].text
                     ret[ident] = (ret.get(ty.text) or False) or (not is_weak)
             elif ty.type == "primitive_type":
                 pass
@@ -69,23 +70,30 @@ def load_file(filename: str):
     root = tree.root_node
     for node in root.children:
         if node.type == "struct_specifier" or node.type == "union_specifier":
-            ident = [c for c in node.children if c.type ==
-                     "type_identifier"][0].text
+            ident = [c for c in node.children if c.type == "type_identifier"][0].text
             base_class = first_or_else(
-                [c for c in node.children if c.type == "base_class_clause"], None)
+                [c for c in node.children if c.type == "base_class_clause"], None
+            )
             fields = first_or_else(
-                [c for c in node.children if c.type == "field_declaration_list"], None)
-            refs = handle_field_decl_list(
-                fields) if fields is not None else dict[bytes, bool]()
+                [c for c in node.children if c.type == "field_declaration_list"], None
+            )
+            refs = (
+                handle_field_decl_list(fields)
+                if fields is not None
+                else dict[bytes, bool]()
+            )
             if base_class is not None:
                 base_class = [
-                    c for c in base_class.children if c.type == "type_identifier"][0].text
+                    c for c in base_class.children if c.type == "type_identifier"
+                ][0].text
                 refs[base_class] = True
             typedefs[ident] = {"name": ident, "decl": node.text, "refs": refs}
         elif node.type == "type_definition":
             ident = find_ident(node)
-            typedefs[ident] = {"name": ident,
-                               "decl": node.text, "refs": dict()}
+            refs = dict()
+            if ident == "InvokerMethod":
+                refs["MethodInfo"] = False  # is_strong
+            typedefs[ident] = {"name": ident, "decl": node.text, "refs": refs}
         elif node.type == ";":
             pass
         else:
@@ -99,7 +107,7 @@ def build_struct(name: str, mark: set[str]) -> str:
     ret = ""
     decl = typedefs[str.encode(name)]
     ret += f"// BEG {name}\n"
-    for (dep, is_strong) in decl["refs"].items():
+    for dep, is_strong in decl["refs"].items():
         dep = dep.decode("utf-8")
         if is_strong:
             ret += build_struct(dep, mark)
@@ -114,6 +122,6 @@ def build_struct(name: str, mark: set[str]) -> str:
         mark.add(name)
     for dep, is_strong in decl["refs"].items():
         if not is_strong:
-            ret += build_struct(dep.decode('utf-8'), mark)
+            ret += build_struct(dep.decode("utf-8"), mark)
     ret += f"// END {name}\n"
     return ret

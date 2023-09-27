@@ -1,3 +1,4 @@
+from binaryninja import *
 import tree_sitter_languages
 from tree_sitter import Node
 
@@ -11,13 +12,21 @@ def first_or_else(lst, default):
         return default
 
 
+def children_of_type(node: Node, ty: str) -> Node | None:
+    return first_or_else([c for c in node.children if c.type == ty], None)
+
+
 def handle_field_decl_list(fields: Node) -> dict[bytes, bool]:
     ret = dict()
     for field in fields.children:
-        if field.type == "field_declaration":
+        if field.type == "field_declaration" or field.type == "parameter_declaration":
             ty = field.children_by_field_name("type")[0]
             is_weak = first_or_else(field.children_by_field_name("declarator"), None)
-            is_weak = is_weak is None or is_weak.type == "pointer_declarator"
+            is_weak = (
+                is_weak is None
+                or is_weak.type == "pointer_declarator"
+                or is_weak.type == "abstract_pointer_declarator"
+            )
             if ty.type == "type_identifier":
                 ret[ty.text] = (ret.get(ty.text) or False) or (not is_weak)
             elif ty.type == "struct_specifier" or ty.type == "union_specifier":
@@ -62,7 +71,20 @@ def find_refs(node: Node) -> list[bytes]:
     return ret
 
 
-typedefs = dict()
+class TypedefInfo:
+    name: str
+    decl: str
+    refs: dict[bytes, bool]  # type_ident -> is_strong
+    type: str
+
+    def __init__(self, name: str, decl: str, refs: dict[bytes, bool], type: str):
+        self.name = name
+        self.decl = decl
+        self.refs = refs
+        self.type = type
+
+
+typedefs = dict[bytes, TypedefInfo]()
 
 
 def load_file(filename: str):
@@ -87,13 +109,23 @@ def load_file(filename: str):
                     c for c in base_class.children if c.type == "type_identifier"
                 ][0].text
                 refs[base_class] = True
-            typedefs[ident] = {"name": ident, "decl": node.text, "refs": refs}
+
+            ty = "struct" if node.type == "struct_specifier" else "union"
+            typedefs[ident] = TypedefInfo(ident, node.text, refs, ty)
         elif node.type == "type_definition":
-            ident = find_ident(node)
-            refs = dict()
-            if ident == "InvokerMethod":
-                refs["MethodInfo"] = False  # is_strong
-            typedefs[ident] = {"name": ident, "decl": node.text, "refs": refs}
+            func_decl = children_of_type(node, "function_declarator")
+            if func_decl is not None:
+                paren_decl = children_of_type(func_decl, "parenthesized_declarator")
+                ptr_decl = children_of_type(paren_decl, "pointer_declarator")
+                ident = children_of_type(ptr_decl, "type_identifier").text
+
+                param_list = children_of_type(func_decl, "parameter_list")
+                refs = handle_field_decl_list(param_list)
+                typedefs[ident] = TypedefInfo(ident, node.text, refs, "func")
+            else:
+                ident = find_ident(node)
+                typedefs[ident] = TypedefInfo(ident, node.text, dict(), "type")
+
         elif node.type == ";":
             pass
         else:
@@ -107,20 +139,20 @@ def build_struct(name: str, mark: set[str]) -> str:
     ret = ""
     decl = typedefs[str.encode(name)]
     ret += f"// BEG {name}\n"
-    for dep, is_strong in decl["refs"].items():
+    for dep, is_strong in decl.refs.items():
+        ty = typedefs[dep].type
         dep = dep.decode("utf-8")
         if is_strong:
             ret += build_struct(dep, mark)
         else:
             if dep not in mark:
-                if dep == "Il2CppRGCTXData":
-                    ret += f"union {dep};\n"
-                else:
-                    ret += f"struct {dep};\n"
+                if ty != "struct" and ty != "union":
+                    ty = ""
+                ret += f"{ty} {dep};\n"
     if not name in mark:
-        ret += f"{decl['decl'].decode('utf-8')};\n"
+        ret += f"{decl.decl.decode('utf-8')};\n"
         mark.add(name)
-    for dep, is_strong in decl["refs"].items():
+    for dep, is_strong in decl.refs.items():
         if not is_strong:
             ret += build_struct(dep.decode("utf-8"), mark)
     ret += f"// END {name}\n"

@@ -176,7 +176,7 @@ def process(bv: BinaryView):
     if not exists(headerDialog.result):
         return log_error("File not found.")
     task = IL2CPPProcessTask(
-        bv, scriptDialog.result, headerDialog.result, skip_naming.result
+        bv, scriptDialog.result, headerDialog.result, skip_naming.result == 0
     )
     task.start()
 

@@ -72,7 +72,7 @@ replace_keywords = [
     " unsigned;",
     " void;",
     " volatile;",
-    " while;",
+    " while;"
 ]
 
 

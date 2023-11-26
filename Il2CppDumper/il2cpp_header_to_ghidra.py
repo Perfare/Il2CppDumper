@@ -72,7 +72,7 @@ replace_keywords = [
     " unsigned;",
     " void;",
     " volatile;",
-    " while;"
+    " while;",
 ]
 
 
@@ -82,31 +82,29 @@ def main():
     with open(h_file.absolutePath, 'r') as f:
         print("il2cpp.h opened...")
         original_header_data = f.read()
-        print("il2cpp.h read...")
-        fixed_header_data = re.sub(r": (\w+) {", r"{\n \1 super;", original_header_data)
-        for i in range(len(replace_keywords)):
-            if (fixed_header_data.find(replace_keywords[i]) != -1):
-                x = 1
-                while (x < 10):
-                    if (fixed_header_data.find(replace_keywords[i][:1] + ("_" * x) + replace_keywords[i][1:]) == -1):
-                        string = replace_keywords[i][:1] + ("_" * x) + replace_keywords[i][1:]
-                        break
-                    x += 1
-                if (x == 10):
-                    print("Replacing variable name \"%s\" failed..." % (replace_keywords[i][1:-1]))
-                else:
-                    fixed_header_data = fixed_header_data.replace(replace_keywords[i], string)
-                    print("Replace variable name \"%s\" with \"%s\"..." % (replace_keywords[i][1:-1], string[1:-1]))
-        print("il2cpp.h data fixed...")
-    print("il2cpp.h closed.")
+    print("il2cpp.h read and closed.")
+    fixed_header_data = re.sub(r": (\w+) {", r"{\n \1 super;", original_header_data)
+    for i in range(len(replace_keywords)):
+        if (fixed_header_data.find(replace_keywords[i]) != -1):
+            x = 1
+            while (x < 10):
+                if (fixed_header_data.find(replace_keywords[i][:1] + ("_" * x) + replace_keywords[i][1:]) == -1):
+                    string = replace_keywords[i][:1] + ("_" * x) + replace_keywords[i][1:]
+                    break
+                x += 1
+            if (x == 10):
+                print("Replacing variable name \"%s\" failed..." % (replace_keywords[i][1:-1]))
+            else:
+                fixed_header_data = fixed_header_data.replace(replace_keywords[i], string)
+                print("Replace variable name \"%s\" with \"%s\"..." % (replace_keywords[i][1:-1], string[1:-1]))
+    print("il2cpp.h data fixed...")
     new_file = askFile("Choose where to save patched il2cpp.h", "Save")
     with open(new_file.absolutePath, 'w') as f:
         print("Patched header opened...")
         f.write(header)
-        print("Patched header written...")
+        print("Patched header common typedefs written...")
         f.write(fixed_header_data)
-        print("fixed data written...")
-    print("Patched header closed.")
+    print("Patched header fixed data written and closed...")
 
 
 if __name__ == '__main__':

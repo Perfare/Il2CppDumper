@@ -55,7 +55,9 @@ replace_keywords = [
     " restrict;",
     " return;",
     " short;",
-    " signed;",
+    " signed;";
+    " _signed;",
+    " __signed;",
     " sizeof;",
     " static;",
     " static_assert;",

@@ -58,6 +58,10 @@ namespace Il2CppDumper
             }
             Version = version;
             header = ReadClass<Il2CppGlobalMetadataHeader>(0);
+            if (stream.Position != header.stringLiteralOffset)
+            {
+                Console.WriteLine($"WARNING: Metadata header size does not match declared version {version}, version might be incorrect.");
+            }
             if (version == 24)
             {
                 if (header.stringLiteralOffset == 264)

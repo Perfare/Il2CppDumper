@@ -52,7 +52,7 @@ namespace Il2CppDumper
             {
                 throw new InvalidDataException("ERROR: Metadata file supplied is not valid metadata file.");
             }
-            if (version < 16 || version > 29)
+            if (version < 16 || version > 31)
             {
                 throw new NotSupportedException($"ERROR: Metadata file supplied is not a supported version[{version}].");
             }

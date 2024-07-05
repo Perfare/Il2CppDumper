@@ -237,6 +237,8 @@ namespace Il2CppDumper
         public uint nameIndex;
         public int declaringType;
         public int returnType;
+        [Version(Min = 31)]
+        public int returnParameterToken;
         public int parameterStart;
         [Version(Max = 24)]
         public int customAttributeIndex;

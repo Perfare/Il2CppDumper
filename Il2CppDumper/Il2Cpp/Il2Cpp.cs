@@ -56,6 +56,18 @@ namespace Il2CppDumper
                 if (Version >= 24.2)
                 {
                     pCodeRegistration = MapVATR<Il2CppCodeRegistration>(codeRegistration);
+                    if (Version == 31)
+                    {
+                        if (pCodeRegistration.genericMethodPointersCount > limit)
+                        {
+                            codeRegistration -= PointerSize * 2;
+                        }
+                        else
+                        {
+                            Version = 29;
+                            Console.WriteLine($"Change il2cpp version to: {Version}");
+                        }
+                    }
                     if (Version == 29)
                     {
                         if (pCodeRegistration.genericMethodPointersCount > limit)

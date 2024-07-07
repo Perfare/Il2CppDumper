@@ -15,19 +15,14 @@ class Il2CppProcessTask(BackgroundTaskThread):
         self.has_types = False
     
     def process_header(self):
-        self.progress = "Il2Cpp types (1/3)"
+        self.progress = "Il2Cpp types (1/3): parsing header"
         with open(self.header_path) as f:
             result = self.bv.parse_types_from_string(f.read())
-        length = len(result.types)
-        i = 0
-        for name in result.types:
-            i += 1
-            if i % 100 == 0:
-                percent = i / length * 100
-                self.progress = f"Il2Cpp types: {percent:.2f}%"
-            if self.bv.get_type_by_name(name):
-                continue
-            self.bv.define_user_type(name, result.types[name])
+
+        type_list = [(Type.generate_auto_type_id("il2cppdumper", name), name, result.types[name]) for name in result.types]
+        
+        self.progress = "Il2Cpp types (1/3): defining types"
+        self.bv.define_types(type_list)
     
     def process_methods(self, data: dict):
         self.progress = f"Il2Cpp methods (2/3)"

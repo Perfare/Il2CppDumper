@@ -5,11 +5,13 @@ namespace Il2CppDumper
     public sealed class WebAssemblyMemory : Il2Cpp
     {
         private readonly uint bssStart;
+        private readonly uint[] refTable;
 
-        public WebAssemblyMemory(Stream stream, uint bssStart) : base(stream)
+        public WebAssemblyMemory(Stream stream, uint bssStart, uint[] funcRefs) : base(stream)
         {
             Is32Bit = true;
             this.bssStart = bssStart;
+            this.refTable = funcRefs;
         }
 
         public override ulong MapVATR(ulong addr)
@@ -71,5 +73,13 @@ namespace Il2CppDumper
         }
 
         public override bool CheckDump() => false;
+
+        public override int GetFunctionIndex(ulong address)
+        {
+            // on wasm, address of function is actually index of reference table.
+            // reference table points index of function at runtime.
+            // (e.g. if a function has address 123 and refTable[123] is 456, it will be $func456)
+            return refTable != null && address < (ulong)refTable.Length ? (int)refTable[address] : 0;
+        }
     }
 }

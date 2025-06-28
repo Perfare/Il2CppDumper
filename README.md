@@ -115,6 +115,13 @@ You can open a new issue and upload the file, I will try to solve.
 
 Il2CppDumper detected that the executable file has been protected, use `GameGuardian` to dump `libil2cpp.so` from the game memory, then use Il2CppDumper to load and follow the prompts, can bypass most protections.
 
+## Large Metadata Support
+
+Il2CppDumper now ships with a runtime configuration enabling very large object support. This prevents `System.OverflowException` when processing oversized `global-metadata.dat` files. The file `Il2CppDumper.runtimeconfig.template.json` will be copied to the output directory automatically and is used at runtime to allow arrays larger than 2 GB.
+
+> **Note**
+> .NET arrays are still limited to `Int32.MaxValue` elements. If a metadata section reports a larger count, Il2CppDumper will fail with a clear error message rather than overflowing memory. Such a count usually indicates a corrupted or unsupported file.
+
 If you have a rooted Android phone, you can try my other project [Zygisk-Il2CppDumper](https://github.com/Perfare/Zygisk-Il2CppDumper), it can bypass almost all protections.
 
 ## Credits

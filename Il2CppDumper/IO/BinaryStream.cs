@@ -184,12 +184,54 @@ namespace Il2CppDumper
 
         public T[] ReadClassArray<T>(long count) where T : new()
         {
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+            if (count > int.MaxValue)
+            {
+                throw new InvalidDataException(
+                    $"Array length {count} exceeds maximum supported length {int.MaxValue}. " +
+                    "Metadata may be corrupted or too large to handle.");
+            }
+
+            var elementSize = EstimateElementSize(typeof(T));
+            var remaining = (long)(Length - Position);
+            var bytesRequired = elementSize * count;
+            if (bytesRequired > remaining)
+            {
+                throw new InvalidDataException(
+                    $"Attempt to read {count} elements ({bytesRequired} bytes) " +
+                    $"but only {remaining} bytes remain in the stream.");
+            }
+
             var t = new T[count];
-            for (var i = 0; i < count; i++)
+            for (long i = 0; i < count; i++)
             {
                 t[i] = ReadClass<T>();
             }
             return t;
+        }
+
+        private static int EstimateElementSize(Type type)
+        {
+            if (type.IsPrimitive)
+            {
+                return type.Name switch
+                {
+                    "Byte" or "SByte" => 1,
+                    "Int16" or "UInt16" => 2,
+                    "Int32" or "UInt32" => 4,
+                    "Int64" or "UInt64" => 8,
+                    _ => 1
+                };
+            }
+            var size = 0;
+            foreach (var f in type.GetFields())
+            {
+                size += EstimateElementSize(f.FieldType);
+            }
+            return size == 0 ? 1 : size;
         }
 
         public T[] ReadClassArray<T>(ulong addr, ulong count) where T : new()

@@ -13,5 +13,8 @@
   "ForceIl2CppVersion": false,
   "ForceVersion": 16,
   "ForceDump": false,
-  "NoRedirectedPointer": false
+  "NoRedirectedPointer": false,
+  "ReplaceHashNames": [
+
+  ]
 }

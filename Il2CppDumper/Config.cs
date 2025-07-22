@@ -1,5 +1,14 @@
-﻿namespace Il2CppDumper
+﻿using System.Collections.Generic;
+
+namespace Il2CppDumper
 {
+
+    public class ReplaceHashName
+    {
+        public string TargetName { get; set; }
+        public string ReplaceToName { get; set; }
+    }
+
     public class Config
     {
         public bool DumpMethod { get; set; } = true;
@@ -17,5 +26,7 @@
         public double ForceVersion { get; set; } = 24.3;
         public bool ForceDump { get; set; } = false;
         public bool NoRedirectedPointer { get; set; } = false;
-    }
+        public List<ReplaceHashName> ReplaceHashNames { get; set; }
+        public Dictionary<string, string> ReplaceHashNameMap { get; set; }
+}
 }

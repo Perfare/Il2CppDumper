@@ -182,6 +182,17 @@ namespace Il2CppDumper
             if (!stringCache.TryGetValue(index, out var result))
             {
                 result = ReadStringToNull(header.stringOffset + index);
+
+                string szReplaceToName = null;
+                if (result != null)
+                {
+                    szReplaceToName = Il2CppDumper.Program.TryGetReplaceName(result);
+                }
+                if (szReplaceToName != null)
+                {
+                    result = szReplaceToName;
+                }
+
                 stringCache.Add(index, result);
             }
             return result;

@@ -14,6 +14,7 @@ namespace Il2CppDumper
         static void Main(string[] args)
         {
             config = JsonSerializer.Deserialize<Config>(File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + @"config.json"));
+            GenerateReplaceNameMap();
             string il2cppPath = null;
             string metadataPath = null;
             string outputDir = null;
@@ -109,6 +110,28 @@ namespace Il2CppDumper
                 Console.WriteLine("Press any key to exit...");
                 Console.ReadKey(true);
             }
+        }
+
+        static void GenerateReplaceNameMap()
+        {
+            if (config.ReplaceHashNames != null && config.ReplaceHashNames.Count > 0)
+            {
+                config.ReplaceHashNameMap = new System.Collections.Generic.Dictionary<string, string>();
+                for (int i = 0; i < config.ReplaceHashNames.Count; i++)
+                {
+                    config.ReplaceHashNameMap.Add(config.ReplaceHashNames[i].TargetName, config.ReplaceHashNames[i].ReplaceToName);
+                }
+            }
+        }
+
+        public static string TryGetReplaceName(string szTargetName)
+        {
+            string szRet = null;
+            if(config.ReplaceHashNameMap != null)
+            {
+                config.ReplaceHashNameMap.TryGetValue(szTargetName, out szRet);
+            }
+            return szRet;
         }
 
         static void ShowHelp()

@@ -1,5 +1,4 @@
 [
-  // A single package (from nuget), it's version and hash
   {
     "pname": "Mono.Cecil",
     "version": "0.11.6",

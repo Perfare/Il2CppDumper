@@ -1,4 +1,4 @@
-{ fetchFromGitHub, buildDotnetModule, dotnetCorePackages }:
+{ buildDotnetModule, dotnetCorePackages }:
 
 buildDotnetModule rec {
   pname = "Il2CppDumper";

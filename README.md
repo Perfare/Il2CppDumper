@@ -24,16 +24,22 @@ Please respect game developers and other players, use responsibly!
 * Supports Android memory dumped `libil2cpp.so` file to bypass protection
 * Support bypassing simple PE protection
 
+## Installation
+### Nix
+```
+nix shell github:Parsa307/Il2CppDumper --extra-experimental-features "nix-command flakes"
+```
+
 ## Usage
 
-Run `Il2CppDumper.exe` and choose the il2cpp executable file and `global-metadata.dat` file, then enter the information as prompted
+Run `Il2CppDumper` and choose the il2cpp executable file and `global-metadata.dat` file, then enter the information as prompted
 
 The program will then generate all the output files in current working directory
 
 ### Command-line
 
 ```
-Il2CppDumper.exe <executable-file> <global-metadata> <output-directory>
+Il2CppDumper <executable-file> <global-metadata> <output-directory>
 ```
 
 ### Outputs

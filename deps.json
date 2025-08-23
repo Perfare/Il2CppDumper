@@ -1,7 +1,8 @@
 [
+  // A single package (from nuget), it's version and hash
   {
     "pname": "Mono.Cecil",
-    "version": "0.11.4",
-    "hash": "sha256-HrnRgFsOzfqAWw0fUxi/vkzZd8dMn5zueUeLQWA9qvs="
+    "version": "0.11.6",
+    "hash": "sha256-0qI4MqqpSLqaAazEK1cm40xfmVlY8bMNRcDnxws6ctU="
   }
 ]

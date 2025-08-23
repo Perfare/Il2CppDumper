@@ -33,7 +33,7 @@ The program will then generate all the output files in current working directory
 ### Command-line
 
 ```
-Il2CppDumper.exe <executable-file> <global-metadata> <output-directory>
+Il2CppDumper <executable-file> <global-metadata> <output-directory>
 ```
 
 ### Outputs

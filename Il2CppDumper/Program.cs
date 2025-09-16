@@ -3,6 +3,9 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Collections.Generic;
+using System.Threading;
+// Add WinForms reference for dialogs
 
 namespace Il2CppDumper
 {
@@ -13,97 +16,82 @@ namespace Il2CppDumper
         [STAThread]
         static void Main(string[] args)
         {
-            config = JsonSerializer.Deserialize<Config>(File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + @"config.json"));
+            // Ensure STAThread for WinForms dialogs
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && Thread.CurrentThread.GetApartmentState() != ApartmentState.STA)
+            {
+                var thread = new Thread(() => Main(args));
+                thread.SetApartmentState(ApartmentState.STA);
+                thread.Start();
+                thread.Join();
+                return;
+            }
+
+            config = JsonSerializer.Deserialize<Config>(
+                File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json")));
+
             string il2cppPath = null;
             string metadataPath = null;
             string outputDir = null;
 
-            if (args.Length == 1)
+            // ─────────────── simple flag parser ───────────────
+            var it = ((IEnumerable<string>)args).GetEnumerator();
+            while (it.MoveNext())
             {
-                if (args[0] == "-h" || args[0] == "--help" || args[0] == "/?" || args[0] == "/h")
+                var arg = it.Current;
+                switch (arg)
                 {
-                    ShowHelp();
-                    return;
+                    case "-h": case "--help": ShowHelp(); return;
+                    case "-i":
+                    case "--input":
+                        if (!it.MoveNext()) { ShowHelp(); return; }
+                        il2cppPath = it.Current; break;
+                    case "-m":
+                    case "--meta":
+                        if (!it.MoveNext()) { ShowHelp(); return; }
+                        metadataPath = it.Current; break;
+                    case "-o":
+                    case "--output":
+                        if (!it.MoveNext()) { ShowHelp(); return; }
+                        outputDir = it.Current; break;
+                    default:
+                        Console.WriteLine($"Unknown arg: {arg}"); ShowHelp(); return;
                 }
             }
-            if (args.Length > 3)
-            {
-                ShowHelp();
-                return;
-            }
-            if (args.Length > 1)
-            {
-                foreach (var arg in args)
-                {
-                    if (File.Exists(arg))
-                    {
-                        var file = File.ReadAllBytes(arg);
-                        if (BitConverter.ToUInt32(file, 0) == 0xFAB11BAF)
-                        {
-                            metadataPath = arg;
-                        }
-                        else
-                        {
-                            il2cppPath = arg;
-                        }
-                    }
-                    else if (Directory.Exists(arg))
-                    {
-                        outputDir = Path.GetFullPath(arg) + Path.DirectorySeparatorChar;
-                    }
-                }
-            }
-            outputDir ??= AppDomain.CurrentDomain.BaseDirectory;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                if (il2cppPath == null)
-                {
-                    var ofd = new OpenFileDialog
-                    {
-                        Filter = "Il2Cpp binary file|*.*"
-                    };
-                    if (ofd.ShowDialog())
-                    {
-                        il2cppPath = ofd.FileName;
-                        ofd.Filter = "global-metadata|global-metadata.dat";
-                        if (ofd.ShowDialog())
-                        {
-                            metadataPath = ofd.FileName;
-                        }
-                        else
-                        {
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        return;
-                    }
-                }
-            }
+            // ─────────────────────────────────────────────────
+
+            // GUI fall-backs
             if (il2cppPath == null)
             {
-                ShowHelp();
-                return;
+                var ofd = new OpenFileDialog { Filter = "Il2Cpp binary|*.*" };
+                if (!ofd.ShowDialog()) return;
+                il2cppPath = ofd.FileName;
             }
             if (metadataPath == null)
             {
-                Console.WriteLine($"ERROR: Metadata file not found or encrypted.");
+                var ofd = new OpenFileDialog { Filter = "global-metadata.dat|global-metadata.dat" };
+                if (!ofd.ShowDialog()) return;
+                metadataPath = ofd.FileName;
             }
-            else
+            if (outputDir == null)
             {
-                try
-                {
-                    if (Init(il2cppPath, metadataPath, out var metadata, out var il2Cpp))
-                    {
-                        Dump(metadata, il2Cpp, outputDir);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
+                var fbd = new FolderBrowserDialog { Description = "Select output folder" };
+                if (!fbd.ShowDialog()) return;
+                outputDir = fbd.SelectedPath + Path.DirectorySeparatorChar;
             }
+
+            // ensure absolute + trailing slash
+            outputDir = Path.GetFullPath(outputDir) + Path.DirectorySeparatorChar;
+
+            try
+            {
+                if (Init(il2cppPath, metadataPath, out var metadata, out var il2Cpp))
+                    Dump(metadata, il2Cpp, outputDir);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
             if (config.RequireAnyKey)
             {
                 Console.WriteLine("Press any key to exit...");
@@ -113,7 +101,22 @@ namespace Il2CppDumper
 
         static void ShowHelp()
         {
-            Console.WriteLine($"usage: {AppDomain.CurrentDomain.FriendlyName} <executable-file> <global-metadata> <output-directory>");
+            Console.WriteLine("Il2CppDumper - Unity il2cpp reverse engineering tool\n");
+            Console.WriteLine("Usage:");
+            Console.WriteLine($"  {AppDomain.CurrentDomain.FriendlyName} -i <il2cpp-binary> -m <global-metadata> -o <output-directory>");
+            Console.WriteLine();
+            Console.WriteLine("Options:");
+            Console.WriteLine("  -h, --help           Show this help message and exit");
+            Console.WriteLine("  -i, --input          Path to il2cpp binary file");
+            Console.WriteLine("  -m, --meta           Path to global-metadata.dat file");
+            Console.WriteLine("  -o, --output         Output directory");
+            Console.WriteLine();
+            Console.WriteLine("If no arguments are provided, GUI dialogs will be shown.");
+            if (config.RequireAnyKey)
+            {
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey(true);
+            }
         }
 
         private static bool Init(string il2cppPath, string metadataPath, out Metadata metadata, out Il2Cpp il2Cpp)

@@ -279,7 +279,7 @@ namespace Il2CppDumper
                     var unCompressedData = new byte[header.TextSegment.DecompressedSize];
                     using (var decoder = new Lz4DecoderStream(new MemoryStream(textBytes)))
                     {
-                        decoder.Read(unCompressedData, 0, unCompressedData.Length);
+                        ReadAll(decoder, unCompressedData);
                     }
                     writer.Write(unCompressedData);
                 }
@@ -293,7 +293,7 @@ namespace Il2CppDumper
                     var unCompressedData = new byte[header.RoDataSegment.DecompressedSize];
                     using (var decoder = new Lz4DecoderStream(new MemoryStream(roDataBytes)))
                     {
-                        decoder.Read(unCompressedData, 0, unCompressedData.Length);
+                        ReadAll(decoder, unCompressedData);
                     }
                     writer.Write(unCompressedData);
                 }
@@ -307,7 +307,7 @@ namespace Il2CppDumper
                     var unCompressedData = new byte[header.DataSegment.DecompressedSize];
                     using (var decoder = new Lz4DecoderStream(new MemoryStream(dataBytes)))
                     {
-                        decoder.Read(unCompressedData, 0, unCompressedData.Length);
+                        ReadAll(decoder, unCompressedData);
                     }
                     writer.Write(unCompressedData);
                 }
@@ -320,6 +320,20 @@ namespace Il2CppDumper
                 return new NSO(unCompressedStream);
             }
             return this;
+        }
+
+        private static void ReadAll(Stream s, byte[] buffer)
+        {
+            int offset = 0;
+            while (offset < buffer.Length)
+            {
+                int read = s.Read(buffer, offset, buffer.Length - offset);
+                if (read == 0)
+                {
+                    throw new EndOfStreamException("Unexpected end of stream while reading decompressed data.");
+                }
+                offset += read;
+            }
         }
 
         public override SectionHelper GetSectionHelper(int methodCount, int typeDefinitionsCount, int imageCount)

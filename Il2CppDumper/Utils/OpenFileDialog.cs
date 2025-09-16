@@ -43,4 +43,33 @@ namespace Il2CppDumper
             }
         }
     }
+
+    public class FolderBrowserDialog
+    {
+        public string Description { get; set; }
+        public string SelectedPath { get; set; }
+
+        public bool ShowDialog()
+        {
+            var dialog = (IFileDialog)(new FileOpenDialogRCW());
+            dialog.GetOptions(out var options);
+            options |= FOS.FOS_PICKFOLDERS | FOS.FOS_FORCEFILESYSTEM | FOS.FOS_NOVALIDATE | FOS.FOS_DONTADDTORECENT;
+            dialog.SetOptions(options);
+            if (!string.IsNullOrEmpty(Description))
+            {
+                dialog.SetTitle(Description);
+            }
+            if (dialog.Show(IntPtr.Zero) == 0)
+            {
+                dialog.GetResult(out var shellItem);
+                shellItem.GetDisplayName(SIGDN.SIGDN_FILESYSPATH, out var ppszName);
+                SelectedPath = ppszName;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
 }

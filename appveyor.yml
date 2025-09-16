@@ -1,0 +1,15 @@
+image: Visual Studio 2022
+
+environment:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 'true'
+
+before_build:
+  - ps: dotnet --info
+
+build_script:
+  - cmd: powershell -NoProfile -ExecutionPolicy Bypass -File build-ci.ps1 -TargetFrameworks "net8.0"
+  - cmd: powershell -NoProfile -ExecutionPolicy Bypass -File build-ci.ps1 -TargetFrameworks "net9.0" -Rids "win-x64"
+
+artifacts:
+  - path: Il2CppDumper\\bin\\Release\\published\\**\\*
+    name: Published

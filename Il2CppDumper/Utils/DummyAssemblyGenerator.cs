@@ -24,7 +24,7 @@ namespace Il2CppDumper
         private readonly Dictionary<int, PropertyDefinition> propertyDefinitionDic = new();
         private readonly Dictionary<int, MethodDefinition> methodDefinitionDic = new();
 
-        public DummyAssemblyGenerator(Il2CppExecutor il2CppExecutor, bool addToken)
+        public DummyAssemblyGenerator(Il2CppExecutor il2CppExecutor, Config config)
         {
             executor = il2CppExecutor;
             metadata = il2CppExecutor.metadata;
@@ -121,7 +121,7 @@ namespace Il2CppDumper
                     var typeDef = metadata.typeDefs[index];
                     var typeDefinition = typeDefinitionDic[typeDef];
 
-                    if (addToken)
+                    if (config.DummyDllAddToken)
                     {
                         var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
                         customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{typeDef.token:X}")));
@@ -180,7 +180,7 @@ namespace Il2CppDumper
                         typeDefinition.Fields.Add(fieldDefinition);
                         fieldDefinitionDic.Add(i, fieldDefinition);
 
-                        if (addToken)
+                        if (config.DummyDllAddToken)
                         {
                             var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
                             customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{fieldDef.token:X}")));
@@ -194,7 +194,7 @@ namespace Il2CppDumper
                             {
                                 fieldDefinition.Constant = value;
                             }
-                            else
+                            else if(config.DummyDllAddOffset)
                             {
                                 var customAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(metadataOffsetAttribute));
                                 var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{value:X}"));
@@ -203,7 +203,7 @@ namespace Il2CppDumper
                             }
                         }
                         //fieldOffset
-                        if (!fieldDefinition.IsLiteral)
+                        if (!fieldDefinition.IsLiteral && config.DummyDllAddOffset)
                         {
                             var fieldOffset = il2Cpp.GetFieldOffsetFromIndex(index, i - typeDef.fieldStart, i, typeDefinition.IsValueType, fieldDefinition.IsStatic);
                             if (fieldOffset >= 0)
@@ -242,7 +242,7 @@ namespace Il2CppDumper
                         var returnType = GetTypeReferenceWithByRef(methodDefinition, methodReturnType);
                         methodDefinition.ReturnType = returnType;
 
-                        if (addToken)
+                        if (config.DummyDllAddToken)
                         {
                             var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
                             customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{methodDef.token:X}")));
@@ -289,7 +289,7 @@ namespace Il2CppDumper
                                 {
                                     parameterDefinition.Constant = value;
                                 }
-                                else
+                                else if (config.DummyDllAddOffset)
                                 {
                                     var customAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(metadataOffsetAttribute));
                                     var offset = new CustomAttributeNamedArgument("Offset", new CustomAttributeArgument(stringType, $"0x{value:X}"));
@@ -299,7 +299,7 @@ namespace Il2CppDumper
                             }
                         }
                         //methodAddress
-                        if (!methodDefinition.IsAbstract)
+                        if (!methodDefinition.IsAbstract && config.DummyDllAddOffset)
                         {
                             var methodPointer = il2Cpp.GetMethodPointer(imageName, methodDef);
                             if (methodPointer > 0)
@@ -348,7 +348,7 @@ namespace Il2CppDumper
                         typeDefinition.Properties.Add(propertyDefinition);
                         propertyDefinitionDic.Add(i, propertyDefinition);
 
-                        if (addToken)
+                        if (config.DummyDllAddToken)
                         {
                             var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
                             customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{propertyDef.token:X}")));
@@ -373,7 +373,7 @@ namespace Il2CppDumper
                         typeDefinition.Events.Add(eventDefinition);
                         eventDefinitionDic.Add(i, eventDefinition);
 
-                        if (addToken)
+                        if (config.DummyDllAddToken)
                         {
                             var customTokenAttribute = new CustomAttribute(typeDefinition.Module.ImportReference(tokenAttribute));
                             customTokenAttribute.Fields.Add(new CustomAttributeNamedArgument("Token", new CustomAttributeArgument(stringType, $"0x{eventDef.token:X}")));

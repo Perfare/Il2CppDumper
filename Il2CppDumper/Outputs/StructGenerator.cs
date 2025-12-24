@@ -27,10 +27,20 @@ namespace Il2CppDumper
         private readonly StringBuilder methodInfoHeader = new();
         private static readonly HashSet<ulong> methodInfoCache = new();
         private static readonly HashSet<string> keyword = new(StringComparer.Ordinal)
-        { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "flat", "default", "_ds", "interrupt",
-            "unsigned", "signed", "asm", "if", "case", "break", "continue", "do", "new", "_", "short", "union", "class", "namespace"};
+        {
+            "alignas", "alignof", "and", "and_eq", "asm", "auto", "bitand", "bitor", "bool", "break", "case", "catch",
+            "char", "char8_t", "char16_t", "char32_t", "class", "compl", "concept", "const", "consteval", "constexpr",
+            "constinit", "const_cast", "continue", "co_await", "co_return", "co_yield", "decltype", "default", "delete",
+            "do", "double", "dynamic_cast", "else", "enum", "explicit", "export", "extern", "false", "float", "for",
+            "friend", "goto", "if", "inline", "int", "long", "mutable", "namespace", "new", "noexcept", "not", "not_eq",
+            "nullptr", "operator", "or", "or_eq", "private", "protected", "public", "register", "reinterpret_cast",
+            "requires", "return", "short", "signed", "sizeof", "static", "static_assert", "static_cast", "struct", "switch",
+            "template", "this", "thread_local", "throw", "true", "try", "typedef", "typeid", "typename", "union",
+            "unsigned", "using", "virtual", "void", "volatile", "wchar_t", "while", "xor", "xor_eq"
+        };
+
         private static readonly HashSet<string> specialKeywords = new(StringComparer.Ordinal)
-        { "inline", "near", "far" };
+        { "inline", "near", "far", "_cs", "_ds", "_ts" };
 
         public StructGenerator(Il2CppExecutor il2CppExecutor)
         {
@@ -373,9 +383,10 @@ namespace Il2CppDumper
                 address = $"0x{x.Address:X}"
             }).ToArray();
             var jsonOptions = new JsonSerializerOptions() { WriteIndented = true, IncludeFields = true };
-            File.WriteAllText(outputDir + "stringliteral.json", JsonSerializer.Serialize(stringLiterals, jsonOptions), new UTF8Encoding(false));
+            File.WriteAllText(Path.Combine(outputDir, "stringliteral.json"), JsonSerializer.Serialize(stringLiterals, jsonOptions), new UTF8Encoding(false));
             //写入文件
-            File.WriteAllText(outputDir + "script.json", JsonSerializer.Serialize(json, jsonOptions));
+            File.WriteAllText(Path.Combine(outputDir, "script.json"), JsonSerializer.Serialize(json, jsonOptions));
+            ScriptBin.WriteFile(Path.Combine(outputDir, "script.bin"), json);
             //il2cpp.h
             for (int i = 0; i < genericClassList.Count; i++)
             {
@@ -428,7 +439,8 @@ namespace Il2CppDumper
             sb.Append(headerStruct);
             sb.Append(arrayClassHeader);
             sb.Append(methodInfoHeader);
-            File.WriteAllText(outputDir + "il2cpp.h", sb.ToString());
+            File.WriteAllText(Path.Combine(outputDir, "il2cpp.h"), sb.ToString());
+            return;
         }
 
         private void AddMetadataUsageTypeInfo(ScriptJson json, uint index, ulong address)

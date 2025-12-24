@@ -53,7 +53,6 @@ namespace Il2CppDumper
                     }
                 }
             }
-            outputDir ??= AppDomain.CurrentDomain.BaseDirectory;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 if (il2cppPath == null)
@@ -65,14 +64,18 @@ namespace Il2CppDumper
                     if (ofd.ShowDialog())
                     {
                         il2cppPath = ofd.FileName;
-                        ofd.Filter = "global-metadata|global-metadata.dat";
-                        if (ofd.ShowDialog())
+                        metadataPath = TryAutoMatchMetadataPath(il2cppPath);
+                        if (metadataPath == null)
                         {
-                            metadataPath = ofd.FileName;
-                        }
-                        else
-                        {
-                            return;
+                            ofd.Filter = "global-metadata.dat|*.*";
+                            if (ofd.ShowDialog())
+                            {
+                                metadataPath = ofd.FileName;
+                            }
+                            else
+                            {
+                                return;
+                            }
                         }
                     }
                     else
@@ -81,10 +84,18 @@ namespace Il2CppDumper
                     }
                 }
             }
-            if (il2cppPath == null)
+            if (string.IsNullOrEmpty(il2cppPath))
             {
                 ShowHelp();
                 return;
+            }
+            if (string.IsNullOrEmpty(outputDir))
+            {
+                outputDir = Path.Combine(Path.GetDirectoryName(il2cppPath), "Il2CppDumper");
+            }
+            if (!Directory.Exists(outputDir))
+            {
+                Directory.CreateDirectory(outputDir);
             }
             if (metadataPath == null)
             {
@@ -109,6 +120,21 @@ namespace Il2CppDumper
                 Console.WriteLine("Press any key to exit...");
                 Console.ReadKey(true);
             }
+        }
+
+        private static string TryAutoMatchMetadataPath(string il2cppPath)
+        {
+            var folder = Path.GetDirectoryName(il2cppPath);
+            if (folder == null) return null;
+            foreach (var path in Directory.GetDirectories(folder, "*_Data", SearchOption.TopDirectoryOnly))
+            {
+                var maybePath = Path.Combine(path, "il2cpp_data", "Metadata", "global-metadata.dat");
+                if (File.Exists(maybePath))
+                {
+                    return maybePath;
+                }
+            }
+            return null;
         }
 
         static void ShowHelp()
@@ -268,7 +294,7 @@ namespace Il2CppDumper
             if (config.GenerateDummyDll)
             {
                 Console.WriteLine("Generate dummy dll...");
-                DummyAssemblyExporter.Export(executor, outputDir, config.DummyDllAddToken);
+                DummyAssemblyExporter.Export(executor, outputDir, config);
                 Console.WriteLine("Done!");
             }
         }

@@ -11,7 +11,8 @@
   "DummyDllAddToken": true,
   "RequireAnyKey": true,
   "ForceIl2CppVersion": false,
-  "ForceVersion": 16,
+  "ForceVersion": 29,
   "ForceDump": false,
-  "NoRedirectedPointer": false
+  "NoRedirectedPointer": false,
+  "DisablePlusSearch": false
 }

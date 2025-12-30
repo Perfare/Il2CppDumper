@@ -207,33 +207,57 @@ namespace Il2CppDumper
             Console.WriteLine("Searching...");
             try
             {
-                var flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length, metadata.imageDefs.Length);
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                if (config.DisablePlusSearch)
                 {
-                    if (!flag && il2Cpp is PE)
+                    Console.WriteLine("PlusSearch is disabled...");
+                    var sectionHelper = il2Cpp.GetSectionHelper(metadata.methodDefs.Count(), metadata.typeDefs.Length, metadata.imageDefs.Length);
+                    var codeRegistration = sectionHelper.FindCodeRegistration();
+                    var metadataRegistration = sectionHelper.FindMetadataRegistration();
+                    if (codeRegistration != 0 && metadataRegistration != 0)
                     {
-                        Console.WriteLine("Use custom PE loader");
-                        il2Cpp = PELoader.Load(il2cppPath);
-                        il2Cpp.SetProperties(version, metadata.metadataUsagesCount);
-                        flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length, metadata.imageDefs.Length);
+                        Console.WriteLine($"Code Registration:{codeRegistration:X}\nMetadata Registration:{metadataRegistration:X}");
+                        il2Cpp.Init(codeRegistration, metadataRegistration);
+                    }
+                    else
+                    {
+                        Console.WriteLine("ERROR: Can't use auto mode to process file, try manual mode.");
+                        Console.Write("Input CodeRegistration: ");
+                        codeRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
+                        Console.Write("Input MetadataRegistration: ");
+                        metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
+                        il2Cpp.Init(codeRegistration, metadataRegistration);
                     }
                 }
-                if (!flag)
+                else
                 {
-                    flag = il2Cpp.Search();
-                }
-                if (!flag)
-                {
-                    flag = il2Cpp.SymbolSearch();
-                }
-                if (!flag)
-                {
-                    Console.WriteLine("ERROR: Can't use auto mode to process file, try manual mode.");
-                    Console.Write("Input CodeRegistration: ");
-                    var codeRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
-                    Console.Write("Input MetadataRegistration: ");
-                    var metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
-                    il2Cpp.Init(codeRegistration, metadataRegistration);
+                    var flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length, metadata.imageDefs.Length);
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        if (!flag && il2Cpp is PE)
+                        {
+                            Console.WriteLine("Use custom PE loader");
+                            il2Cpp = PELoader.Load(il2cppPath);
+                            il2Cpp.SetProperties(version, metadata.metadataUsagesCount);
+                            flag = il2Cpp.PlusSearch(metadata.methodDefs.Count(x => x.methodIndex >= 0), metadata.typeDefs.Length, metadata.imageDefs.Length);
+                        }
+                    }
+                    if (!flag)
+                    {
+                        flag = il2Cpp.Search();
+                    }
+                    if (!flag)
+                    {
+                        flag = il2Cpp.SymbolSearch();
+                    }
+                    if (!flag)
+                    {
+                        Console.WriteLine("ERROR: Can't use auto mode to process file, try manual mode.");
+                        Console.Write("Input CodeRegistration: ");
+                        var codeRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
+                        Console.Write("Input MetadataRegistration: ");
+                        var metadataRegistration = Convert.ToUInt64(Console.ReadLine(), 16);
+                        il2Cpp.Init(codeRegistration, metadataRegistration);
+                    }
                 }
                 if (il2Cpp.Version >= 27 && il2Cpp.IsDumped)
                 {

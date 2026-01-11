@@ -2,10 +2,10 @@
 import json
 
 from ghidra.program.model.symbol import SourceType
-from ghidra.app.util.cparser.C import CParserUtils
-from ghidra.app.cmd.function import ApplyFunctionSignatureCmd
+from ghidra.program.model.util import CodeUnitInsertionException
+from ghidra.app.util.cparser.C import CParserUtils, ParseException
+from ghidra.app.cmd.function import ApplyFunctionSignatureCmd, FunctionRenameOption
 from ghidra.program.model.data import DataTypeConflictHandler
-from ghidra.app.cmd.function import FunctionRenameOption
 
 processFields = [
 	"ScriptMethod",
@@ -26,7 +26,7 @@ def set_name(addr, name):
 		name = name.replace(' ', '-')
 		createLabel(addr, name, True, SourceType.USER_DEFINED)
 	except Exception as e:
-		print("set_name() Failed: "+str(e))
+		print("set_name() Failed: " + str(e))
 
 def set_type(addr, type):
 	# Requires types (il2cpp.h) to be imported first
@@ -51,8 +51,8 @@ def set_type(addr, type):
 	else:
 		try:
 			createData(addr, addrType)
-		except ghidra.program.model.util.CodeUnitInsertionException:
-			print("Warning: unable to set type (CodeUnitInsertionException)")
+		except CodeUnitInsertionException as e:
+			print("Warning: unable to set type: " + str(e))
 
 def make_function(start):
 	func = getFunctionAt(start)
@@ -65,19 +65,16 @@ def make_function(start):
 def set_sig(addr, name, sig):
 	try:
 		typeSig = CParserUtils.parseSignature(None, currentProgram, sig, False)
-	except ghidra.app.util.cparser.C.ParseException:
-		print("Warning: Unable to parse")
-		print(sig)
-		print("Attempting to modify...")
+	except ParseException:
+		print('Warning: Unable to parse "' + sig + '", attempting to modify...')
 		# try to fix by renaming the parameters
+		newSig = sig.replace(", ","ext, ").replace(")","ext)")
 		try:
-			newSig = sig.replace(", ","ext, ").replace("\)","ext\)")
 			typeSig = CParserUtils.parseSignature(None, currentProgram, newSig, False)
-		except:
-			print("Warning: also unable to parse")
-			print(newSig)
-			print("Skipping.")
+		except ParseException as e:
+			print('Warning: also unable to parse "' + newSig + '", skipping: ' + str(e))
 			return
+		print('Successfully modified and parsed the signature as "' + newSig + '"')
 	if typeSig is not None:
 		try:
 			typeSig.setName(name)
@@ -85,7 +82,7 @@ def set_sig(addr, name, sig):
 REPLACE_HANDLER, FunctionRenameOption.RENAME)
 			cmd.applyTo(currentProgram)
 		except Exception as e:
-			print("Warning: unable to set Signature. ApplyFunctionSignatureCmd() Failed: "+str(e))
+			print("Warning: unable to set Signature. ApplyFunctionSignatureCmd() Failed: " + str(e))
 
 f = askFile("script.json from Il2cppdumper", "Open")
 data = json.loads(open(f.absolutePath, 'r', encoding='utf-8').read())
@@ -109,7 +106,7 @@ if "ScriptString" in data and "ScriptString" in processFields:
 		addr = get_addr(scriptString["Address"])
 		value = scriptString["Value"]
 		name = "StringLiteral_" + str(index)
-		createLabel(addr, name, True, USER_DEFINED)
+		createLabel(addr, name, True, SourceType.USER_DEFINED)
 		setEOLComment(addr, value)
 		index += 1
 		monitor.incrementProgress(1)

@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
 
-from ghidra.app.util.cparser.C import CParserUtils
-from ghidra.app.cmd.function import ApplyFunctionSignatureCmd
+from ghidra.program.model.symbol import SourceType
+from ghidra.program.model.util import CodeUnitInsertionException
+from ghidra.app.util.cparser.C import CParserUtils, ParseException
+from ghidra.app.cmd.function import ApplyFunctionSignatureCmd, FunctionRenameOption
+from ghidra.program.model.data import DataTypeConflictHandler
 
 processFields = [
 	"ScriptMethod",
@@ -14,7 +17,6 @@ processFields = [
 
 functionManager = currentProgram.getFunctionManager()
 baseAddress = currentProgram.getImageBase()
-USER_DEFINED = ghidra.program.model.symbol.SourceType.USER_DEFINED
 
 def get_addr(addr):
 	return baseAddress.add(addr)
@@ -22,9 +24,9 @@ def get_addr(addr):
 def set_name(addr, name):
 	try:
 		name = name.replace(' ', '-')
-		createLabel(addr, name, True, USER_DEFINED)
-	except:
-		print("set_name() Failed.")
+		createLabel(addr, name, True, SourceType.USER_DEFINED)
+	except Exception as e:
+		print("set_name() Failed: " + str(e))
 
 def set_type(addr, type):
 	# Requires types (il2cpp.h) to be imported first
@@ -32,7 +34,7 @@ def set_type(addr, type):
 	dataTypes = getDataTypes(newType)
 	addrType = None
 	if len(dataTypes) == 0:
-		if newType == newType[:-2] + " *":
+		if newType.endswith(" *"):
 			baseType = newType[:-2]
 			dataTypes = getDataTypes(baseType)
 			if len(dataTypes) == 1:
@@ -49,8 +51,8 @@ def set_type(addr, type):
 	else:
 		try:
 			createData(addr, addrType)
-		except ghidra.program.model.util.CodeUnitInsertionException:
-			print("Warning: unable to set type (CodeUnitInsertionException)")
+		except CodeUnitInsertionException as e:
+			print("Warning: unable to set type: " + str(e))
 
 def make_function(start):
 	func = getFunctionAt(start)
@@ -61,30 +63,29 @@ def make_function(start):
 			print("Warning: Unable to create function")
 
 def set_sig(addr, name, sig):
-	try: 
+	try:
 		typeSig = CParserUtils.parseSignature(None, currentProgram, sig, False)
-	except ghidra.app.util.cparser.C.ParseException:
-		print("Warning: Unable to parse")
-		print(sig)
-		print("Attempting to modify...")
+	except ParseException:
+		print('Warning: Unable to parse "' + sig + '", attempting to modify...')
 		# try to fix by renaming the parameters
+		newSig = sig.replace(", ","ext, ").replace(")","ext)")
 		try:
-			newSig = sig.replace(", ","ext, ").replace("\)","ext\)")
 			typeSig = CParserUtils.parseSignature(None, currentProgram, newSig, False)
-		except:
-			print("Warning: also unable to parse")
-			print(newSig)
-			print("Skipping.")
+		except ParseException as e:
+			print('Warning: also unable to parse "' + newSig + '", skipping: ' + str(e))
 			return
+		print('Successfully modified and parsed the signature as "' + newSig + '"')
 	if typeSig is not None:
 		try:
 			typeSig.setName(name)
-			ApplyFunctionSignatureCmd(addr, typeSig, USER_DEFINED, False, True).applyTo(currentProgram)
-		except:
-			print("Warning: unable to set Signature. ApplyFunctionSignatureCmd() Failed.")
+			cmd = ApplyFunctionSignatureCmd(addr, typeSig, SourceType.USER_DEFINED, False, False, DataTypeConflictHandler.
+REPLACE_HANDLER, FunctionRenameOption.RENAME)
+			cmd.applyTo(currentProgram)
+		except Exception as e:
+			print("Warning: unable to set Signature. ApplyFunctionSignatureCmd() Failed: " + str(e))
 
 f = askFile("script.json from Il2cppdumper", "Open")
-data = json.loads(open(f.absolutePath, 'rb').read().decode('utf-8'))
+data = json.loads(open(f.absolutePath, 'r', encoding='utf-8').read())
 
 if "ScriptMethod" in data and "ScriptMethod" in processFields:
 	scriptMethods = data["ScriptMethod"]
@@ -92,7 +93,7 @@ if "ScriptMethod" in data and "ScriptMethod" in processFields:
 	monitor.setMessage("Methods")
 	for scriptMethod in scriptMethods:
 		addr = get_addr(scriptMethod["Address"])
-		name = scriptMethod["Name"].encode("utf-8")
+		name = scriptMethod["Name"]
 		set_name(addr, name)
 		monitor.incrementProgress(1)
 
@@ -103,9 +104,9 @@ if "ScriptString" in data and "ScriptString" in processFields:
 	monitor.setMessage("Strings")
 	for scriptString in scriptStrings:
 		addr = get_addr(scriptString["Address"])
-		value = scriptString["Value"].encode("utf-8")
+		value = scriptString["Value"]
 		name = "StringLiteral_" + str(index)
-		createLabel(addr, name, True, USER_DEFINED)
+		createLabel(addr, name, True, SourceType.USER_DEFINED)
 		setEOLComment(addr, value)
 		index += 1
 		monitor.incrementProgress(1)
@@ -116,11 +117,11 @@ if "ScriptMetadata" in data and "ScriptMetadata" in processFields:
 	monitor.setMessage("Metadata")
 	for scriptMetadata in scriptMetadatas:
 		addr = get_addr(scriptMetadata["Address"])
-		name = scriptMetadata["Name"].encode("utf-8")
+		name = scriptMetadata["Name"]
 		set_name(addr, name)
 		setEOLComment(addr, name)
 		if scriptMetadata["Signature"]:
-			set_type(addr, scriptMetadata["Signature"].encode("utf-8"))
+			set_type(addr, scriptMetadata["Signature"])
 		monitor.incrementProgress(1)
 
 if "ScriptMetadataMethod" in data and "ScriptMetadataMethod" in processFields:
@@ -129,7 +130,7 @@ if "ScriptMetadataMethod" in data and "ScriptMetadataMethod" in processFields:
 	monitor.setMessage("Metadata Methods")
 	for scriptMetadataMethod in scriptMetadataMethods:
 		addr = get_addr(scriptMetadataMethod["Address"])
-		name = scriptMetadataMethod["Name"].encode("utf-8")
+		name = scriptMetadataMethod["Name"]
 		methodAddr = get_addr(scriptMetadataMethod["MethodAddress"])
 		set_name(addr, name)
 		setEOLComment(addr, name)
@@ -139,20 +140,20 @@ if "Addresses" in data and "Addresses" in processFields:
 	addresses = data["Addresses"]
 	monitor.initialize(len(addresses))
 	monitor.setMessage("Addresses")
-	for index in range(len(addresses) - 1):
-		start = get_addr(addresses[index])
+	for address in addresses:
+		start = get_addr(address)
 		make_function(start)
 		monitor.incrementProgress(1)
 
 if "ScriptMethod" in data and "ScriptMethod" in processFields:
 	scriptMethods = data["ScriptMethod"]
 	monitor.initialize(len(scriptMethods))
-	monitor.setMessage("Methods")
+	monitor.setMessage("Signatures")
 	for scriptMethod in scriptMethods:
 		addr = get_addr(scriptMethod["Address"])
-		sig = scriptMethod["Signature"][:-1].encode("utf-8")
-		name = scriptMethod["Name"].encode("utf-8")
+		sig = scriptMethod["Signature"][:-1]
+		name = scriptMethod["Name"]
 		set_sig(addr, name, sig)
 		monitor.incrementProgress(1)
 
-print 'Script finished!'
+print('Script finished!')

@@ -2,7 +2,8 @@
 
 Unity il2cpp reverse engineer
 
-This project is forked and maintained by **Parsa307** to ensure ongoing support and development.
+~~This project is forked and maintained by **Parsa307** to ensure ongoing support and development.~~
+This project is forked and maintained by **highghlow** (github: `unhighghlow`) to ensure ongoing support and development.
 
 🔧 **Intended Use:**  
 This tool is designed exclusively for single-player game modding and educational research.
@@ -27,7 +28,7 @@ Please respect game developers and other players, use responsibly!
 ## Installation
 ### Nix
 ```
-nix shell github:Parsa307/Il2CppDumper --extra-experimental-features "nix-command flakes"
+nix shell github:unhighghlow/Il2CppDumper --extra-experimental-features "nix-command flakes"
 ```
 
 ## Usage

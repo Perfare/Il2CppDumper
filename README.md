@@ -1,10 +1,19 @@
 # Il2CppDumper
 
-[![Build status](https://ci.appveyor.com/api/projects/status/anhqw33vcpmp8ofa?svg=true)](https://ci.appveyor.com/project/Perfare/il2cppdumper/branch/master/artifacts)
-
-中文说明请戳[这里](README.zh-CN.md)
-
 Unity il2cpp reverse engineer
+
+~~This project is forked and maintained by **Parsa307** to ensure ongoing support and development.~~
+This project is forked and maintained by **highghlow** (github: `unhighghlow`) to ensure ongoing support and development.
+
+🔧 **Intended Use:**  
+This tool is designed exclusively for single-player game modding and educational research.
+
+❌ **IMPORTANT:**  
+**Do not use this tool on multiplayer games.**  
+Using it in multiplayer environments may violate Terms of Service, result in bans, or be considered unethical and potentially illegal.  
+Cheating in multiplayer games ruins the experience for other players.
+
+Please respect game developers and other players, use responsibly!
 
 ## Features
 
@@ -16,16 +25,22 @@ Unity il2cpp reverse engineer
 * Supports Android memory dumped `libil2cpp.so` file to bypass protection
 * Support bypassing simple PE protection
 
+## Installation
+### Nix
+```
+nix shell github:unhighghlow/Il2CppDumper --extra-experimental-features "nix-command flakes"
+```
+
 ## Usage
 
-Run `Il2CppDumper.exe` and choose the il2cpp executable file and `global-metadata.dat` file, then enter the information as prompted
+Run `Il2CppDumper` and choose the il2cpp executable file and `global-metadata.dat` file, then enter the information as prompted
 
 The program will then generate all the output files in current working directory
 
 ### Command-line
 
 ```
-Il2CppDumper.exe <executable-file> <global-metadata> <output-directory>
+Il2CppDumper <executable-file> <global-metadata> <output-directory>
 ```
 
 ### Outputs

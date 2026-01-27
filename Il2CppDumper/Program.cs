@@ -10,10 +10,9 @@ namespace Il2CppDumper
     {
         private static Config config;
 
-        [STAThread]
         static void Main(string[] args)
         {
-            config = JsonSerializer.Deserialize<Config>(File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + @"config.json"));
+            config = JsonSerializer.Deserialize<Config>(File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json")));
             string il2cppPath = null;
             string metadataPath = null;
             string outputDir = null;
@@ -26,8 +25,9 @@ namespace Il2CppDumper
                     return;
                 }
             }
-            if (args.Length > 3)
+            if (args.Length < 3)
             {
+                Console.WriteLine("ERROR: Not enough arguments.");
                 ShowHelp();
                 return;
             }
@@ -37,8 +37,11 @@ namespace Il2CppDumper
                 {
                     if (File.Exists(arg))
                     {
-                        var file = File.ReadAllBytes(arg);
-                        if (BitConverter.ToUInt32(file, 0) == 0xFAB11BAF)
+                        UInt32 magicBytes = 0;
+                        using (FileStream fileStream = File.OpenRead(arg)) {
+                            magicBytes = new BinaryReader(fileStream).ReadUInt32();
+                        }
+                        if (magicBytes == 0xFAB11BAF)
                         {
                             metadataPath = arg;
                         }
@@ -53,32 +56,19 @@ namespace Il2CppDumper
                     }
                 }
             }
-            outputDir ??= AppDomain.CurrentDomain.BaseDirectory;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (string.IsNullOrEmpty(outputDir) || !Directory.Exists(outputDir))
             {
-                if (il2cppPath == null)
+                Console.WriteLine("ERROR: The specified output folder does not exist.");
+                ShowHelp();
+                return;
+            }
+            outputDir = Path.GetFullPath(outputDir) + Path.DirectorySeparatorChar;
+            {
+                if (il2cppPath == null || metadataPath == null)
                 {
-                    var ofd = new OpenFileDialog
-                    {
-                        Filter = "Il2Cpp binary file|*.*"
-                    };
-                    if (ofd.ShowDialog())
-                    {
-                        il2cppPath = ofd.FileName;
-                        ofd.Filter = "global-metadata|global-metadata.dat";
-                        if (ofd.ShowDialog())
-                        {
-                            metadataPath = ofd.FileName;
-                        }
-                        else
-                        {
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        return;
-                    }
+                    Console.WriteLine("ERROR: Missing required input files.");
+                    ShowHelp();
+                    return;
                 }
             }
             if (il2cppPath == null)
@@ -104,11 +94,6 @@ namespace Il2CppDumper
                     Console.WriteLine(e);
                 }
             }
-            if (config.RequireAnyKey)
-            {
-                Console.WriteLine("Press any key to exit...");
-                Console.ReadKey(true);
-            }
         }
 
         static void ShowHelp()
@@ -119,8 +104,8 @@ namespace Il2CppDumper
         private static bool Init(string il2cppPath, string metadataPath, out Metadata metadata, out Il2Cpp il2Cpp)
         {
             Console.WriteLine("Initializing metadata...");
-            var metadataBytes = File.ReadAllBytes(metadataPath);
-            metadata = new Metadata(new MemoryStream(metadataBytes));
+            var metadataStream = File.OpenRead(metadataPath);
+            metadata = new Metadata(metadataStream);
             Console.WriteLine($"Metadata Version: {metadata.Version}");
 
             Console.WriteLine("Initializing il2cpp file...");

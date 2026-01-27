@@ -373,9 +373,9 @@ namespace Il2CppDumper
                 address = $"0x{x.Address:X}"
             }).ToArray();
             var jsonOptions = new JsonSerializerOptions() { WriteIndented = true, IncludeFields = true };
-            File.WriteAllText(outputDir + "stringliteral.json", JsonSerializer.Serialize(stringLiterals, jsonOptions), new UTF8Encoding(false));
+            File.WriteAllText(Path.Combine(outputDir, "stringliteral.json"), JsonSerializer.Serialize(stringLiterals, jsonOptions), new UTF8Encoding(false));
             //写入文件
-            File.WriteAllText(outputDir + "script.json", JsonSerializer.Serialize(json, jsonOptions));
+            File.WriteAllText(Path.Combine(outputDir, "script.json"), JsonSerializer.Serialize(json, jsonOptions), new UTF8Encoding(false));
             //il2cpp.h
             for (int i = 0; i < genericClassList.Count; i++)
             {
@@ -428,7 +428,7 @@ namespace Il2CppDumper
             sb.Append(headerStruct);
             sb.Append(arrayClassHeader);
             sb.Append(methodInfoHeader);
-            File.WriteAllText(outputDir + "il2cpp.h", sb.ToString());
+            File.WriteAllText(Path.Combine(outputDir, "il2cpp.h"), sb.ToString());
         }
 
         private void AddMetadataUsageTypeInfo(ScriptJson json, uint index, ulong address)

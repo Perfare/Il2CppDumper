@@ -24,7 +24,7 @@ namespace Il2CppDumper
 
         public void Decompile(Config config, string outputDir)
         {
-            var writer = new StreamWriter(new FileStream(outputDir + "dump.cs", FileMode.Create), new UTF8Encoding(false));
+            var writer = new StreamWriter(new FileStream(Path.Combine(outputDir, "dump.cs"), FileMode.Create), new UTF8Encoding(false));
             //dump image
             for (var imageIndex = 0; imageIndex < metadata.imageDefs.Length; imageIndex++)
             {
@@ -59,6 +59,8 @@ namespace Il2CppDumper
                                 extends.Add(executor.GetTypeName(@interface, false, false));
                             }
                         }
+
+                        writer.Write($"\n// DLL: {imageName}");
                         writer.Write($"\n// Namespace: {metadata.GetStringFromIndex(typeDef.namespaceIndex)}\n");
                         if (config.DumpAttribute)
                         {
@@ -499,3 +501,4 @@ namespace Il2CppDumper
         }
     }
 }
+

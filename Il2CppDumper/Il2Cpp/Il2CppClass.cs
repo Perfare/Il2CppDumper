@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
 
 namespace Il2CppDumper
 {
@@ -63,6 +65,41 @@ namespace Il2CppDumper
         public ulong codeGenModulesCount;
         [Version(Min = 24.2)]
         public ulong codeGenModules;
+
+        public static ulong Size(double version)
+        {
+            ulong size = 0;
+            foreach (var field in typeof(Il2CppCodeRegistration).GetFields()) {
+                // Check if the field exists in our version
+                var versionAttributes = field.GetCustomAttributes<VersionAttribute>().ToArray();
+                if (versionAttributes?.Length > 0)
+                {
+                    var isInVersionRange = false;
+                    foreach (var versionAttribute in versionAttributes)
+                    {
+                        if (versionAttribute.Min <= version && version <= versionAttribute.Max)
+                        {
+                            isInVersionRange = true;
+                            break;
+                        }
+                    }
+                    if (!isInVersionRange)
+                    {
+                        continue;
+                    }
+                }
+
+                if (field.FieldType == typeof(byte) || field.FieldType == typeof(sbyte))
+                    size += sizeof(byte);
+                if (field.FieldType == typeof(long) || field.FieldType == typeof(ulong))
+                    size += sizeof(ulong);
+                if (field.FieldType == typeof(int) || field.FieldType == typeof(uint))
+                    size += sizeof(uint);
+                if (field.FieldType == typeof(short) || field.FieldType == typeof(ushort))
+                    size += sizeof(ushort);
+            }
+            return size;
+        }
     }
 
     public class Il2CppMetadataRegistration

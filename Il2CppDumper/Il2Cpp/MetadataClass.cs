@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
 
 namespace Il2CppDumper
 {
@@ -175,6 +177,7 @@ namespace Il2CppDumper
 
         public int declaringTypeIndex;
         public int parentIndex;
+        [Version(Max = 31)]
         public int elementTypeIndex; // we can probably remove this one. Only used for enums
 
         [Version(Max = 24.1)]
@@ -230,6 +233,27 @@ namespace Il2CppDumper
 
         public bool IsValueType => (bitfield & 0x1) == 1;
         public bool IsEnum => ((bitfield >> 1) & 0x1) == 1;
+
+        public int GetEnumElementTypeIndex(double version)
+        {
+            // In versions < 35, elementTypeIndex exists
+            // In versions >= 35, we use parentIndex instead
+            var field = typeof(Il2CppTypeDefinition).GetField("elementTypeIndex");
+            var versionAttributes = field.GetCustomAttributes<VersionAttribute>().ToArray();
+            if (versionAttributes?.Length > 0)
+            {
+                return elementTypeIndex;
+            }
+            var versionAttribute = versionAttributes[0];
+
+            if (versionAttribute.Min <= version && version <= versionAttribute.Max)
+            {
+                return elementTypeIndex;
+            }
+
+            // Field does not exist; return parentIndex instead
+            return parentIndex;
+        }
     }
 
     public class Il2CppMethodDefinition
@@ -320,7 +344,6 @@ namespace Il2CppDumper
 
     public class Il2CppStringLiteral
     {
-        public uint length;
         public int dataIndex;
     }
 

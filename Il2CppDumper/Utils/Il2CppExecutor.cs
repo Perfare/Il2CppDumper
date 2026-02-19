@@ -470,7 +470,7 @@ namespace Il2CppDumper
                 var enumTypeIndex = reader.ReadCompressedInt32();
                 enumType = il2Cpp.types[enumTypeIndex];
                 var typeDef = GetTypeDefinitionFromIl2CppType(enumType);
-                type = il2Cpp.types[typeDef.elementTypeIndex].type;
+                type = il2Cpp.types[typeDef.GetEnumElementTypeIndex(il2Cpp.Version)].type;
             }
             return type;
         }

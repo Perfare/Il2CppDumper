@@ -599,9 +599,9 @@ namespace Il2CppDumper
                         var reader = new CustomAttributeDataReader(executor, buff);
                         if (reader.Count != 0)
                         {
-                            for (var i = 0; i < reader.Count; i++)
+                            var iterator = reader.VisitCustomAttributeData();
+                            foreach (var visitor  in iterator)
                             {
-                                var visitor = reader.VisitCustomAttributeData();
                                 var methodDefinition = methodDefinitionDic[visitor.CtorIndex];
                                 var customAttribute = new CustomAttribute(moduleDefinition.ImportReference(methodDefinition));
                                 foreach (var argument in visitor.Arguments)

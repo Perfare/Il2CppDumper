@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Il2CppDumper
@@ -52,7 +53,7 @@ namespace Il2CppDumper
             {
                 throw new InvalidDataException("ERROR: Metadata file supplied is not valid metadata file.");
             }
-            if (version < 16 || version > 31)
+            if (version < 16 || version > 35)
             {
                 throw new NotSupportedException($"ERROR: Metadata file supplied is not a supported version[{version}].");
             }
@@ -208,9 +209,21 @@ namespace Il2CppDumper
 
         public string GetStringLiteralFromIndex(uint index)
         {
-            var stringLiteral = stringLiterals[index];
-            Position = (uint)(header.stringLiteralDataOffset + stringLiteral.dataIndex);
-            return Encoding.UTF8.GetString(ReadBytes((int)stringLiteral.length));
+            var currentLiteral = stringLiterals[index];
+            int stringLength = 0;
+            if (index < stringLiterals.Length - 1)
+            {
+                var nextLiteral = stringLiterals[index + 1];
+                stringLength = nextLiteral.dataIndex - currentLiteral.dataIndex;
+            }
+            else
+            {
+                // Last string, read to end of section
+                stringLength = header.stringLiteralDataSize - currentLiteral.dataIndex;
+            }
+
+            Position = (uint)(header.stringLiteralDataOffset + currentLiteral.dataIndex);
+            return Encoding.UTF8.GetString(ReadBytes(stringLength));
         }
 
         private void ProcessingMetadataUsage()

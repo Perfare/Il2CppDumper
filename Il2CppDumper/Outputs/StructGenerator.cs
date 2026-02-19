@@ -419,6 +419,7 @@ namespace Il2CppDumper
                 case 29:
                 case 29.1:
                 case 31:
+                case 35:
                     sb.Append(HeaderConstants.HeaderV29);
                     break;
                 default:
@@ -581,7 +582,7 @@ namespace Il2CppDumper
                         var typeDef = executor.GetTypeDefinitionFromIl2CppType(il2CppType);
                         if (typeDef.IsEnum)
                         {
-                            return ParseType(il2Cpp.types[typeDef.elementTypeIndex]);
+                            return ParseType(il2Cpp.types[typeDef.GetEnumElementTypeIndex(il2Cpp.Version)]);
                         }
                         return structNameDic[typeDef] + "_o";
                     }
@@ -628,7 +629,7 @@ namespace Il2CppDumper
                         {
                             if (typeDef.IsEnum)
                             {
-                                return ParseType(il2Cpp.types[typeDef.elementTypeIndex]);
+                                return ParseType(il2Cpp.types[typeDef.GetEnumElementTypeIndex(il2Cpp.Version)]);
                             }
                             return typeStructName + "_o";
                         }
@@ -1288,7 +1289,7 @@ namespace Il2CppDumper
                         var typeDef = executor.GetTypeDefinitionFromIl2CppType(il2CppType);
                         if (typeDef.IsEnum)
                         {
-                            return IsCustomType(il2Cpp.types[typeDef.elementTypeIndex], context);
+                            return IsCustomType(il2Cpp.types[typeDef.GetEnumElementTypeIndex(il2Cpp.Version)], context);
                         }
                         return true;
                     }
@@ -1298,33 +1299,33 @@ namespace Il2CppDumper
                         var typeDef = executor.GetGenericClassTypeDefinition(genericClass);
                         if (typeDef.IsEnum)
                         {
-                            return IsCustomType(il2Cpp.types[typeDef.elementTypeIndex], context);
+                            return IsCustomType(il2Cpp.types[typeDef.GetEnumElementTypeIndex(il2Cpp.Version)], context);
                         }
                         return true;
                     }
                 case Il2CppTypeEnum.IL2CPP_TYPE_VAR:
-                    {
-                        if (context != null)
-                        {
-                            var genericParameter = executor.GetGenericParameteFromIl2CppType(il2CppType);
-                            var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(context.class_inst);
-                            var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
-                            var pointer = pointers[genericParameter.num];
-                            var type = il2Cpp.GetIl2CppType(pointer);
-                            return IsCustomType(type, null);
-                        }
-                        return false;
-                    }
                 case Il2CppTypeEnum.IL2CPP_TYPE_MVAR:
                     {
                         if (context != null)
                         {
                             var genericParameter = executor.GetGenericParameteFromIl2CppType(il2CppType);
-                            var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(context.method_inst);
-                            var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
-                            var pointer = pointers[genericParameter.num];
-                            var type = il2Cpp.GetIl2CppType(pointer);
-                            return IsCustomType(type, null);
+                            if (context.method_inst != 0)
+                            {
+                                // Is method
+                                var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(context.method_inst);
+                                var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
+                                var pointer = pointers[genericParameter.num];
+                                var type = il2Cpp.GetIl2CppType(pointer);
+                                return IsCustomType(type, null);
+                            } else if (context.class_inst != 0)
+                            {
+                                // Is class
+                                var genericInst = il2Cpp.MapVATR<Il2CppGenericInst>(context.class_inst);
+                                var pointers = il2Cpp.MapVATR<ulong>(genericInst.type_argv, genericInst.type_argc);
+                                var pointer = pointers[genericParameter.num];
+                                var type = il2Cpp.GetIl2CppType(pointer);
+                                return IsCustomType(type, null);
+                            }
                         }
                         return false;
                     }

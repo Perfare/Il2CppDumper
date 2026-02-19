@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace Il2CppDumper
 {
@@ -380,7 +381,11 @@ namespace Il2CppDumper
                                         il2Cpp.Position = il2Cpp.MapVATR(refva3 - il2Cpp.PointerSize);
                                         if (il2Cpp.ReadIntPtr() == imageCount)
                                         {
-                                            if (il2Cpp.Version >= 29)
+                                            if (il2Cpp.Version >= 35)
+                                            {
+                                                return refva3 - il2Cpp.PointerSize * 16;
+                                            }
+                                            else if (il2Cpp.Version >= 29)
                                             {
                                                 return refva3 - il2Cpp.PointerSize * 14;
                                             }

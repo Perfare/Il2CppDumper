@@ -55,7 +55,7 @@ namespace Il2CppDumper
                         {
                             for (int i = 0; i < typeDef.interfaces_count; i++)
                             {
-                                var @interface = il2Cpp.types[metadata.interfaceIndices[typeDef.interfacesStart + i]];
+                                var @interface = il2Cpp.types[metadata.interfaceOffsetPairs[i].interfaceTypeIndex];
                                 extends.Add(executor.GetTypeName(@interface, false, false));
                             }
                         }
@@ -281,9 +281,10 @@ namespace Il2CppDumper
                                 }
                                 writer.Write($"{executor.GetTypeName(methodReturnType, false, false)} {methodName}(");
                                 var parameterStrs = new List<string>();
-                                for (var j = 0; j < methodDef.parameterCount; ++j)
+                                for (int j = 0; j < methodDef.parameterCount; ++j)
                                 {
                                     var parameterStr = "";
+
                                     var parameterDef = metadata.parameterDefs[methodDef.parameterStart + j];
                                     var parameterName = metadata.GetStringFromIndex(parameterDef.nameIndex);
                                     var parameterType = il2Cpp.types[parameterDef.typeIndex];
@@ -425,7 +426,7 @@ namespace Il2CppDumper
                 {
                     var startRange = metadata.attributeDataRanges[attributeIndex];
                     var endRange = metadata.attributeDataRanges[attributeIndex + 1];
-                    metadata.Position = metadata.header.attributeDataOffset + startRange.startOffset;
+                    metadata.Position = (il2Cpp.Version < 38 ? metadata.header.attributeDataOffset : metadata.header.attributeData.offset) + startRange.startOffset;
                     var buff = metadata.ReadBytes((int)(endRange.startOffset - startRange.startOffset));
                     var reader = new CustomAttributeDataReader(executor, buff);
                     if (reader.Count == 0)

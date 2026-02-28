@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Mono.Cecil;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 
 namespace Il2CppDumper
 {
@@ -7,8 +10,8 @@ namespace Il2CppDumper
     {
         private readonly Il2CppExecutor executor;
         private readonly Metadata metadata;
-        private long ctorBuffer;
-        private long dataBuffer;
+        public long ctorBuffer;
+        public long dataBuffer;
 
         public uint Count { get; set; }
 
@@ -56,7 +59,6 @@ namespace Il2CppDumper
             }
             dataBuffer = BaseStream.Position;
 
-
             var typeName = metadata.GetStringFromIndex(typeDef.nameIndex).Replace("Attribute", "");
             if (argList.Count > 0)
             {
@@ -95,48 +97,54 @@ namespace Il2CppDumper
             }
         }
 
-        public CustomAttributeReaderVisitor VisitCustomAttributeData()
+        public IEnumerable<CustomAttributeReaderVisitor> VisitCustomAttributeData()
         {
-            var visitor = new CustomAttributeReaderVisitor();
-
             BaseStream.Position = ctorBuffer;
-            var ctorIndex = ReadInt32();
-            visitor.CtorIndex = ctorIndex;
-            var methodDef = metadata.methodDefs[ctorIndex];
-            var typeDef = metadata.typeDefs[methodDef.declaringType];
-            ctorBuffer = BaseStream.Position;
+
+            var ctors = new CustomAttributeReaderVisitor[Count];
+            for (int i = 0; i < Count; i++)
+            {
+                ctors[i] = new CustomAttributeReaderVisitor();
+                ctors[i].CtorIndex = (int)ReadUInt32();
+            }
 
             BaseStream.Position = dataBuffer;
-            var argumentCount = this.ReadCompressedUInt32();
-            var fieldCount = this.ReadCompressedUInt32();
-            var propertyCount = this.ReadCompressedUInt32();
+            for (int i = 0; i < Count; i++)
+            {
+                var ctor = ctors[i];
+                var methodDef = metadata.methodDefs[ctor.CtorIndex].declaringType;
+                var typeDef = metadata.typeDefs[methodDef];
 
-            visitor.Arguments = new AttributeArgument[argumentCount];
-            for (var i = 0; i < argumentCount; i++)
-            {
-                var argument = visitor.Arguments[i] = new AttributeArgument();
-                argument.Value = ReadAttributeDataValue();
-                argument.Index = i;
-            }
-            visitor.Fields = new AttributeArgument[fieldCount];
-            for (var i = 0; i < fieldCount; i++)
-            {
-                var field = visitor.Fields[i] = new AttributeArgument();
-                field.Value = ReadAttributeDataValue();
-                (var declaring, var fieldIndex) = ReadCustomAttributeNamedArgumentClassAndIndex(typeDef);
-                field.Index = declaring.fieldStart + fieldIndex;
-            }
-            visitor.Properties = new AttributeArgument[propertyCount];
-            for (var i = 0; i < propertyCount; i++)
-            {
-                var property = visitor.Properties[i] = new AttributeArgument();
-                property.Value = ReadAttributeDataValue();
-                (var declaring, var propertyIndex) = ReadCustomAttributeNamedArgumentClassAndIndex(typeDef);
-                property.Index = declaring.propertyStart + propertyIndex;
-            }
+                var argumentCount = this.ReadCompressedUInt32();
+                var fieldCount = this.ReadCompressedUInt32();
+                var propertyCount = this.ReadCompressedUInt32();
 
-            dataBuffer = BaseStream.Position;
-            return visitor;
+                ctor.Arguments = new AttributeArgument[argumentCount];
+                for (var j = 0; j < argumentCount; j++)
+                {
+                    var argument = ctor.Arguments[j] = new AttributeArgument();
+                    argument.Value = ReadAttributeDataValue();
+                    argument.Index = j;
+                }
+                ctor.Fields = new AttributeArgument[fieldCount];
+                for (var j = 0; j < fieldCount; j++)
+                {
+                    var field = ctor.Fields[j] = new AttributeArgument();
+                    field.Value = ReadAttributeDataValue();
+                    (var declaring, var fieldIndex) = ReadCustomAttributeNamedArgumentClassAndIndex(typeDef);
+                    field.Index = declaring.fieldStart + fieldIndex;
+                }
+                ctor.Properties = new AttributeArgument[propertyCount];
+                for (var j = 0; j < propertyCount; j++)
+                {
+                    var property = ctor.Properties[j] = new AttributeArgument();
+                    property.Value = ReadAttributeDataValue();
+                    (var declaring, var propertyIndex) = ReadCustomAttributeNamedArgumentClassAndIndex(typeDef);
+                    property.Index = declaring.propertyStart + propertyIndex;
+                }
+
+                yield return ctor;
+            }
         }
 
         private BlobValue ReadAttributeDataValue()

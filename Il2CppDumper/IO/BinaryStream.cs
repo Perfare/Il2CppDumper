@@ -112,6 +112,144 @@ namespace Il2CppDumper
             return ReadClass<T>();
         }
 
+        public TypeIndex ReadTypeIndex()
+        {
+            if (Version < 35)
+            {
+                // Before Version 35, these were always Int32
+                int value = ReadInt32();
+                return new TypeIndex(value);
+            }
+            else
+            {
+                switch (Metadata.typeIndexSize)
+                {
+                    case 1:
+                        {
+                            uint value = ReadByte();
+                            if (value == Byte.MaxValue) return new TypeIndex(-1);
+                            return new TypeIndex((int)value);
+                        }
+                    case 2:
+                        {
+                            uint value = ReadUInt16();
+                            if (value == UInt16.MaxValue) return new TypeIndex(-1);
+                            return new TypeIndex((int)value);
+                        }
+                    case 4:
+                    default:
+                        {
+                            uint value = ReadUInt32();
+                            if (value == UInt32.MaxValue) return new TypeIndex(-1);
+                            return new TypeIndex((int)value);
+                        }
+                }
+            }
+        }
+
+        public TypeDefinitionIndex ReadTypeDefinitionIndex()
+        {
+            if (Version < 35)
+            {
+                // Before Version 35, these were always Int32
+                int value = ReadInt32();
+                return new TypeDefinitionIndex(value);
+            }
+            else
+            {
+                switch (Metadata.typeDefinitionIndexSize)
+                {
+                    case 1:
+                        {
+                            uint value = ReadByte();
+                            if (value == Byte.MaxValue) return new TypeDefinitionIndex(-1);
+                            return new TypeDefinitionIndex((int)value);
+                        }
+                    case 2:
+                        {
+                            uint value = ReadUInt16();
+                            if (value == UInt16.MaxValue) return new TypeDefinitionIndex(-1);
+                            return new TypeDefinitionIndex((int)value);
+                        }
+                    case 4:
+                    default:
+                        {
+                            uint value = ReadUInt32();
+                            if (value == UInt32.MaxValue) return new TypeDefinitionIndex(-1);
+                            return new TypeDefinitionIndex((int)value);
+                        }
+                }
+            }
+        }
+        public GenericContainerIndex ReadGenericContainerIndex()
+        {
+            if (Version < 35)
+            {
+                // Before Version 35, these were always Int32
+                int value = ReadInt32();
+                return new GenericContainerIndex(value);
+            }
+            else
+            {
+                switch (Metadata.genericContainerIndexSize)
+                {
+                    case 1:
+                        {
+                            uint value = ReadByte();
+                            if (value == Byte.MaxValue) return new GenericContainerIndex(-1);
+                            return new GenericContainerIndex((int)value);
+                        }
+                    case 2:
+                        {
+                            uint value = ReadUInt16();
+                            if (value == UInt16.MaxValue) return new GenericContainerIndex(-1);
+                            return new GenericContainerIndex((int)value);
+                        }
+                    case 4:
+                    default:
+                        {
+                            uint value = ReadUInt32();
+                            if (value == UInt32.MaxValue) return new GenericContainerIndex(-1);
+                            return new GenericContainerIndex((int)value);
+                        }
+                }
+            }
+        }
+        public ParameterIndex ReadParameterIndex()
+        {
+            if (Version < 39)
+            {
+                // Before Version 39, these were always Int32
+                int value = ReadInt32();
+                return new ParameterIndex(value);
+            }
+            else
+            {
+                switch (Metadata.parameterIndexSize)
+                {
+                    case 1:
+                        {
+                            uint value = ReadByte();
+                            if (value == Byte.MaxValue) return new ParameterIndex(-1);
+                            return new ParameterIndex((int)value);
+                        }
+                    case 2:
+                        {
+                            uint value = ReadUInt16();
+                            if (value == UInt16.MaxValue) return new ParameterIndex(-1);
+                            return new ParameterIndex((int)value);
+                        }
+                    case 4:
+                    default:
+                        {
+                            uint value = ReadUInt32();
+                            if (value == UInt32.MaxValue) return new ParameterIndex(-1);
+                            return new ParameterIndex((int)value);
+                        }
+                }
+            }
+        }
+
         public T ReadClass<T>() where T : new()
         {
             var type = typeof(T);
@@ -167,6 +305,26 @@ namespace Il2CppDumper
                             genericMethodCache.Add(fieldType, methodInfo);
                         }
                         i.SetValue(t, methodInfo.Invoke(this, new object[] { arrayLengthAttribute.Length }));
+                    }
+                    else if (fieldType == typeof(TypeIndex))
+                    {
+                        i.SetValue(t, ReadTypeIndex());
+                    }
+                    else if (fieldType == typeof(TypeDefinitionIndex))
+                    {
+                        i.SetValue(t, ReadTypeDefinitionIndex());
+                    }
+                    else if (fieldType == typeof(GenericContainerIndex))
+                    {
+                        i.SetValue(t, ReadGenericContainerIndex());
+                    }
+                    else if (fieldType == typeof(ParameterIndex))
+                    {
+                        i.SetValue(t, ReadParameterIndex());
+                    }
+                    else if (fieldType == typeof(Il2CppSectionMetadata))
+                    {
+                        i.SetValue(t, ReadClass<Il2CppSectionMetadata>());
                     }
                     else
                     {

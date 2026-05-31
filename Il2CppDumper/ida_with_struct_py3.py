@@ -23,6 +23,8 @@ PROCESS_FIELDS = {
 }
 
 IMAGE_BASE = idaapi.get_imagebase()
+if IMAGE_BASE == 0:
+    IMAGE_BASE = 0x7100000000  # NSO default load address (Nintendo Switch)
 IS_64BIT   = ida_ida.inf_is_64bit()
 PATCH_WORD = ida_bytes.patch_qword if IS_64BIT else ida_bytes.patch_dword
 WORD_FLAG  = idc.FF_QWORD if IS_64BIT else idc.FF_DWORD

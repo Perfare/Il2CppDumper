@@ -1,78 +1,151 @@
 # -*- coding: utf-8 -*-
 import json
+import idaapi
+import idc
+import ida_funcs
+import ida_bytes
+import ida_segment
+import ida_typeinf
+import ida_dirtree
+import ida_xref
+import ida_auto
+import ida_ida
 
-processFields = [
-	"ScriptMethod",
-	"ScriptString",
-	"ScriptMetadata",
-	"ScriptMetadataMethod",
-	"Addresses",
-]
+PROCESS_FIELDS = {
+    "ScriptMethod",
+    "ScriptString",
+    "ScriptMetadata",
+    "ScriptMetadataMethod",
+    "Addresses",
+    "TypeInfoPointers",
+    "TypeRefPointers",
+    "FieldInfos",
+}
 
-imageBase = idaapi.get_imagebase()
+IMAGE_BASE = idaapi.get_imagebase()
+if IMAGE_BASE == 0:
+    IMAGE_BASE = 0x7100000000  # NSO default load address (Nintendo Switch)
+IS_64BIT = ida_ida.inf_is_64bit()
+PATCH_WORD = ida_bytes.patch_qword if IS_64BIT else ida_bytes.patch_dword
+WORD_FLAG = idc.FF_QWORD if IS_64BIT else idc.FF_DWORD
+
+_CHAR_PTR_TI = ida_typeinf.tinfo_t()
+_CHAR_PTR_OK = ida_typeinf.parse_decl(_CHAR_PTR_TI, None, "const char* const;", 0)
 
 def get_addr(addr):
-	return imageBase + addr
+    return IMAGE_BASE + addr
 
 def set_name(addr, name):
-	ret = idc.set_name(addr, name, SN_NOWARN | SN_NOCHECK)
-	if ret == 0:
-		new_name = name + '_' + str(addr)
-		ret = idc.set_name(addr, new_name, SN_NOWARN | SN_NOCHECK)
+    if idc.set_name(addr, name, idc.SN_NOWARN | idc.SN_NOCHECK) == 0:
+        idc.set_name(addr, name + '_' + str(addr), idc.SN_NOWARN | idc.SN_NOCHECK)
 
 def make_function(start, end):
-	next_func = idc.get_next_func(start)
-	if next_func < end:
-		end = next_func
-	if idc.get_func_attr(start, FUNCATTR_START) == start:
-		ida_funcs.del_func(start)
-	ida_funcs.add_func(start, end)
+    nf = idc.get_next_func(start)
+    if nf < end:
+        end = nf
+    if idc.get_func_attr(start, idc.FUNCATTR_START) == start:
+        ida_funcs.del_func(start)
+    ida_funcs.add_func(start, end)
+
+def set_data_type(addr):
+    if _CHAR_PTR_OK:
+        ida_typeinf.apply_tinfo(addr, _CHAR_PTR_TI, ida_typeinf.TINFO_DEFINITE)
+    else:
+        ida_bytes.create_data(addr, WORD_FLAG, 0, idaapi.BADADDR)
+
+def add_cross_reference(from_addr, to_addr):
+    ida_xref.add_dref(from_addr, to_addr, ida_xref.XREF_USER | ida_xref.dr_I)
+
+ida_auto.set_ida_state(ida_auto.st_Work)
+idc.set_inf_attr(idc.INF_SHORT_DEMNAMES, idc.DEMNAM_GCC3)
 
 path = idaapi.ask_file(False, '*.json', 'script.json from Il2cppdumper')
-data = json.loads(open(path, 'rb').read().decode('utf-8'))
+with open(path, 'rb') as f:
+    data = json.loads(f.read().decode('utf-8'))
 
-if "Addresses" in data and "Addresses" in processFields:
-	addresses = data["Addresses"]
-	for index in range(len(addresses) - 1):
-		start = get_addr(addresses[index])
-		end = get_addr(addresses[index + 1])
-		make_function(start, end)
+active = PROCESS_FIELDS & set(data.keys())
 
-if "ScriptMethod" in data and "ScriptMethod" in processFields:
-	scriptMethods = data["ScriptMethod"]
-	for scriptMethod in scriptMethods:
-		addr = get_addr(scriptMethod["Address"])
-		name = scriptMethod["Name"]
-		set_name(addr, name)
+func_dirtree = None
+try:
+    func_dirtree = ida_dirtree.dirtree_t(ida_dirtree.DIRTREE_FUNCS)
+except Exception:
+    pass
 
-if "ScriptString" in data and "ScriptString" in processFields:
-	index = 1
-	scriptStrings = data["ScriptString"]
-	for scriptString in scriptStrings:
-		addr = get_addr(scriptString["Address"])
-		value = scriptString["Value"]
-		name = "StringLiteral_" + str(index)
-		idc.set_name(addr, name, SN_NOWARN)
-		idc.set_cmt(addr, value, 1)
-		index += 1
+if "Addresses" in active:
+    idaapi.show_wait_box("Processing Addresses...")
+    addresses = data["Addresses"]
+    mapped = [get_addr(a) for a in addresses]
+    for i in range(len(mapped) - 1):
+        make_function(mapped[i], mapped[i + 1])
+    idaapi.hide_wait_box()
 
-if "ScriptMetadata" in data and "ScriptMetadata" in processFields:
-	scriptMetadatas = data["ScriptMetadata"]
-	for scriptMetadata in scriptMetadatas:
-		addr = get_addr(scriptMetadata["Address"])
-		name = scriptMetadata["Name"]
-		set_name(addr, name)
-		idc.set_cmt(addr, name, 1)
+if "ScriptMethod" in active:
+    idaapi.show_wait_box("Processing Methods...")
+    for m in data["ScriptMethod"]:
+        addr = get_addr(m["Address"])
+        set_name(addr, m["Name"])
 
-if "ScriptMetadataMethod" in data and "ScriptMetadataMethod" in processFields:
-	scriptMetadataMethods = data["ScriptMetadataMethod"]
-	for scriptMetadataMethod in scriptMetadataMethods:
-		addr = get_addr(scriptMetadataMethod["Address"])
-		name = scriptMetadataMethod["Name"]
-		methodAddr = get_addr(scriptMetadataMethod["MethodAddress"])
-		set_name(addr, name)
-		idc.set_cmt(addr, name, 1)
-		idc.set_cmt(addr, '{0:X}'.format(methodAddr), 0)
+        group = m.get("Group")
+        if func_dirtree and group:
+            func_dirtree.mkdir(group)
+            fn = ida_funcs.get_func_name(addr)
+            func_dirtree.rename(fn, "{}/{}".format(group, fn))
+    idaapi.hide_wait_box()
 
-print('Script finished!')
+if "ScriptString" in active:
+    idaapi.show_wait_box("Processing Strings...")
+    script_strings = data["ScriptString"]
 
+    encoded = [s["Value"].encode('utf-8') for s in script_strings]
+    total_len = sum(len(v) + 1 for v in encoded)
+
+    fake_seg_start = (ida_ida.inf_get_max_ea() + 0xFFF) & ~0xFFF
+    ida_segment.add_segm(0, fake_seg_start, fake_seg_start + total_len, ".fake_strings", "DATA")
+
+    cur = fake_seg_start
+    for s, value in zip(script_strings, encoded):
+        addr = get_addr(s["Address"])
+        ida_bytes.put_bytes(cur, value + b'\x00')
+        PATCH_WORD(addr, cur)
+        set_data_type(addr)
+
+        name = s.get("Name") or ("StringLiteral_" + str(s["Address"]))
+        idc.set_name(addr, name, idc.SN_NOWARN | idc.SN_NOCHECK)
+        cur += len(value) + 1
+
+    idaapi.hide_wait_box()
+
+if "ScriptMetadata" in active:
+    idaapi.show_wait_box("Processing Metadata...")
+    for m in data["ScriptMetadata"]:
+        addr = get_addr(m["Address"])
+        set_name(addr, m["Name"])
+        idc.set_cmt(addr, m["Name"], 1)
+    idaapi.hide_wait_box()
+
+if "ScriptMetadataMethod" in active:
+    idaapi.show_wait_box("Processing MethodInfo Cross-References...")
+    for m in data["ScriptMetadataMethod"]:
+        addr = get_addr(m["Address"])
+        method_addr = get_addr(m["MethodAddress"])
+        set_name(addr, m["Name"])
+        if method_addr > IMAGE_BASE:
+            add_cross_reference(method_addr, addr)
+    idaapi.hide_wait_box()
+
+if "TypeInfoPointers" in active:
+    idaapi.show_wait_box("Processing TypeInfo Pointers...")
+    for t in data["TypeInfoPointers"]:
+        set_name(get_addr(t["Address"]), t["Name"])
+    idaapi.hide_wait_box()
+
+if "FieldInfos" in active:
+    idaapi.show_wait_box("Processing Field Infos...")
+    for f in data["FieldInfos"]:
+        addr = get_addr(f["Address"])
+        set_name(addr, f["Name"])
+        idc.set_cmt(addr, f["Value"], 1)
+    idaapi.hide_wait_box()
+
+ida_auto.set_ida_state(ida_auto.st_Ready)
+print('Il2CppDumper Script finished successfully!')

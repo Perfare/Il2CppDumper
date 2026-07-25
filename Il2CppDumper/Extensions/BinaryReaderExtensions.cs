@@ -75,6 +75,11 @@ namespace Il2CppDumper
                 // Yes we treat UInt32.MaxValue (and Int32.MinValue, see ReadCompressedInt32) specially
                 val = uint.MaxValue;
             }
+            // 新增判断，现在部分游戏会是0xE8，返回默认值0
+            else if (read == 0xE8)
+            { 
+                val = 0;
+            }
             else
             {
                 throw new Exception("Invalid compressed integer format");

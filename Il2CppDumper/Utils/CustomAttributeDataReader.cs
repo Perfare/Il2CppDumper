@@ -142,7 +142,11 @@ namespace Il2CppDumper
         private BlobValue ReadAttributeDataValue()
         {
             var type = executor.ReadEncodedTypeEnum(this, out var enumType);
-            executor.GetConstantValueFromBlob(type, this, out var blobValue);
+            if (!executor.GetConstantValueFromBlob(type, this, out var blobValue) || blobValue == null)
+            {
+                blobValue = new BlobValue();
+            }
+            blobValue.il2CppTypeEnum = type;
             if (enumType != null)
             {
                 blobValue.EnumType = enumType;

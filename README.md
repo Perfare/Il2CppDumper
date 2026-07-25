@@ -6,11 +6,21 @@
 
 Unity il2cpp reverse engineer
 
+## About This Fork
+
+This fork includes experimental adaptations for newer Unity/IL2CPP metadata versions, including v35/v38/v39 used by Unity 6000.x. The changes improve metadata parsing, method address recovery, DummyDll generation, and `il2cpp.h` generation for newer versions.
+
+The newer-version support has only been self-tested on a small number of games. IL2CPP layouts, metadata formats, and protections vary by Unity version, platform, and project. If a specific game cannot be dumped, you need to debug and modify the source code yourself. I do not provide one-by-one adaptation for every game or protected build.
+
+## Disclaimer
+
+This project is provided for learning, research, interoperability, and analysis of software you own or are authorized to inspect. Do not use it to infringe copyright, bypass access control, cheat in online services, or violate any law or terms of service. You are responsible for how you use this tool.
+
 ## Features
 
 * Complete DLL restore (except code), can be used to extract `MonoBehaviour` and `MonoScript`
 * Supports ELF, ELF64, Mach-O, PE, NSO and WASM format
-* Supports Unity 5.3 - 2022.2
+* Supports Unity 5.3 - 2022.2, with experimental support for newer Unity metadata versions such as v35/v38/v39 (Unity 6000.x)
 * Supports generate IDA, Ghidra and Binary Ninja scripts to help them better analyze il2cpp files
 * Supports generate structures header file
 * Supports Android memory dumped `libil2cpp.so` file to bypass protection
@@ -109,7 +119,7 @@ If your file is `libil2cpp.so` and you have a rooted Android phone, you can try 
 
 Please note that the executable file for the PC platform is `GameAssembly.dll` or `*Assembly.dll`
 
-You can open a new issue and upload the file, I will try to solve.
+For newer Unity versions or protected builds, please investigate the failing parser path and patch the source locally. Per-game adaptation is not guaranteed.
 
 #### `ERROR: This file may be protected.`
 

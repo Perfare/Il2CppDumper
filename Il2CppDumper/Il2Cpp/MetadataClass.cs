@@ -106,6 +106,94 @@ namespace Il2CppDumper
         public int exportedTypeDefinitionsOffset; // TypeDefinitionIndex
         [Version(Min = 24)]
         public int exportedTypeDefinitionsSize;
+
+        // v38+ metadata sections
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata stringLiterals; // Il2CppStringLiteral
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata stringLiteralData; // uint8_t
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata strings; // const char*
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata events; // Il2CppEventDefinition
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata properties; // Il2CppPropertyDefinition
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata methods; // Il2CppMethodDefinition
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata parameterDefaultValues; // Il2CppParameterDefaultValue
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata fieldDefaultValues; // Il2CppFieldDefaultValue
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata fieldAndParameterDefaultValueData; // uint8_t
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata fieldMarshaledSizes; // Il2CppFieldMarshaledSize
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata parameters; // Il2CppParameterDefinition
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata fields; // Il2CppFieldDefinition
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata genericParameters; // Il2CppGenericParameter
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata genericParameterConstraints; // TypeIndex
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata genericContainers; // Il2_GENERICContainer
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata nestedTypes; // TypeDefinitionIndex
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata interfaces; // TypeIndex
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata vtableMethods; // EncodedMethodIndex
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata interfaceOffsets; // Il2CppInterfaceOffsetPair
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata typeDefinitions; // Il2CppTypeDefinition
+        [Version(Min = 104)]
+        public Il2CppSectionMetadata typeInlineArrays;
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata images; // Il2CppImageDefinition
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata assemblies; // Il2CppAssemblyDefinition
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata fieldRefs; // Il2CppFieldRef
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata referencedAssemblies; // int32_t
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata attributeData; // uint8_t
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata attributeDataRanges; // Il2CppCustomAttributeDataRange
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata unresolvedIndirectCallParameterTypes; // TypeIndex
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata unresolvedIndirectCallParameterRanges; // Il2CppRange
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata windowsRuntimeTypeNames; // Il2CppWindowsRuntimeTypeNamePair
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata windowsRuntimeStrings; // const char*
+        [Version(Min = 38)]
+        public Il2CppSectionMetadata exportedTypeDefinitions; // TypeDefinitionIndex
+        [Version(Min = 108)]
+        public Il2CppSectionMetadata methodSpecsOnGenericType; // Il2CppMethodSpecOnGenericType
+        [Version(Min = 108)]
+        public Il2CppSectionMetadata genericMethodSpecsOnType; // Il2CppGenericMethodSpecOnType
+        [Version(Min = 108)]
+        public Il2CppSectionMetadata methodSpecs; // Il2CppMethodSpec
+        [Version(Min = 108)]
+        public Il2CppSectionMetadata genericMethodFunctionsDefinitions; // Il2CppGenericMethodFunctionsDefinitions
+        [Version(Min = 108)]
+        public Il2CppSectionMetadata genericMethodFunctionsDefinitionsWithAdjustor; // Il2CppGenericMethodFunctionsDefinitionsWithAdjustor
+        [Version(Min = 108)]
+        public Il2CppSectionMetadata invokerIndices; // InvokerTableIndex
+        [Version(Min = 108)]
+        public Il2CppSectionMetadata rgctxRanges; // Il2CppTokenRangePair
+        [Version(Min = 108)]
+        public Il2CppSectionMetadata rgctxValues; // Il2CppRGCTXDataDefinition
+        [Version(Min = 108)]
+        public Il2CppSectionMetadata staticConstructorTypeIndices; // TypeDefinitionIndex
+        [Version(Min = 110)]
+        public Il2CppSectionMetadata generatedMethodTypeInfos; // Il2CppGeneratedMethodTypeInfo
+        [Version(Min = 110)]
+        public Il2CppSectionMetadata generatedMethodTokens; // Il2CppGeneratedMethodToken
     }
 
     public class Il2CppAssemblyDefinition
@@ -115,11 +203,15 @@ namespace Il2CppDumper
         public uint token;
         [Version(Max = 24)]
         public int customAttributeIndex;
+        [Version(Min = 24.1)]
+        public int unusedCustomAttributeIndex;
         [Version(Min = 20)]
         public int referencedAssemblyStart;
         [Version(Min = 20)]
         public int referencedAssemblyCount;
         public Il2CppAssemblyNameDefinition aname;
+        [Version(Min = 38)]
+        public uint moduleToken;
     }
 
     public class Il2CppAssemblyNameDefinition
@@ -161,6 +253,24 @@ namespace Il2CppDumper
         public int customAttributeStart;
         [Version(Min = 24.1)]
         public uint customAttributeCount;
+        [Version(Min = 108)]
+        public int invokerIndicesStart;
+        [Version(Min = 108)]
+        public int rgctxRangesStart;
+        [Version(Min = 108)]
+        public int rgctxRangesCount;
+        [Version(Min = 108)]
+        public int staticConstructorStart;
+        [Version(Min = 108)]
+        public int staticConstructorCount;
+        [Version(Min = 110)]
+        public int fieldStart;
+        [Version(Min = 110)]
+        public int propertyStart;
+        [Version(Min = 110)]
+        public int eventStart;
+        [Version(Min = 110)]
+        public int methodStart;
     }
 
     public class Il2CppTypeDefinition
@@ -175,6 +285,7 @@ namespace Il2CppDumper
 
         public int declaringTypeIndex;
         public int parentIndex;
+        [Version(Max = 31)]
         public int elementTypeIndex; // we can probably remove this one. Only used for enums
 
         [Version(Max = 24.1)]
@@ -225,11 +336,12 @@ namespace Il2CppDumper
         // 12 - ClassSize is default
         // 13-16 - One of nine possible PackingSize values (0, 1, 2, 4, 8, 16, 32, 64, or 128) - the specified packing size (even for explicit layouts)
         public uint bitfield;
-        [Version(Min = 19)]
+        [Version(Min = 19, Max = 109)]
         public uint token;
 
         public bool IsValueType => (bitfield & 0x1) == 1;
         public bool IsEnum => ((bitfield >> 1) & 0x1) == 1;
+        public bool HasGeneratedMethods => ((bitfield >> 19) & 0x1) == 1;
     }
 
     public class Il2CppMethodDefinition
@@ -253,6 +365,7 @@ namespace Il2CppDumper
         public int rgctxStartIndex;
         [Version(Max = 24.1)]
         public int rgctxCount;
+        [Version(Max = 109)]
         public uint token;
         public ushort flags;
         public ushort iflags;
@@ -275,7 +388,7 @@ namespace Il2CppDumper
         public int typeIndex;
         [Version(Max = 24)]
         public int customAttributeIndex;
-        [Version(Min = 19)]
+        [Version(Min = 19, Max = 109)]
         public uint token;
     }
 
@@ -294,7 +407,7 @@ namespace Il2CppDumper
         public uint attrs;
         [Version(Max = 24)]
         public int customAttributeIndex;
-        [Version(Min = 19)]
+        [Version(Min = 19, Max = 109)]
         public uint token;
     }
 
@@ -320,6 +433,7 @@ namespace Il2CppDumper
 
     public class Il2CppStringLiteral
     {
+        [Version(Max = 31)]
         public uint length;
         public int dataIndex;
     }
@@ -340,7 +454,7 @@ namespace Il2CppDumper
         public int raise;
         [Version(Max = 24)]
         public int customAttributeIndex;
-        [Version(Min = 19)]
+        [Version(Min = 19, Max = 109)]
         public uint token;
     }
 
@@ -416,5 +530,45 @@ namespace Il2CppDumper
     {
         public uint token;
         public uint startOffset;
+    }
+
+    public class Il2CppMethodSpecOnGenericType
+    {
+        public int methodDefinitionIndex;
+        public int classIndexIndex;
+    }
+
+    public class Il2CppGenericMethodSpecOnType
+    {
+        public int methodDefinitionIndex;
+        public int methodIndexIndex;
+    }
+
+    public class Il2CppGenericMethodFunctionsDefinitionsWithAdjustor
+    {
+        public int genericMethodIndex;
+        public int methodIndex;
+        public int invokerIndex;
+        public int adjustorThunkIndex;
+    }
+
+    public class Il2CppGeneratedMethodTypeInfo
+    {
+        public int typeIndex;
+        public int generatedMethodStart;
+        public int generatedMethodCount;
+    }
+
+    public class Il2CppGeneratedMethodToken
+    {
+        public uint token;
+    }
+
+    // v38+ metadata section format
+    public class Il2CppSectionMetadata
+    {
+        public int offset;
+        public int sectionSize;
+        public int count;
     }
 }

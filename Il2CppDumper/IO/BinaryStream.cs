@@ -19,6 +19,7 @@ namespace Il2CppDumper
         private readonly MethodInfo readClassArray;
         private readonly Dictionary<Type, MethodInfo> genericMethodCache;
         private readonly Dictionary<FieldInfo, VersionAttribute[]> attributeCache;
+        private readonly Dictionary<VariableIndexKind, int> variableIndexWidths = new();
 
         public BinaryStream(Stream input)
         {
@@ -106,6 +107,35 @@ namespace Il2CppDumper
             };
         }
 
+        private protected void SetVariableIndexWidth(VariableIndexKind kind, int width)
+        {
+            if (width != 1 && width != 2 && width != 4)
+            {
+                throw new InvalidDataException($"Invalid {kind} index width: {width}.");
+            }
+            variableIndexWidths[kind] = width;
+        }
+
+        private protected int GetVariableIndexWidth(VariableIndexKind kind)
+        {
+            return variableIndexWidths.TryGetValue(kind, out var width) ? width : sizeof(int);
+        }
+
+        private protected int ReadVariableIndex(VariableIndexKind kind)
+        {
+            if (GetVariableIndexWidth(kind) == 1)
+            {
+                var value = ReadByte();
+                return value == byte.MaxValue ? -1 : value;
+            }
+            if (GetVariableIndexWidth(kind) == 2)
+            {
+                var value = ReadUInt16();
+                return value == ushort.MaxValue ? -1 : value;
+            }
+            return ReadInt32();
+        }
+
         public T ReadClass<T>(ulong addr) where T : new()
         {
             Position = addr;
@@ -149,7 +179,17 @@ namespace Il2CppDumper
                         }
                     }
                     var fieldType = i.FieldType;
-                    if (fieldType.IsPrimitive)
+                    var variableIndex = i.GetCustomAttribute<VariableIndexAttribute>();
+                    if (variableIndex != null)
+                    {
+                        if (fieldType != typeof(int))
+                        {
+                            throw new InvalidDataException(
+                                $"{i.DeclaringType?.Name}.{i.Name} must be an Int32 variable-width index.");
+                        }
+                        i.SetValue(t, ReadVariableIndex(variableIndex.Kind));
+                    }
+                    else if (fieldType.IsPrimitive)
                     {
                         i.SetValue(t, ReadPrimitive(fieldType));
                     }

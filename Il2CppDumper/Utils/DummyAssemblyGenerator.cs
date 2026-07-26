@@ -383,7 +383,10 @@ namespace Il2CppDumper
                 }
             }
             //第三遍，添加CustomAttribute
-            if (il2Cpp.Version > 20)
+            // Metadata v39 custom attribute enum blobs are not representable by
+            // Mono.Cecil's legacy custom attribute writer. They are still emitted
+            // to dump.cs; skip embedding them so DummyDll export can complete.
+            if (il2Cpp.Version > 20 && il2Cpp.Version < 39)
             {
                 foreach (var imageDef in metadata.imageDefs)
                 {
@@ -681,7 +684,8 @@ namespace Il2CppDumper
                 }
                 else
                 {
-                    val = new CustomAttributeArgument(GetBlobValueTypeReference(blobValue, memberReference), val);
+                    var valueType = GetBlobValueTypeReference(blobValue, memberReference);
+                    val = new CustomAttributeArgument(valueType, val);
                 }
             }
             else if (val == null)

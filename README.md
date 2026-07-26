@@ -10,7 +10,8 @@ Unity il2cpp reverse engineer
 
 * Complete DLL restore (except code), can be used to extract `MonoBehaviour` and `MonoScript`
 * Supports ELF, ELF64, Mach-O, PE, NSO and WASM format
-* Supports Unity 5.3 - 2022.2
+* Supports Unity 5.3 - 2022.2 and Unity 6
+* Supports Unity 6 metadata versions 35, 38 and 39, including compact metadata indexes
 * Supports generate IDA, Ghidra and Binary Ninja scripts to help them better analyze il2cpp files
 * Supports generate structures header file
 * Supports Android memory dumped `libil2cpp.so` file to bypass protection
@@ -79,7 +80,7 @@ Available options:
 * `DumpMethod`, `DumpField`, `DumpProperty`, `DumpAttribute`, `DumpFieldOffset`, `DumpMethodOffset`, `DumpTypeDefIndex`
   * Whether to output these information to dump.cs
 
-* `GenerateDummyDll`, `GenerateScript`
+* `GenerateDummyDll`, `GenerateScript`, `GenerateStruct`
   * Whether to generate these things
 
 * `DummyDllAddToken`

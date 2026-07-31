@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Il2CppDumper
 {
@@ -140,7 +140,11 @@ namespace Il2CppDumper
     {
         public ulong datapoint;
         public uint bits;
-        public Union data { get; set; }
+        public Union data
+        {
+            get => new Union { dummy = datapoint };
+            set => datapoint = value.dummy;
+        }
         public uint attrs { get; set; }
         public Il2CppTypeEnum type { get; set; }
         public uint num_mods { get; set; }

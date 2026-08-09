@@ -12,9 +12,10 @@ namespace Il2CppDumper
         public ulong delegateWrappersFromNativeToManagedCount;
         [Version(Max = 21)]
         public ulong delegateWrappersFromNativeToManaged; // note the double indirection to handle different calling conventions
-        [Version(Min = 22)]
+        // v39 dropped the reverse P/Invoke wrapper table from this struct.
+        [Version(Min = 22, Max = 38)]
         public ulong reversePInvokeWrapperCount;
-        [Version(Min = 22)]
+        [Version(Min = 22, Max = 38)]
         public ulong reversePInvokeWrappers;
         [Version(Max = 22)]
         public ulong delegateWrappersFromManagedToNativeCount;

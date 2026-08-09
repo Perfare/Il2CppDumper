@@ -52,7 +52,9 @@ namespace Il2CppDumper
             {
                 throw new InvalidDataException("ERROR: Metadata file supplied is not valid metadata file.");
             }
-            if (version < 16 || version > 31)
+            // v32-v38 were never shipped publicly; v39 (Unity 6.x) is a distinct
+            // format and is handled explicitly rather than by an open-ended range.
+            if (version < 16 || (version > 31 && version != 39))
             {
                 throw new NotSupportedException($"ERROR: Metadata file supplied is not a supported version[{version}].");
             }
@@ -102,12 +104,29 @@ namespace Il2CppDumper
             fieldDefaultValuesDic = fieldDefaultValues.ToDictionary(x => x.fieldIndex);
             parameterDefaultValuesDic = parameterDefaultValues.ToDictionary(x => x.parameterIndex);
             propertyDefs = ReadMetadataClassArray<Il2CppPropertyDefinition>(header.propertiesOffset, header.propertiesSize);
-            interfaceIndices = ReadClassArray<int>(header.interfacesOffset, header.interfacesSize / 4);
+            // v39 narrowed the standalone TypeIndex arrays to uint16 as well.
+            if (Version >= 39)
+            {
+                interfaceIndices = Array.ConvertAll(
+                    ReadClassArray<ushort>(header.interfacesOffset, header.interfacesSize / 2), WidenIndexV39);
+            }
+            else
+            {
+                interfaceIndices = ReadClassArray<int>(header.interfacesOffset, header.interfacesSize / 4);
+            }
             nestedTypeIndices = ReadClassArray<int>(header.nestedTypesOffset, header.nestedTypesSize / 4);
             eventDefs = ReadMetadataClassArray<Il2CppEventDefinition>(header.eventsOffset, header.eventsSize);
             genericContainers = ReadMetadataClassArray<Il2CppGenericContainer>(header.genericContainersOffset, header.genericContainersSize);
             genericParameters = ReadMetadataClassArray<Il2CppGenericParameter>(header.genericParametersOffset, header.genericParametersSize);
-            constraintIndices = ReadClassArray<int>(header.genericParameterConstraintsOffset, header.genericParameterConstraintsSize / 4);
+            if (Version >= 39)
+            {
+                constraintIndices = Array.ConvertAll(
+                    ReadClassArray<ushort>(header.genericParameterConstraintsOffset, header.genericParameterConstraintsSize / 2), WidenIndexV39);
+            }
+            else
+            {
+                constraintIndices = ReadClassArray<int>(header.genericParameterConstraintsOffset, header.genericParameterConstraintsSize / 4);
+            }
             vtableMethods = ReadClassArray<uint>(header.vtableMethodsOffset, header.vtableMethodsSize / 4);
             stringLiterals = ReadMetadataClassArray<Il2CppStringLiteral>(header.stringLiteralOffset, header.stringLiteralSize);
             if (Version > 16)
@@ -154,6 +173,126 @@ namespace Il2CppDumper
             if (Version <= 24.1)
             {
                 rgctxEntries = ReadMetadataClassArray<Il2CppRGCTXDefinition>(header.rgctxEntriesOffset, header.rgctxEntriesCount);
+            }
+            if (Version >= 39)
+            {
+                FixIndexesV39();
+            }
+        }
+
+        /// <summary>
+        /// Widens a v39 uint16 index into the int the rest of the dumper expects.
+        /// 0xFFFF is the "no value" sentinel and becomes -1, which caps usable
+        /// indexes at 65534 - well above anything Unity emits today.
+        /// </summary>
+        private static int WidenIndexV39(ushort value)
+        {
+            return value == ushort.MaxValue ? -1 : value;
+        }
+
+        /// <summary>
+        /// v39 narrowed a set of index fields from int32 to uint16 and dropped
+        /// Il2CppTypeDefinition.elementTypeIndex and Il2CppStringLiteral.length
+        /// outright. Everything is normalised back into the pre-v39 fields here so
+        /// no downstream consumer needs to know about the format change.
+        /// </summary>
+        private void FixIndexesV39()
+        {
+            foreach (var typeDef in typeDefs)
+            {
+                typeDef.byvalTypeIndex = WidenIndexV39(typeDef.byvalTypeIndexV39);
+                typeDef.declaringTypeIndex = WidenIndexV39(typeDef.declaringTypeIndexV39);
+                typeDef.parentIndex = WidenIndexV39(typeDef.parentIndexV39);
+                typeDef.genericContainerIndex = WidenIndexV39(typeDef.genericContainerIndexV39);
+            }
+            foreach (var methodDef in methodDefs)
+            {
+                methodDef.declaringType = WidenIndexV39(methodDef.declaringTypeV39);
+                methodDef.returnType = WidenIndexV39(methodDef.returnTypeV39);
+                methodDef.genericContainerIndex = WidenIndexV39(methodDef.genericContainerIndexV39);
+            }
+            foreach (var parameterDef in parameterDefs)
+            {
+                parameterDef.typeIndex = WidenIndexV39(parameterDef.typeIndexV39);
+            }
+            foreach (var fieldDef in fieldDefs)
+            {
+                fieldDef.typeIndex = WidenIndexV39(fieldDef.typeIndexV39);
+            }
+            foreach (var eventDef in eventDefs)
+            {
+                eventDef.typeIndex = WidenIndexV39(eventDef.typeIndexV39);
+            }
+            foreach (var genericParameter in genericParameters)
+            {
+                genericParameter.ownerIndex = WidenIndexV39(genericParameter.ownerIndexV39);
+            }
+            foreach (var imageDef in imageDefs)
+            {
+                imageDef.typeStart = imageDef.typeStartV39;
+                imageDef.typeCount = imageDef.typeCountV39;
+            }
+            foreach (var fieldDefaultValue in fieldDefaultValuesDic.Values)
+            {
+                fieldDefaultValue.typeIndex = WidenIndexV39(fieldDefaultValue.typeIndexV39);
+            }
+            foreach (var parameterDefaultValue in parameterDefaultValuesDic.Values)
+            {
+                parameterDefaultValue.typeIndex = WidenIndexV39(parameterDefaultValue.typeIndexV39);
+            }
+            if (fieldRefs != null)
+            {
+                foreach (var fieldRef in fieldRefs)
+                {
+                    fieldRef.typeIndex = WidenIndexV39(fieldRef.typeIndexV39);
+                }
+            }
+
+            // v39 merged parentIndex and elementTypeIndex into a single slot. An
+            // enum's parent is always System.Enum and therefore redundant, so for
+            // enums the slot carries the underlying type instead; every other type
+            // stores its parent there as before. Split them back apart, or the
+            // generated enums end up deriving from their underlying type and every
+            // enum-typed custom attribute argument becomes unserialisable.
+            var systemEnumTypeIndex = -1;
+            foreach (var typeDef in typeDefs)
+            {
+                if (GetStringFromIndex(typeDef.nameIndex) == "Enum"
+                    && GetStringFromIndex(typeDef.namespaceIndex) == "System")
+                {
+                    systemEnumTypeIndex = typeDef.byvalTypeIndex;
+                    break;
+                }
+            }
+            if (systemEnumTypeIndex < 0)
+            {
+                Console.WriteLine("WARNING: System.Enum not found; enum base types will be wrong.");
+            }
+            foreach (var typeDef in typeDefs)
+            {
+                if (typeDef.IsEnum)
+                {
+                    typeDef.elementTypeIndex = typeDef.parentIndex;
+                    if (systemEnumTypeIndex >= 0)
+                    {
+                        typeDef.parentIndex = systemEnumTypeIndex;
+                    }
+                }
+                else
+                {
+                    typeDef.elementTypeIndex = -1;
+                }
+            }
+
+            // The string literal table is now a sentinel-terminated list of offsets:
+            // the final entry exists only to bound the one before it.
+            if (stringLiterals.Length > 0)
+            {
+                for (var i = 0; i < stringLiterals.Length - 1; i++)
+                {
+                    stringLiterals[i].length = (uint)(stringLiterals[i + 1].dataIndex - stringLiterals[i].dataIndex);
+                }
+                Array.Resize(ref stringLiterals, stringLiterals.Length - 1);
             }
         }
 

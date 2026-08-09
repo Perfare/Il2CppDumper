@@ -4,56 +4,105 @@ namespace Il2CppDumper
 {
     public class Il2CppGlobalMetadataHeader
     {
+        // Metadata v39 note:
+        // Every table descriptor gained a trailing element-count field, turning the
+        // classic (offset, byteSize) pairs into (offset, byteSize, count) triples.
+        // The set of tables and their order are otherwise unchanged from v31, so the
+        // counts are simply interleaved via [Version(Min = 39)].
         public uint sanity;
         public int version;
         public uint stringLiteralOffset; // string data for managed code
         public int stringLiteralSize;
+        [Version(Min = 39)]
+        public int stringLiteralCountV39;
         public uint stringLiteralDataOffset;
         public int stringLiteralDataSize;
+        [Version(Min = 39)]
+        public int stringLiteralDataCountV39;
         public uint stringOffset; // string data for metadata
         public int stringSize;
+        [Version(Min = 39)]
+        public int stringCountV39;
         public uint eventsOffset; // Il2CppEventDefinition
         public int eventsSize;
+        [Version(Min = 39)]
+        public int eventsCountV39;
         public uint propertiesOffset; // Il2CppPropertyDefinition
         public int propertiesSize;
+        [Version(Min = 39)]
+        public int propertiesCountV39;
         public uint methodsOffset; // Il2CppMethodDefinition
         public int methodsSize;
+        [Version(Min = 39)]
+        public int methodsCountV39;
         public uint parameterDefaultValuesOffset; // Il2CppParameterDefaultValue
         public int parameterDefaultValuesSize;
+        [Version(Min = 39)]
+        public int parameterDefaultValuesCountV39;
         public uint fieldDefaultValuesOffset; // Il2CppFieldDefaultValue
         public int fieldDefaultValuesSize;
+        [Version(Min = 39)]
+        public int fieldDefaultValuesCountV39;
         public uint fieldAndParameterDefaultValueDataOffset; // uint8_t
         public int fieldAndParameterDefaultValueDataSize;
+        [Version(Min = 39)]
+        public int fieldAndParameterDefaultValueDataCountV39;
         public int fieldMarshaledSizesOffset; // Il2CppFieldMarshaledSize
         public int fieldMarshaledSizesSize;
+        [Version(Min = 39)]
+        public int fieldMarshaledSizesCountV39;
         public uint parametersOffset; // Il2CppParameterDefinition
         public int parametersSize;
+        [Version(Min = 39)]
+        public int parametersCountV39;
         public uint fieldsOffset; // Il2CppFieldDefinition
         public int fieldsSize;
+        [Version(Min = 39)]
+        public int fieldsCountV39;
         public uint genericParametersOffset; // Il2CppGenericParameter
         public int genericParametersSize;
+        [Version(Min = 39)]
+        public int genericParametersCountV39;
         public uint genericParameterConstraintsOffset; // TypeIndex
         public int genericParameterConstraintsSize;
+        [Version(Min = 39)]
+        public int genericParameterConstraintsCountV39;
         public uint genericContainersOffset; // Il2CppGenericContainer
         public int genericContainersSize;
+        [Version(Min = 39)]
+        public int genericContainersCountV39;
         public uint nestedTypesOffset; // TypeDefinitionIndex
         public int nestedTypesSize;
+        [Version(Min = 39)]
+        public int nestedTypesCountV39;
         public uint interfacesOffset; // TypeIndex
         public int interfacesSize;
+        [Version(Min = 39)]
+        public int interfacesCountV39;
         public uint vtableMethodsOffset; // EncodedMethodIndex
         public int vtableMethodsSize;
+        [Version(Min = 39)]
+        public int vtableMethodsCountV39;
         public int interfaceOffsetsOffset; // Il2CppInterfaceOffsetPair
         public int interfaceOffsetsSize;
+        [Version(Min = 39)]
+        public int interfaceOffsetsCountV39;
         public uint typeDefinitionsOffset; // Il2CppTypeDefinition
         public int typeDefinitionsSize;
+        [Version(Min = 39)]
+        public int typeDefinitionsCountV39;
         [Version(Max = 24.1)]
         public uint rgctxEntriesOffset; // Il2CppRGCTXDefinition
         [Version(Max = 24.1)]
         public int rgctxEntriesCount;
         public uint imagesOffset; // Il2CppImageDefinition
         public int imagesSize;
+        [Version(Min = 39)]
+        public int imagesCountV39;
         public uint assembliesOffset; // Il2CppAssemblyDefinition
         public int assembliesSize;
+        [Version(Min = 39)]
+        public int assembliesCountV39;
         [Version(Min = 19, Max = 24.5)]
         public uint metadataUsageListsOffset; // Il2CppMetadataUsageList
         [Version(Min = 19, Max = 24.5)]
@@ -66,10 +115,14 @@ namespace Il2CppDumper
         public uint fieldRefsOffset; // Il2CppFieldRef
         [Version(Min = 19)]
         public int fieldRefsSize;
+        [Version(Min = 39)]
+        public int fieldRefsCountV39;
         [Version(Min = 20)]
         public int referencedAssembliesOffset; // int32_t
         [Version(Min = 20)]
         public int referencedAssembliesSize;
+        [Version(Min = 39)]
+        public int referencedAssembliesCountV39;
         [Version(Min = 21, Max = 27.2)]
         public uint attributesInfoOffset; // Il2CppCustomAttributeTypeRange
         [Version(Min = 21, Max = 27.2)]
@@ -82,30 +135,44 @@ namespace Il2CppDumper
         public uint attributeDataOffset;
         [Version(Min = 29)]
         public int attributeDataSize;
+        [Version(Min = 39)]
+        public int attributeDataCountV39;
         [Version(Min = 29)]
         public uint attributeDataRangeOffset;
         [Version(Min = 29)]
         public int attributeDataRangeSize;
+        [Version(Min = 39)]
+        public int attributeDataRangeCountV39;
         [Version(Min = 22)]
         public int unresolvedVirtualCallParameterTypesOffset; // TypeIndex
         [Version(Min = 22)]
         public int unresolvedVirtualCallParameterTypesSize;
+        [Version(Min = 39)]
+        public int unresolvedVirtualCallParameterTypesCountV39;
         [Version(Min = 22)]
         public int unresolvedVirtualCallParameterRangesOffset; // Il2CppRange
         [Version(Min = 22)]
         public int unresolvedVirtualCallParameterRangesSize;
+        [Version(Min = 39)]
+        public int unresolvedVirtualCallParameterRangesCountV39;
         [Version(Min = 23)]
         public int windowsRuntimeTypeNamesOffset; // Il2CppWindowsRuntimeTypeNamePair
         [Version(Min = 23)]
         public int windowsRuntimeTypeNamesSize;
+        [Version(Min = 39)]
+        public int windowsRuntimeTypeNamesCountV39;
         [Version(Min = 27)]
         public int windowsRuntimeStringsOffset; // const char*
         [Version(Min = 27)]
         public int windowsRuntimeStringsSize;
+        [Version(Min = 39)]
+        public int windowsRuntimeStringsCountV39;
         [Version(Min = 24)]
         public int exportedTypeDefinitionsOffset; // TypeDefinitionIndex
         [Version(Min = 24)]
         public int exportedTypeDefinitionsSize;
+        [Version(Min = 39)]
+        public int exportedTypeDefinitionsCountV39;
     }
 
     public class Il2CppAssemblyDefinition
@@ -113,6 +180,12 @@ namespace Il2CppDumper
         public int imageIndex;
         [Version(Min = 24.1)]
         public uint token;
+        // v39 added a 4-byte field here. It mirrors the RID of `token` in every
+        // assembly observed (1 for real assemblies, 0 for the synthetic
+        // "__Generated" module). Unused by the dumper; read only to keep the
+        // struct stride correct.
+        [Version(Min = 39)]
+        public int unknownV39;
         [Version(Max = 24)]
         public int customAttributeIndex;
         [Version(Min = 20)]
@@ -145,8 +218,14 @@ namespace Il2CppDumper
         public uint nameIndex;
         public int assemblyIndex;
 
+        [Version(Max = 38)]
         public int typeStart;
+        [Version(Max = 38)]
         public uint typeCount;
+        [Version(Min = 39)]
+        public ushort typeStartV39;
+        [Version(Min = 39)]
+        public ushort typeCountV39;
 
         [Version(Min = 24)]
         public int exportedTypeStart;
@@ -169,12 +248,24 @@ namespace Il2CppDumper
         public uint namespaceIndex;
         [Version(Max = 24)]
         public int customAttributeIndex;
+        [Version(Max = 38)]
         public int byvalTypeIndex;
+        [Version(Min = 39)]
+        public ushort byvalTypeIndexV39;
         [Version(Max = 24.5)]
         public int byrefTypeIndex;
 
+        [Version(Max = 38)]
         public int declaringTypeIndex;
+        [Version(Min = 39)]
+        public ushort declaringTypeIndexV39;
+        [Version(Max = 38)]
         public int parentIndex;
+        [Version(Min = 39)]
+        public ushort parentIndexV39;
+        // v39 dropped elementTypeIndex entirely. Metadata.FixIndexesV39 rebuilds it
+        // for enums from the type of their value__ field, which is what it held.
+        [Version(Max = 38)]
         public int elementTypeIndex; // we can probably remove this one. Only used for enums
 
         [Version(Max = 24.1)]
@@ -182,7 +273,10 @@ namespace Il2CppDumper
         [Version(Max = 24.1)]
         public int rgctxCount;
 
+        [Version(Max = 38)]
         public int genericContainerIndex;
+        [Version(Min = 39)]
+        public ushort genericContainerIndexV39;
 
         [Version(Max = 22)]
         public int delegateWrapperFromManagedToNativeIndex;
@@ -235,14 +329,23 @@ namespace Il2CppDumper
     public class Il2CppMethodDefinition
     {
         public uint nameIndex;
+        [Version(Max = 38)]
         public int declaringType;
+        [Version(Min = 39)]
+        public ushort declaringTypeV39;
+        [Version(Max = 38)]
         public int returnType;
+        [Version(Min = 39)]
+        public ushort returnTypeV39;
         [Version(Min = 31)]
         public int returnParameterToken;
         public int parameterStart;
         [Version(Max = 24)]
         public int customAttributeIndex;
+        [Version(Max = 38)]
         public int genericContainerIndex;
+        [Version(Min = 39)]
+        public ushort genericContainerIndexV39;
         [Version(Max = 24.1)]
         public int methodIndex;
         [Version(Max = 24.1)]
@@ -266,13 +369,19 @@ namespace Il2CppDumper
         public uint token;
         [Version(Max = 24)]
         public int customAttributeIndex;
+        [Version(Max = 38)]
         public int typeIndex;
+        [Version(Min = 39)]
+        public ushort typeIndexV39;
     }
 
     public class Il2CppFieldDefinition
     {
         public uint nameIndex;
+        [Version(Max = 38)]
         public int typeIndex;
+        [Version(Min = 39)]
+        public ushort typeIndexV39;
         [Version(Max = 24)]
         public int customAttributeIndex;
         [Version(Min = 19)]
@@ -282,7 +391,10 @@ namespace Il2CppDumper
     public class Il2CppFieldDefaultValue
     {
         public int fieldIndex;
+        [Version(Max = 38)]
         public int typeIndex;
+        [Version(Min = 39)]
+        public ushort typeIndexV39;
         public int dataIndex;
     }
 
@@ -320,6 +432,10 @@ namespace Il2CppDumper
 
     public class Il2CppStringLiteral
     {
+        // v39 dropped the explicit length: the table is now a sentinel-terminated
+        // array of data offsets, so entry N's length is entry N+1's offset minus
+        // its own. Metadata.FixIndexesV39 fills `length` in from that.
+        [Version(Max = 38)]
         public uint length;
         public int dataIndex;
     }
@@ -327,14 +443,20 @@ namespace Il2CppDumper
     public class Il2CppParameterDefaultValue
     {
         public int parameterIndex;
+        [Version(Max = 38)]
         public int typeIndex;
+        [Version(Min = 39)]
+        public ushort typeIndexV39;
         public int dataIndex;
     }
 
     public class Il2CppEventDefinition
     {
         public uint nameIndex;
+        [Version(Max = 38)]
         public int typeIndex;
+        [Version(Min = 39)]
+        public ushort typeIndexV39;
         public int add;
         public int remove;
         public int raise;
@@ -357,13 +479,19 @@ namespace Il2CppDumper
 
     public class Il2CppFieldRef
     {
+        [Version(Max = 38)]
         public int typeIndex;
+        [Version(Min = 39)]
+        public ushort typeIndexV39;
         public int fieldIndex; // local offset into type fields
     }
 
     public class Il2CppGenericParameter
     {
+        [Version(Max = 38)]
         public int ownerIndex;  /* Type or method this parameter was defined in. */
+        [Version(Min = 39)]
+        public ushort ownerIndexV39;
         public uint nameIndex;
         public short constraintsStart;
         public short constraintsCount;

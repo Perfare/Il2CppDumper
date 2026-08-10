@@ -93,6 +93,14 @@ namespace Il2CppDumper
         public ulong metadataUsages;
     }
 
+    public class Il2CppTypeDefinitionSizes
+    {
+        public uint instance_size;
+        public int native_size;
+        public uint static_fields_size;
+        public uint thread_static_fields_size;
+    }
+
     public enum Il2CppTypeEnum
     {
         IL2CPP_TYPE_END = 0x00,       /* End of List */

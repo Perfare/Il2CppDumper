@@ -7,6 +7,8 @@ namespace Il2CppDumper
     {
         public string TypeName;
         public bool IsValueType;
+        public bool IsExplicitLayout;
+        public int NativeSize;
         public string Parent;
         public List<StructFieldInfo> Fields = new();
         public List<StructFieldInfo> StaticFields = new();
@@ -20,6 +22,7 @@ namespace Il2CppDumper
         public string FieldName;
         public bool IsValueType;
         public bool IsCustomType;
+        public int Offset = -1;
     }
 
     public class StructVTableMethodInfo

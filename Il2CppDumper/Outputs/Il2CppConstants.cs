@@ -55,6 +55,9 @@
         public const int TYPE_ATTRIBUTE_NESTED_FAM_AND_ASSEM = 0x00000006;
         public const int TYPE_ATTRIBUTE_NESTED_FAM_OR_ASSEM = 0x00000007;
 
+        public const int TYPE_ATTRIBUTE_LAYOUT_MASK = 0x00000018;
+        public const int TYPE_ATTRIBUTE_EXPLICIT_LAYOUT = 0x00000010;
+
 
         public const int TYPE_ATTRIBUTE_INTERFACE = 0x00000020;
 

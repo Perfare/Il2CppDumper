@@ -79,7 +79,7 @@ namespace Il2CppDumper
                 for (int typeIndex = imageDef.typeStart; typeIndex < typeEnd; typeIndex++)
                 {
                     var typeDef = metadata.typeDefs[typeIndex];
-                    AddStruct(typeDef);
+                    AddStruct(typeDef, typeIndex);
                     var typeName = executor.GetTypeDefName(typeDef, true, true);
                     var methodEnd = typeDef.methodStart + typeDef.method_count;
                     for (var i = typeDef.methodStart; i < methodEnd; ++i)
@@ -694,14 +694,30 @@ namespace Il2CppDumper
             return signature;
         }
 
-        private void AddStruct(Il2CppTypeDefinition typeDef)
+        private void AddStruct(Il2CppTypeDefinition typeDef, int typeIndex)
         {
             var structInfo = new StructInfo();
             structInfoList.Add(structInfo);
             structInfo.TypeName = structNameDic[typeDef];
             structInfo.IsValueType = typeDef.IsValueType;
+            structInfo.IsExplicitLayout = typeDef.IsValueType && !typeDef.IsEnum && typeDef.genericContainerIndex < 0 &&
+                (typeDef.flags & TYPE_ATTRIBUTE_LAYOUT_MASK) == TYPE_ATTRIBUTE_EXPLICIT_LAYOUT;
             AddParents(typeDef, structInfo);
-            AddFields(typeDef, structInfo, null);
+            AddFields(typeDef, structInfo, null, typeIndex);
+            if (structInfo.IsExplicitLayout)
+            {
+                structInfo.IsExplicitLayout = structInfo.Fields
+                    .GroupBy(x => x.Offset)
+                    .Any(x => x.Key >= 0 && x.Count() > 1);
+                if (structInfo.IsExplicitLayout)
+                {
+                    structInfo.NativeSize = il2Cpp.GetTypeDefinitionSizeFromIndex(typeIndex);
+                    if (structInfo.NativeSize <= 0 || structInfo.Fields.Any(x => x.Offset < 0 || x.Offset >= structInfo.NativeSize))
+                    {
+                        structInfo.IsExplicitLayout = false;
+                    }
+                }
+            }
             AddVTableMethod(structInfo, typeDef);
             AddRGCTX(structInfo, typeDef);
         }
@@ -734,7 +750,7 @@ namespace Il2CppDumper
             }
         }
 
-        private void AddFields(Il2CppTypeDefinition typeDef, StructInfo structInfo, Il2CppGenericContext context)
+        private void AddFields(Il2CppTypeDefinition typeDef, StructInfo structInfo, Il2CppGenericContext context, int typeIndex = -1)
         {
             if (typeDef.field_count > 0)
             {
@@ -766,6 +782,11 @@ namespace Il2CppDumper
                     }
                     else
                     {
+                        if (structInfo.IsExplicitLayout)
+                        {
+                            structFieldInfo.Offset = il2Cpp.GetFieldOffsetFromIndex(
+                                typeIndex, i - typeDef.fieldStart, i, typeDef.IsValueType, false);
+                        }
                         structInfo.Fields.Add(structFieldInfo);
                     }
                 }
@@ -1009,13 +1030,35 @@ namespace Il2CppDumper
                     var fieldInfo = structInfoWithStructName[field.FieldTypeName];
                     pre.Append(RecursionStructInfo(fieldInfo));
                 }
-                if (field.IsCustomType)
+            }
+            if (info.IsExplicitLayout)
+            {
+                sb.Append("\tunion {\n");
+                sb.Append("\t\t#pragma pack(push, 1)\n");
+                for (var i = 0; i < info.Fields.Count; i++)
                 {
-                    sb.Append($"\tstruct {field.FieldTypeName} {field.FieldName};\n");
+                    var field = info.Fields[i];
+                    if (field.Offset == 0)
+                    {
+                        AppendField(sb, field, "\t\t");
+                    }
+                    else
+                    {
+                        sb.Append("\t\tstruct {\n");
+                        sb.Append($"\t\t\tuint8_t __il2cpp_padding_{i}[{field.Offset}];\n");
+                        AppendField(sb, field, "\t\t\t");
+                        sb.Append("\t\t};\n");
+                    }
                 }
-                else
+                sb.Append("\t\t#pragma pack(pop)\n");
+                sb.Append($"\t\tuint8_t __il2cpp_size[{info.NativeSize}];\n");
+                sb.Append("\t};\n");
+            }
+            else
+            {
+                foreach (var field in info.Fields)
                 {
-                    sb.Append($"\t{field.FieldTypeName} {field.FieldName};\n");
+                    AppendField(sb, field, "\t");
                 }
             }
             sb.Append("};\n");
@@ -1123,6 +1166,18 @@ namespace Il2CppDumper
             }
 
             return pre.Append(sb).ToString();
+        }
+
+        private static void AppendField(StringBuilder sb, StructFieldInfo field, string padding)
+        {
+            if (field.IsCustomType)
+            {
+                sb.Append($"{padding}struct {field.FieldTypeName} {field.FieldName};\n");
+            }
+            else
+            {
+                sb.Append($"{padding}{field.FieldTypeName} {field.FieldName};\n");
+            }
         }
 
         private string GetIl2CppStructName(Il2CppType il2CppType, Il2CppGenericContext context = null)

@@ -311,6 +311,31 @@ namespace Il2CppDumper
             }
         }
 
+        public int GetTypeDefinitionSizeFromIndex(int typeIndex)
+        {
+            try
+            {
+                if (typeIndex < 0 || typeIndex >= pMetadataRegistration.typeDefinitionsSizesCount)
+                {
+                    return -1;
+                }
+                Position = MapVATR(pMetadataRegistration.typeDefinitionsSizes) + (ulong)typeIndex * PointerSize;
+                var typeDefinitionSizes = MapVATR<Il2CppTypeDefinitionSizes>(ReadUIntPtr());
+                if (typeDefinitionSizes.native_size > 0)
+                {
+                    return typeDefinitionSizes.native_size;
+                }
+                var objectHeaderSize = Is32Bit ? 8u : 16u;
+                return typeDefinitionSizes.instance_size >= objectHeaderSize
+                    ? (int)(typeDefinitionSizes.instance_size - objectHeaderSize)
+                    : -1;
+            }
+            catch
+            {
+                return -1;
+            }
+        }
+
         public Il2CppType GetIl2CppType(ulong pointer)
         {
             if (!typeDic.TryGetValue(pointer, out var type))

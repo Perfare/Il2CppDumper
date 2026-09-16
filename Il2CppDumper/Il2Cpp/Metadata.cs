@@ -258,10 +258,19 @@ namespace Il2CppDumper
             var size = 0;
             foreach (var i in type.GetFields())
             {
-                var attr = (VersionAttribute)Attribute.GetCustomAttribute(i, typeof(VersionAttribute));
-                if (attr != null)
+                var attrs = i.GetCustomAttributes<VersionAttribute>().ToArray();
+                if (attrs.Length > 0)
                 {
-                    if (Version < attr.Min || Version > attr.Max)
+                    var match = false;
+                    foreach (var attr in attrs)
+                    {
+                        if (Version >= attr.Min && Version <= attr.Max)
+                        {
+                            match = true;
+                            break;
+                        }
+                    }
+                    if (!match)
                         continue;
                 }
                 var fieldType = i.FieldType;

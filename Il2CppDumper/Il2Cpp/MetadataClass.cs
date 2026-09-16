@@ -244,6 +244,7 @@ namespace Il2CppDumper
         public int customAttributeIndex;
         public int genericContainerIndex;
         [Version(Max = 24.1)]
+        [Version(Min = 31)]
         public int methodIndex;
         [Version(Max = 24.1)]
         public int invokerIndex;

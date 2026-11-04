@@ -23,8 +23,10 @@ Unity il2cpp逆向工程
 ### 命令行
 
 ```
-Il2CppDumper.exe <executable-file> <global-metadata> <output-directory>
+Il2CppDumper.exe <executable-file> <global-metadata> [output-directory]
 ```
+
+如果未指定输出目录，文件将写入当前工作目录。如果指定的输出目录不存在，程序会自动创建。
 
 ### 输出文件
 

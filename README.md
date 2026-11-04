@@ -25,8 +25,10 @@ The program will then generate all the output files in current working directory
 ### Command-line
 
 ```
-Il2CppDumper.exe <executable-file> <global-metadata> <output-directory>
+Il2CppDumper.exe <executable-file> <global-metadata> [output-directory]
 ```
+
+If no output directory is provided, files are written to the current working directory. A provided output directory is created if it does not exist.
 
 ### Outputs
 

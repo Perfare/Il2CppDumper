@@ -31,29 +31,40 @@ namespace Il2CppDumper
                 ShowHelp();
                 return;
             }
-            if (args.Length > 1)
+            foreach (var arg in args)
             {
-                foreach (var arg in args)
+                if (File.Exists(arg))
                 {
-                    if (File.Exists(arg))
+                    var file = File.ReadAllBytes(arg);
+                    if (BitConverter.ToUInt32(file, 0) == 0xFAB11BAF)
                     {
-                        var file = File.ReadAllBytes(arg);
-                        if (BitConverter.ToUInt32(file, 0) == 0xFAB11BAF)
-                        {
-                            metadataPath = arg;
-                        }
-                        else
-                        {
-                            il2cppPath = arg;
-                        }
+                        metadataPath = arg;
                     }
-                    else if (Directory.Exists(arg))
+                    else
                     {
-                        outputDir = Path.GetFullPath(arg) + Path.DirectorySeparatorChar;
+                        il2cppPath = arg;
                     }
                 }
+                else
+                {
+                    outputDir = arg;
+                }
             }
-            outputDir ??= AppDomain.CurrentDomain.BaseDirectory;
+            try
+            {
+                outputDir = Path.GetFullPath(outputDir ?? Environment.CurrentDirectory);
+                Directory.CreateDirectory(outputDir);
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is ArgumentException || e is NotSupportedException || e is System.Security.SecurityException)
+            {
+                Console.WriteLine($"ERROR: Cannot create output directory '{outputDir ?? "<invalid path>"}': {e.Message}");
+                return;
+            }
+            if (!outputDir.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal) &&
+                !outputDir.EndsWith(Path.AltDirectorySeparatorChar.ToString(), StringComparison.Ordinal))
+            {
+                outputDir += Path.DirectorySeparatorChar;
+            }
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 if (il2cppPath == null)
@@ -113,7 +124,7 @@ namespace Il2CppDumper
 
         static void ShowHelp()
         {
-            Console.WriteLine($"usage: {AppDomain.CurrentDomain.FriendlyName} <executable-file> <global-metadata> <output-directory>");
+            Console.WriteLine($"usage: {AppDomain.CurrentDomain.FriendlyName} <executable-file> <global-metadata> [output-directory]");
         }
 
         private static bool Init(string il2cppPath, string metadataPath, out Metadata metadata, out Il2Cpp il2Cpp)

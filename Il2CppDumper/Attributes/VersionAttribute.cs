@@ -6,6 +6,6 @@ namespace Il2CppDumper
     class VersionAttribute : Attribute
     {
         public double Min { get; set; } = 0;
-        public double Max { get; set; } = 99;
+        public double Max { get; set; } = double.MaxValue;
     }
 }

@@ -4,11 +4,21 @@
 
 Unity il2cpp逆向工程
 
+## 关于此 Fork
+
+此 Fork 针对 Unity/IL2CPP 高版本 metadata 做了实验性适配，包括 Unity 6000.x 使用的 v35/v38/v39。当前主要改动包括高版本 metadata 解析、方法地址恢复、DummyDll 生成修复，以及高版本 `il2cpp.h` 生成。
+
+高版本适配只在少量游戏上做过自测。不同 Unity 版本、平台、项目配置和保护方式都会影响 dump 结果。如果遇到无法 dump 的游戏，需要自行调试并修改源码适配。本项目不承诺对每个游戏或每个保护壳做一一适配。
+
+## 免责声明
+
+本项目仅用于学习、研究、互操作分析，以及对你拥有或已获授权的软件进行分析。请勿用于侵犯版权、绕过访问控制、破坏线上服务公平性，或违反法律法规及服务条款的行为。使用本工具产生的一切后果由使用者自行承担。
+
 ## 功能
 
 * 还原DLL文件（不包含代码），可用于提取`MonoBehaviour`和`MonoScript`
 * 支持ELF, ELF64, Mach-O, PE, NSO和WASM格式
-* 支持Unity 5.3 - 2022.2
+* 支持 Unity 5.3 - 2022.2，并实验性适配 Unity 高版本 metadata（如 v35/v38/v39，Unity 6000.x）
 * 生成IDA和Ghidra的脚本，帮助IDA和Ghidra更好的分析il2cpp文件
 * 生成结构体头文件
 * 支持从内存dump的`libil2cpp.so`文件以绕过保护
@@ -103,14 +113,17 @@ global-metadata.dat已被加密。关于解密的问题请去相关破解论坛�
 
 请注意PC平台的可执行文件是`GameAssembly.dll`或者`*Assembly.dll`
 
-你可以打开一个新的issue，并上传文件，我会尝试解决
+Android ELF64（ARM64 / x86-64）现在支持普通 `DT_RELA` 和 `DT_ANDROID_RELA` 的 APS2 压缩重定位。直接输入原始 so 和 metadata 即可，无需解压重定位表、修改 `ForceVersion` 或手填注册表地址。日志会列出解码、应用及跳过的重定位数量；外部导入符号需要运行时链接器解析，因此离线分析时保留原值。此项不包含 ELF32 的 `DT_ANDROID_REL` 或 RELR 格式。
+
+如果是 Unity 高版本或带保护的构建，请自行定位失败的解析路径并修改源码适配。本项目不承诺对具体游戏逐一适配。
 
 #### `ERROR: This file may be protected.`
 
-Il2CppDumper检测到可执行文件已被保护，使用`GameGuardian`从游戏内存中dump `libil2cpp.so`，然后使用Il2CppDumper载入按提示操作，可绕过大部分保护
+这是旧版的启发式提示，不能单独证明文件已被保护。ELF64 加载器现在将 `JNI_OnLoad` 和 `DT_INIT` 作为普通信息输出，不再仅因存在这些入口而报告保护。如果确认文件确有运行时解密或保护，可以使用 `GameGuardian` 从游戏内存中 dump `libil2cpp.so`，然后使用 Il2CppDumper 载入按提示操作。
 
 如果你拥有一台已root的安卓手机，你可以尝试我的另一个项目[Zygisk-Il2CppDumper](https://github.com/Perfare/Zygisk-Il2CppDumper)，它能够绕过几乎所有保护
 
 ## 感谢
 
 - Jumboperson - [Il2CppDumper](https://github.com/Jumboperson/Il2CppDumper)
+- Il2CppInspectorRedux 贡献者 - [Il2CppInspectorRedux](https://github.com/LukeFZ/Il2CppInspectorRedux)

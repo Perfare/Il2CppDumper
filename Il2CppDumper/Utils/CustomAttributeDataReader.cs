@@ -24,7 +24,7 @@ namespace Il2CppDumper
         public string GetStringCustomAttributeData()
         {
             BaseStream.Position = ctorBuffer;
-            var ctorIndex = ReadInt32();
+            var ctorIndex = ReadCtorMethodIndex();
             var methodDef = metadata.methodDefs[ctorIndex];
             var typeDef = metadata.typeDefs[methodDef.declaringType];
             ctorBuffer = BaseStream.Position;
@@ -100,7 +100,7 @@ namespace Il2CppDumper
             var visitor = new CustomAttributeReaderVisitor();
 
             BaseStream.Position = ctorBuffer;
-            var ctorIndex = ReadInt32();
+            var ctorIndex = ReadCtorMethodIndex();
             visitor.CtorIndex = ctorIndex;
             var methodDef = metadata.methodDefs[ctorIndex];
             var typeDef = metadata.typeDefs[methodDef.declaringType];
@@ -139,10 +139,31 @@ namespace Il2CppDumper
             return visitor;
         }
 
+        private int ReadCtorMethodIndex()
+        {
+            var encodedIndex = ReadUInt32();
+            var index = metadata.GetAttributeCtorMethodIndex(encodedIndex);
+            //a generic attribute stores its ctor as a method spec
+            if (metadata.Version >= 104 && metadata.GetEncodedIndexTypeForVersion(encodedIndex) == (uint)Il2CppMetadataUsage.kIl2CppMetadataUsageMethodRef
+                && executor.il2Cpp.methodSpecs is { } methodSpecs && index < methodSpecs.Length)
+            {
+                var methodDefinitionIndex = methodSpecs[index].methodDefinitionIndex;
+                if (methodDefinitionIndex >= 0 && methodDefinitionIndex < metadata.methodDefs.Length)
+                {
+                    return methodDefinitionIndex;
+                }
+            }
+            return (int)index;
+        }
+
         private BlobValue ReadAttributeDataValue()
         {
             var type = executor.ReadEncodedTypeEnum(this, out var enumType);
-            executor.GetConstantValueFromBlob(type, this, out var blobValue);
+            if (!executor.GetConstantValueFromBlob(type, this, out var blobValue) || blobValue == null)
+            {
+                blobValue = new BlobValue();
+            }
+            blobValue.il2CppTypeEnum = type;
             if (enumType != null)
             {
                 blobValue.EnumType = enumType;
@@ -160,7 +181,9 @@ namespace Il2CppDumper
             memberIndex = -(memberIndex + 1);
 
             var typeIndex = this.ReadCompressedUInt32();
-            var declaringClass = metadata.typeDefs[typeIndex];
+            var declaringClass = metadata.Version >= 104
+                ? executor.GetTypeDefinitionFromTypeIndex(typeIndex)
+                : metadata.typeDefs[typeIndex];
 
             return (declaringClass, memberIndex);
         }

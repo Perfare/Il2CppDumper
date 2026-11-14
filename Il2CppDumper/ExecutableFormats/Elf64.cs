@@ -40,7 +40,7 @@ namespace Il2CppDumper
                 RelocationProcessing();
                 if (CheckProtection())
                 {
-                    Console.WriteLine("ERROR: This file may be protected.");
+                    Console.WriteLine("WARNING: Nonstandard ELF sections detected; protection is not confirmed.");
                 }
             }
         }
@@ -183,36 +183,111 @@ namespace Il2CppDumper
         private void RelocationProcessing()
         {
             Console.WriteLine("Applying relocations...");
-            try
+            var hasRela = ProcessRelocationTable(DT_RELA, DT_RELASZ, false);
+            var hasAndroidRela = ProcessRelocationTable(DT_ANDROID_RELA, DT_ANDROID_RELASZ, true);
+            if (!hasRela && !hasAndroidRela)
+                Console.WriteLine("WARNING: No DT_RELA or DT_ANDROID_RELA relocation table found.");
+        }
+
+        private bool ProcessRelocationTable(long addressTag, long sizeTag, bool packed)
+        {
+            var address = dynamicSection.FirstOrDefault(x => x.d_tag == addressTag);
+            var size = dynamicSection.FirstOrDefault(x => x.d_tag == sizeTag);
+            var format = packed ? "Android APS2 RELA" : "ELF RELA";
+            if (address == null && size == null)
+                return false;
+            if (address == null || size == null)
+                throw new InvalidDataException($"Incomplete {format} dynamic tags: address and size are both required.");
+            if (size.d_un == 0)
             {
-                var relaOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_RELA).d_un);
-                var relaSize = dynamicSection.First(x => x.d_tag == DT_RELASZ).d_un;
-                var relaTable = ReadClassArray<Elf64_Rela>(relaOffset, relaSize / 24L);
-                foreach (var rela in relaTable)
+                Console.WriteLine($"{format}: 0 relocations.");
+                return true;
+            }
+            var offset = GetRelocationFileOffset(address.d_un, size.d_un, format);
+            if (packed)
+            {
+                if (size.d_un > int.MaxValue)
+                    throw new InvalidDataException($"{format} table is too large.");
+                Position = offset;
+                // Bound the expanded count by the number of pointer slots in the file.
+                var relocations = AndroidPackedRelocations.Decode(ReadBytes((int)size.d_un), Length / sizeof(ulong));
+                ApplyRelocations(relocations, format);
+            }
+            else
+            {
+                var entrySize = dynamicSection.FirstOrDefault(x => x.d_tag == DT_RELAENT);
+                if (size.d_un % 24 != 0 || (entrySize != null && entrySize.d_un != 24))
+                    throw new InvalidDataException($"Invalid {format} layout: expected 24-byte entries.");
+                ApplyRelocations(ReadRelaTable(offset, size.d_un / 24), format);
+            }
+            return true;
+        }
+
+        private IEnumerable<Elf64_Rela> ReadRelaTable(ulong offset, ulong count)
+        {
+            for (ulong i = 0; i < count; i++)
+            {
+                Position = offset + i * 24;
+                yield return new Elf64_Rela { r_offset = ReadUInt64(), r_info = ReadUInt64(), r_addend = ReadUInt64() };
+            }
+        }
+
+        private void ApplyRelocations(IEnumerable<Elf64_Rela> relocations, string format)
+        {
+            long total = 0, applied = 0, unresolved = 0, unsupported = 0;
+            foreach (var rela in relocations)
+            {
+                total++;
+                var type = rela.r_info & 0xffffffff;
+                var sym = rela.r_info >> 32;
+                var relative = (elfHeader.e_machine == EM_AARCH64 && type == R_AARCH64_RELATIVE) ||
+                    (elfHeader.e_machine == EM_X86_64 && type == R_X86_64_RELATIVE);
+                var symbolic = (elfHeader.e_machine == EM_AARCH64 && (type == R_AARCH64_ABS64 || type == R_AARCH64_GLOB_DAT)) ||
+                    (elfHeader.e_machine == EM_X86_64 && (type == R_X86_64_64 || type == R_X86_64_GLOB_DAT));
+                if (!relative && !symbolic)
                 {
-                    var type = rela.r_info & 0xffffffff;
-                    var sym = rela.r_info >> 32;
-                    (ulong value, bool recognized) result = (type, elfHeader.e_machine) switch
-                    {
-                        (R_AARCH64_ABS64, EM_AARCH64) => (symbolTable[sym].st_value + rela.r_addend, true),
-                        (R_AARCH64_RELATIVE, EM_AARCH64) => (rela.r_addend, true),
-
-                        (R_X86_64_64, EM_X86_64) => (symbolTable[sym].st_value + rela.r_addend, true),
-                        (R_X86_64_RELATIVE, EM_X86_64) => (rela.r_addend, true),
-
-                        _ => (0, false)
-                    };
-                    if (result.recognized)
-                    {
-                        Position = MapVATR(rela.r_offset);
-                        Write(result.value);
-                    }
+                    if (type != 0) unsupported++;
+                    continue;
                 }
+                // Only file-backed PT_LOAD bytes may be overwritten; never map BSS into another section.
+                var target = GetRelocationFileOffset(rela.r_offset, sizeof(ulong), $"{format} relocation target");
+                var value = rela.r_addend;
+                if (symbolic)
+                {
+                    if (symbolTable == null)
+                        throw new InvalidDataException($"{format} requires a readable dynamic symbol table.");
+                    if (sym >= (ulong)symbolTable.Length)
+                        throw new InvalidDataException($"{format} references invalid symbol index {sym}.");
+                    if (symbolTable[sym].st_shndx == 0)
+                    {
+                        // Imported addresses need the runtime linker; do not substitute a bogus zero address.
+                        unresolved++;
+                        continue;
+                    }
+                    // x86-64 GLOB_DAT uses S; ARM64 GLOB_DAT and ABS64 use S + A.
+                    value = elfHeader.e_machine == EM_X86_64 && type == R_X86_64_GLOB_DAT
+                        ? symbolTable[sym].st_value
+                        : unchecked(value + symbolTable[sym].st_value);
+                }
+                Position = target;
+                Write(value); // Disk ELF addresses use a zero load bias. Memory dumps bypass this path.
+                applied++;
             }
-            catch
+            Console.WriteLine($"{format}: {total} decoded, {applied} applied, {unresolved} unresolved imports, {unsupported} unsupported types.");
+        }
+
+        private ulong GetRelocationFileOffset(ulong address, ulong size, string context)
+        {
+            foreach (var segment in programSegment.Where(x => x.p_type == PT_LOAD))
             {
-                // ignored
+                if (address < segment.p_vaddr) continue;
+                var delta = address - segment.p_vaddr;
+                if (delta > segment.p_filesz || size > segment.p_filesz - delta) continue;
+                if (segment.p_offset > Length || delta > Length - segment.p_offset) continue;
+                var offset = segment.p_offset + delta;
+                if (size <= Length - offset) return offset;
             }
+            throw new InvalidDataException($"{context} at VA 0x{address:X} (size 0x{size:X}) is outside file-backed PT_LOAD data.");
         }
 
         private bool CheckProtection()
@@ -222,8 +297,7 @@ namespace Il2CppDumper
                 //.init_proc
                 if (dynamicSection.Any(x => x.d_tag == DT_INIT))
                 {
-                    Console.WriteLine("WARNING: find .init_proc");
-                    return true;
+                    Console.WriteLine("INFO: ELF initializer found (DT_INIT).");
                 }
                 //JNI_OnLoad
                 ulong dynstrOffset = MapVATR(dynamicSection.First(x => x.d_tag == DT_STRTAB).d_un);
@@ -233,8 +307,8 @@ namespace Il2CppDumper
                     switch (name)
                     {
                         case "JNI_OnLoad":
-                            Console.WriteLine("WARNING: find JNI_OnLoad");
-                            return true;
+                            Console.WriteLine("INFO: JNI_OnLoad export found.");
+                            break;
                     }
                 }
                 if (sectionTable != null && sectionTable.Any(x => x.sh_type == SHT_LOUSER))
@@ -288,6 +362,7 @@ namespace Il2CppDumper
                     case DT_STRTAB:
                     case DT_SYMTAB:
                     case DT_RELA:
+                    case DT_ANDROID_RELA:
                     case DT_INIT:
                     case DT_FINI:
                     case DT_REL:

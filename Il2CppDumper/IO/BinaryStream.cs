@@ -184,8 +184,14 @@ namespace Il2CppDumper
 
         public T[] ReadClassArray<T>(long count) where T : new()
         {
-            var t = new T[count];
-            for (var i = 0; i < count; i++)
+            if (count < 0 || count > int.MaxValue)
+            {
+                throw new InvalidDataException($"Invalid array element count: {count}.");
+            }
+
+            var length = (int)count;
+            var t = new T[length];
+            for (var i = 0; i < length; i++)
             {
                 t[i] = ReadClass<T>();
             }
@@ -194,6 +200,11 @@ namespace Il2CppDumper
 
         public T[] ReadClassArray<T>(ulong addr, ulong count) where T : new()
         {
+            if (count > int.MaxValue)
+            {
+                throw new InvalidDataException($"Invalid array element count: {count}.");
+            }
+
             return ReadClassArray<T>(addr, (long)count);
         }
 

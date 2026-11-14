@@ -126,6 +126,8 @@ Check("new enum signatures use parentIndex", () =>
     Equal(17, metadata.GetEnumElementTypeIndex(new Il2CppTypeDefinition { elementTypeIndex = 0, parentIndex = 17 }));
 });
 
+ElfRelocationTests.Run(Check);
+
 if (args.Length > 0)
 {
     Check("real v108 sample", () =>

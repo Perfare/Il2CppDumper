@@ -169,6 +169,7 @@
         public const int DT_SYMTAB = 6;
         public const int DT_RELA = 7;
         public const int DT_RELASZ = 8;
+        public const int DT_RELAENT = 9;
         public const int DT_INIT = 12;
         public const int DT_FINI = 13;
         public const int DT_REL = 17;
@@ -176,6 +177,8 @@
         public const int DT_JMPREL = 23;
         public const int DT_INIT_ARRAY = 25;
         public const int DT_FINI_ARRAY = 26;
+        public const int DT_ANDROID_RELA = 0x60000011;
+        public const int DT_ANDROID_RELASZ = 0x60000012;
         public const int DT_GNU_HASH = 0x6ffffef5;
 
         //sh_type
@@ -189,10 +192,12 @@
 
         //AArch64 relocs
         public const int R_AARCH64_ABS64 = 257;
+        public const int R_AARCH64_GLOB_DAT = 1025;
         public const int R_AARCH64_RELATIVE = 1027;
 
         //AMD x86-64 relocations
         public const int R_X86_64_64 = 1;
+        public const int R_X86_64_GLOB_DAT = 6;
         public const int R_X86_64_RELATIVE = 8;
     }
 }

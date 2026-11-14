@@ -119,11 +119,13 @@ If your file is `libil2cpp.so` and you have a rooted Android phone, you can try 
 
 Please note that the executable file for the PC platform is `GameAssembly.dll` or `*Assembly.dll`
 
+Android ELF64 (ARM64 / x86-64) supports both ordinary `DT_RELA` and APS2-packed `DT_ANDROID_RELA` relocations. Supply the original binary and metadata; no relocation preprocessing, forced version or manual registration addresses are needed for this format. The log reports decoded, applied and skipped records. Imported symbols require the runtime linker and are left unchanged during offline analysis. This does not add ELF32 `DT_ANDROID_REL` or RELR support.
+
 For newer Unity versions or protected builds, please investigate the failing parser path and patch the source locally. Per-game adaptation is not guaranteed.
 
 #### `ERROR: This file may be protected.`
 
-Il2CppDumper detected that the executable file has been protected, use `GameGuardian` to dump `libil2cpp.so` from the game memory, then use Il2CppDumper to load and follow the prompts, can bypass most protections.
+This older heuristic message does not establish that a binary is protected. The ELF64 loader now reports `JNI_OnLoad` and `DT_INIT` as informational messages, without treating these entry points alone as evidence of protection. If runtime decryption or protection is confirmed, a memory dump of `libil2cpp.so` obtained with `GameGuardian` may be used with Il2CppDumper.
 
 If you have a rooted Android phone, you can try my other project [Zygisk-Il2CppDumper](https://github.com/Perfare/Zygisk-Il2CppDumper), it can bypass almost all protections.
 
